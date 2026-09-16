@@ -1,7 +1,7 @@
 /* ==========================================================================
    Mispah Interactives — vibrant dark studio theme
    Sections: tokens · base · layout · buttons · header · hero · about ·
-             games · showcase · services · process · portfolio · why ·
+             games · showcase · services · process · why ·
              stats · cta · contact · footer · lightbox · motion · responsive
    ========================================================================== */
 
@@ -551,30 +551,57 @@ textarea:focus-visible {
 .highlight p  { font-size: 14px; color: var(--text-muted); }
 
 /* ------------------------------------------------------------------- games */
-.games-list { display: grid; gap: clamp(24px, 3vw, 36px); }
+/* Full-bleed row that scrolls left forever. JS repeats the cards and sets
+   --shift (one set's width) and --dur, so the loop is seamless at any count. */
+.games-marquee {
+  position: relative;
+  overflow: hidden;
+  padding-block: 14px 26px;          /* room for hover lift + glow */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+.games-track {
+  display: flex;
+  width: max-content;
+  padding-left: max(var(--pad), calc((100vw - var(--shell)) / 2 + var(--pad)));
+}
+.games-marquee.is-running .games-track {
+  animation: games-scroll var(--dur, 30s) linear infinite;
+}
+@keyframes games-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(calc(-1 * var(--shift, 0px)), 0, 0); }
+}
+/* stop moving whenever someone is reading, pointing, tabbing or playing */
+.games-marquee:hover .games-track,
+.games-marquee:focus-within .games-track,
+.games-marquee.is-paused .games-track,
+body.no-scroll .games-marquee .games-track { animation-play-state: paused; }
+
+/* reduced motion: a normal swipeable row instead */
+.games-marquee.is-static { overflow-x: auto; scroll-snap-type: x mandatory; -webkit-mask-image: none; mask-image: none; }
+.games-marquee.is-static .game-card { scroll-snap-align: start; }
 
 .game-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
-  gap: clamp(22px, 3vw, 42px);
-  align-items: center;
-  padding: clamp(18px, 2.4vw, 28px);
+  flex: none;
+  display: flex; flex-direction: column;
+  width: clamp(290px, 31vw, 410px);
+  margin-right: clamp(18px, 2vw, 28px);
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
   background: var(--surface);
   transition: border-color .35s var(--ease), transform .35s var(--ease), box-shadow .35s var(--ease);
 }
 .game-card:hover {
-  transform: translateY(-4px);
-  border-color: color-mix(in srgb, var(--c) 34%, transparent);
+  transform: translateY(-6px);
+  border-color: color-mix(in srgb, var(--c) 55%, transparent);
   box-shadow: var(--glow);
 }
-.game-card:nth-child(even) .game-media { order: 2; }
 
 .game-media {
   position: relative;
   overflow: hidden;
-  border-radius: var(--r);
   background: #05070C;
   aspect-ratio: 16 / 9;
 }
@@ -586,8 +613,16 @@ textarea:focus-visible {
 .game-media::after {
   content: "";
   position: absolute; inset: 0;
-  background: linear-gradient(180deg, transparent 52%, rgba(5,7,12,.7));
+  background: linear-gradient(180deg, transparent 45%, rgba(11,10,26,.85));
   pointer-events: none;
+}
+.game-media .game-badge {
+  position: absolute; left: 14px; bottom: 10px; z-index: 3;
+  width: 78px; height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,.6));
+  pointer-events: none;
+  transform: none !important;
 }
 
 .game-play {
@@ -598,59 +633,59 @@ textarea:focus-visible {
 }
 .game-play-ring {
   display: grid; place-items: center;
-  width: 62px; height: 62px;
+  width: 56px; height: 56px;
   border-radius: 50%;
-  background: rgba(10,13,20,.6);
+  background: rgba(10,13,20,.55);
   border: 1.5px solid rgba(255,255,255,.34);
   backdrop-filter: blur(6px);
   transition: transform .35s var(--ease), background-color .35s var(--ease), border-color .35s var(--ease);
 }
 .game-play:hover .game-play-ring {
   transform: scale(1.1);
-  background: color-mix(in srgb, var(--c) 86%, transparent);
+  background: var(--c);
   border-color: transparent;
 }
 
-.game-logo {
-  width: clamp(120px, 34%, 190px);
-  margin-bottom: 16px;
-  filter: drop-shadow(0 8px 18px rgba(0,0,0,.55));
+.game-body {
+  display: flex; flex-direction: column;
+  flex: 1;
+  padding: 20px 22px 22px;
 }
-.game-name    { font-size: clamp(22px, 2.6vw, 30px); }
 .game-tagline {
-  display: inline-block;
-  margin-top: 9px;
-  font-size: 12px; font-weight: 600;
+  font-size: 11.5px; font-weight: 700;
   letter-spacing: .14em; text-transform: uppercase;
-  color: var(--violet);
 }
-.game-desc { margin-top: 14px; color: var(--text-muted); font-size: 15px; }
+.game-name { margin-top: 6px; font-size: clamp(21px, 2vw, 25px); }
+.game-desc {
+  margin-top: 10px;
+  color: var(--text-muted);
+  font-size: 14.5px;
+  /* equal card heights regardless of copy length */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
 .platforms {
-  display: flex; flex-wrap: wrap; gap: 8px;
-  margin-top: 18px;
+  display: flex; flex-wrap: wrap; gap: 7px;
+  margin-top: 14px;
 }
 .platforms li {
-  padding: 5px 12px;
+  padding: 4px 11px;
   border: 1px solid var(--line-strong);
   border-radius: 999px;
   background: rgba(255,255,255,.03);
-  font-size: 11.5px; font-weight: 600;
+  font-size: 11px; font-weight: 600;
   letter-spacing: .05em;
   color: var(--text-muted);
 }
-.game-actions { display: flex; flex-wrap: wrap; gap: 11px; margin-top: 24px; }
-
-.game-shots { display: flex; gap: 10px; margin-top: 20px; }
-.game-shots img {
-  width: 62px; height: 62px;
-  object-fit: cover;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: transform .3s var(--ease), border-color .3s var(--ease);
+.game-actions {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  margin-top: auto;
+  padding-top: 18px;
 }
-.game-shots img:hover { transform: translateY(-3px); border-color: var(--violet); }
+.game-actions .btn { padding: 11px 18px; font-size: 14px; }
 
 /* ---------------------------------------------------------------- showcase */
 .stage {
@@ -858,58 +893,6 @@ textarea:focus-visible {
 }
 .step h3 { font-size: 17.5px; text-transform: uppercase; letter-spacing: .04em; }
 .step p  { margin-top: 9px; font-size: 14px; color: var(--text-muted); }
-
-/* --------------------------------------------------------------- portfolio */
-.portfolio-card {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  transition: transform .4s var(--ease), border-color .4s var(--ease), box-shadow .4s var(--ease);
-}
-.portfolio-card:hover {
-  transform: translateY(-6px);
-  border-color: color-mix(in srgb, var(--c) 40%, transparent);
-  box-shadow: var(--glow);
-}
-.pf-media { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #05070C; }
-.pf-media img {
-  width: 100%; height: 100%; object-fit: cover;
-  transition: transform .8s var(--ease);
-}
-.portfolio-card:hover .pf-media img { transform: scale(1.08); }
-
-.pf-overlay {
-  position: absolute; inset: 0;
-  display: flex; align-items: flex-end;
-  padding: 18px;
-  background: linear-gradient(180deg, transparent 38%, rgba(5,7,12,.9));
-  opacity: 0;
-  transition: opacity .4s var(--ease);
-}
-.portfolio-card:hover .pf-overlay { opacity: 1; }
-.pf-actions {
-  display: flex; flex-wrap: wrap; gap: 9px;
-  transform: translateY(12px);
-  transition: transform .4s var(--ease);
-}
-.portfolio-card:hover .pf-actions { transform: translateY(0); }
-.pf-actions .btn { padding: 9px 16px; font-size: 13px; }
-
-.pf-body { padding: 19px 20px 22px; }
-.pf-cat {
-  display: inline-block;
-  margin-bottom: 9px;
-  padding: 4px 11px;
-  border-radius: 999px;
-  background: var(--grad-soft);
-  font-size: 11px; font-weight: 700;
-  letter-spacing: .1em; text-transform: uppercase;
-  color: var(--cyan);
-}
-.pf-body h3 { font-size: 19px; }
-.pf-body p  { margin-top: 8px; font-size: 14px; color: var(--text-muted); }
 
 /* ------------------------------------------------------------------- stats */
 .stats {
@@ -1330,17 +1313,17 @@ body.no-scroll { overflow: hidden; }
 /* Each card in a set takes the next hue. `--c` drives its icon, border,
    hover glow and top stripe, so the whole card changes colour together.   */
 .card-grid > :nth-child(6n+1), .highlight-list > :nth-child(6n+1), .timeline > :nth-child(6n+1),
-.stats-list > :nth-child(6n+1), .games-list > :nth-child(6n+1), .reel > :nth-child(6n+1) { --c: var(--magenta); }
+.stats-list > :nth-child(6n+1), .reel > :nth-child(6n+1) { --c: var(--magenta); }
 .card-grid > :nth-child(6n+2), .highlight-list > :nth-child(6n+2), .timeline > :nth-child(6n+2),
-.stats-list > :nth-child(6n+2), .games-list > :nth-child(6n+2), .reel > :nth-child(6n+2) { --c: var(--cyan); }
+.stats-list > :nth-child(6n+2), .reel > :nth-child(6n+2) { --c: var(--cyan); }
 .card-grid > :nth-child(6n+3), .highlight-list > :nth-child(6n+3), .timeline > :nth-child(6n+3),
-.stats-list > :nth-child(6n+3), .games-list > :nth-child(6n+3), .reel > :nth-child(6n+3) { --c: var(--orange); }
+.stats-list > :nth-child(6n+3), .reel > :nth-child(6n+3) { --c: var(--orange); }
 .card-grid > :nth-child(6n+4), .highlight-list > :nth-child(6n+4), .timeline > :nth-child(6n+4),
-.stats-list > :nth-child(6n+4), .games-list > :nth-child(6n+4), .reel > :nth-child(6n+4) { --c: var(--lime); }
+.stats-list > :nth-child(6n+4), .reel > :nth-child(6n+4) { --c: var(--lime); }
 .card-grid > :nth-child(6n+5), .highlight-list > :nth-child(6n+5), .timeline > :nth-child(6n+5),
-.stats-list > :nth-child(6n+5), .games-list > :nth-child(6n+5), .reel > :nth-child(6n+5) { --c: var(--violet); }
+.stats-list > :nth-child(6n+5), .reel > :nth-child(6n+5) { --c: var(--violet); }
 .card-grid > :nth-child(6n+6), .highlight-list > :nth-child(6n+6), .timeline > :nth-child(6n+6),
-.stats-list > :nth-child(6n+6), .games-list > :nth-child(6n+6), .reel > :nth-child(6n+6) { --c: var(--yellow); }
+.stats-list > :nth-child(6n+6), .reel > :nth-child(6n+6) { --c: var(--yellow); }
 
 /* icons & tags wear their card's colour */
 .svc-icon, .why-icon, .highlight-icon, .contact-icon {
@@ -1358,17 +1341,16 @@ body.no-scroll { overflow: hidden; }
 }
 
 /* coloured top stripe on content cards */
-.svc-card::after, .why-card::after, .portfolio-card::after, .game-card::after {
+.svc-card::after, .why-card::after, .game-card::after {
   content: "";
   position: absolute; left: 0; right: 0; top: 0; height: 3px;
   background: var(--c);
   opacity: .85;
   pointer-events: none;
 }
-.game-card, .portfolio-card { position: relative; overflow: hidden; }
+.game-card { position: relative; overflow: hidden; }
 .game-card { border-color: color-mix(in srgb, var(--c) 22%, transparent); }
-.game-tagline, .pf-cat { color: var(--c); }
-.pf-cat { background: color-mix(in srgb, var(--c) 16%, transparent); }
+.game-tagline { color: var(--c); }
 .platforms li { border-color: color-mix(in srgb, var(--c) 32%, transparent); }
 
 /* process dots each get a hue */
@@ -1422,12 +1404,12 @@ body.no-scroll { overflow: hidden; }
 .reveal.is-in { will-change: auto; }
 
 /* stagger children inside grids/lists */
-.card-grid > *, .games-list > *, .timeline > *, .highlight-list > *, .stats-list > * {
+.card-grid > *, .timeline > *, .highlight-list > *, .stats-list > * {
   opacity: 0;
   transform: translateY(24px);
   transition: opacity .65s var(--ease), transform .65s var(--ease);
 }
-.card-grid > .is-in, .games-list > .is-in, .timeline > .is-in,
+.card-grid > .is-in, .timeline > .is-in,
 .highlight-list > .is-in, .stats-list > .is-in { opacity: 1; transform: none; }
 
 /* -------------------------------------------------------------- responsive */
@@ -1438,8 +1420,6 @@ body.no-scroll { overflow: hidden; }
   .hero-art:hover .art-frame { transform: none; }
   .about-grid, .contact-grid { grid-template-columns: 1fr; }
   .about-media { max-width: 560px; }
-  .game-card   { grid-template-columns: 1fr; }
-  .game-card:nth-child(even) .game-media { order: 0; }
   .footer-grid { grid-template-columns: 1fr; }
   .timeline::before { display: none; }
 }
@@ -1481,7 +1461,6 @@ body.no-scroll { overflow: hidden; }
   /* native video controls are always visible on touch — clear the label */
   .stage-label { bottom: 54px; left: 16px; text-shadow: 0 2px 10px rgba(0,0,0,.8); }
   .field-row { grid-template-columns: 1fr; gap: 0; }
-  .game-shots img { width: 54px; height: 54px; }
 }
 
 @media (max-width: 560px) {
@@ -1504,7 +1483,7 @@ body.no-scroll { overflow: hidden; }
     transition-duration: .001ms !important;
   }
   .reveal,
-  .card-grid > *, .games-list > *, .timeline > *,
+  .card-grid > *, .timeline > *,
   .highlight-list > *, .stats-list > * {
     opacity: 1 !important;
     transform: none !important;

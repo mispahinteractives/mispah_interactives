@@ -1,8 +1,8 @@
 /* ==========================================================================
    SITE CONTENT  —  EDIT THIS FILE TO UPDATE THE WEBSITE
    --------------------------------------------------------------------------
-   Everything the site displays lives here. Adding a game, a portfolio piece
-   or a service means adding one object to the relevant array below — no HTML
+   Everything the site displays lives here. Adding a game or a service
+   means adding one object to the relevant array below — no HTML
    or CSS changes required.
 
    ⚠️  PLACEHOLDERS: anything marked "TODO" is a placeholder. Real company
@@ -32,7 +32,6 @@ window.SITE = {
     { label: 'About',     href: '#about' },
     { label: 'Games',     href: '#games' },
     { label: 'Services',  href: '#services' },
-    { label: 'Portfolio', href: '#portfolio' },
     { label: 'Contact',   href: '#contact' }
   ],
   navCta: { label: "Let's Work Together", href: '#contact' },
@@ -179,41 +178,6 @@ window.SITE = {
     { step: '05', title: 'Launch',      text: 'Prepare and release the final product.' }
   ],
 
-  /* ------------------------------------------------------------- portfolio */
-  /* `video` is optional — when present a "Watch Gameplay" button appears.    */
-  portfolio: [
-    {
-      id: 'uno-clash-project',
-      name: 'UNO Clash',
-      category: 'HTML5 Game',
-      playGameId: 'uno-clash',        // adds a "Play" button, launches that game
-      description: 'Full multiplayer card game with AI opponents, betting and progression.',
-      image: 'assets/img/games/uno-clash-landscape.jpg',
-      alt:   'UNO Clash landscape gameplay',
-      video: {
-        mp4:    'assets/video/uno-clash-gameplay.mp4',
-        webm:   'assets/video/uno-clash-gameplay.webm',
-        poster: 'assets/img/games/uno-clash-poster.jpg'
-      },
-      url: null
-    },
-    {
-      id: 'golf-solitaire-project',
-      name: 'Golf Solitaire',
-      category: 'HTML5 Game',
-      playGameId: 'golf-solitaire',
-      description: 'Level-based card puzzle with streak scoring and themed decks.',
-      image: 'assets/img/games/golf-solitaire-levels.jpg',
-      alt:   'Golf Solitaire level select screen',
-      video: {
-        mp4:    'assets/video/golf-solitaire-gameplay.mp4',
-        webm:   'assets/video/golf-solitaire-gameplay.webm',
-        poster: 'assets/img/games/golf-solitaire-poster.jpg'
-      },
-      url: null
-    }
-  ],
-
   /* ------------------------------------------------------------------- why */
   why: {
     heading: 'Built with creativity. Powered by technology.',
@@ -282,8 +246,7 @@ window.SITE = {
           { label: 'Home',      href: '#home' },
           { label: 'About',     href: '#about' },
           { label: 'Services',  href: '#services' },
-          { label: 'Portfolio', href: '#portfolio' },
-          { label: 'Contact',   href: '#contact' }
+                { label: 'Contact',   href: '#contact' }
         ]
       },
       {

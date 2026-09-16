@@ -14,8 +14,7 @@ mispah_interactives/
 │   │   └── main.js             rendering, nav, reveals, video, player, form
 │   ├── img/
 │   │   ├── logo.svg            company logo mark
-│   │   ├── games/              game logos, posters, screenshots
-│   │   └── portfolio/          project images
+│   │   └── games/              game logos, posters, screenshots
 │   └── video/                  gameplay footage (MP4 + WebM)
 ├── games/                      playable builds, launched in-page
 │   ├── uno-clash/
@@ -50,6 +49,13 @@ real values.
 Append one object to the `games` array. The Games section, the video showcase,
 the reel carousel and the footer Games column all update automatically.
 
+The Games section is a full-width row that scrolls left continuously. The
+script repeats the cards until the row is wider than the screen, so the loop
+has no gap whether you have 2 games or 20. It pauses on hover, on keyboard
+focus, for a few seconds after a tap, and while a game or video is open.
+Visitors with reduced motion get a still, swipeable row instead. Speed is
+`MARQUEE_SPEED` (pixels per second) in `main.js`.
+
 ```js
 {
   id: 'my-game',                       // unique; also used as the #anchor
@@ -59,7 +65,7 @@ the reel carousel and the footer Games column all update automatically.
   platforms: ['HTML5', 'Mobile'],
   logo:  'assets/img/games/my-game-logo.png',
   thumb: 'assets/img/games/my-game-poster.jpg',   // 16:9
-  shots: [ { src: '...', alt: '...' } ],          // optional thumbnails
+  shots: [ { src: '...', alt: '...' } ],          // kept as data; not shown in the scrolling row
   video: {                                        // omit entirely if no footage
     mp4:    'assets/video/my-game.mp4',
     webm:   'assets/video/my-game.webm',          // optional
@@ -87,8 +93,7 @@ play: {
 }
 ```
 
-That's all — a **Play Now** button appears on the game card, and on any
-portfolio card carrying `playGameId: 'my-game'`.
+That's all — a **Play Now** button appears on the game card.
 
 - `orientation: 'portrait'` frames the game at 9:16 and centres it on desktop
   so it isn't stretched; on mobile it fills the screen either way.
@@ -102,11 +107,6 @@ portfolio card carrying `playGameId: 'my-game'`.
 
 Current builds: UNO Clash is a 15MB self-contained file, Golf Solitaire 4MB.
 They are the studio's own shipped artifacts, copied in unmodified.
-
-### Adding a portfolio project
-
-Append to `portfolio`. Same shape, plus `category`. `video` is optional; when
-absent the card's button opens the project image instead.
 
 ### Other arrays
 

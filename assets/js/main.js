@@ -300,81 +300,130 @@
   }
 
   /* ================================================================= GAMES */
+  /* Games run left-to-right in a continuously scrolling row. With only a few
+     games the set is repeated until it is wider than the screen, so the loop
+     never shows a gap. Repeats are aria-hidden and taken out of the tab order. */
+  var GAME_HUES = ['var(--magenta)', 'var(--cyan)', 'var(--orange)', 'var(--lime)', 'var(--violet)', 'var(--yellow)'];
+  var MARQUEE_SPEED = 42;                 // pixels per second
+
+  function makeGameCard(g, index, isClone) {
+    var card = el('article', 'game-card');
+    card.style.setProperty('--c', GAME_HUES[index % GAME_HUES.length]);
+    if (!isClone) card.id = 'game-' + g.id;
+
+    var media = el('div', 'game-media');
+    var img = el('img');
+    img.src = g.thumb; img.alt = isClone ? '' : g.name + ' gameplay';
+    img.loading = 'lazy'; img.decoding = 'async';
+    img.width = 1280; img.height = 720;
+    media.appendChild(img);
+
+    if (g.video) {
+      var play = el('button', 'game-play');
+      play.type = 'button';
+      play.setAttribute('aria-label', 'Watch ' + g.name + ' gameplay');
+      play.innerHTML = '<span class="game-play-ring">' + icon('play', 24) + '</span>';
+      play.addEventListener('click', function () { openLightbox(g.name, g.video); });
+      media.appendChild(play);
+    }
+    if (g.logo) {
+      var badge = el('img', 'game-badge');
+      badge.src = g.logo; badge.alt = ''; badge.setAttribute('aria-hidden', 'true');
+      badge.loading = 'lazy'; badge.decoding = 'async';
+      media.appendChild(badge);
+    }
+
+    var body = el('div', 'game-body');
+    body.innerHTML =
+      '<span class="game-tagline">' + esc(g.tagline) + '</span>' +
+      '<h3 class="game-name">' + esc(g.name) + '</h3>' +
+      '<p class="game-desc">' + esc(g.description) + '</p>' +
+      '<ul class="platforms">' +
+        g.platforms.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') +
+      '</ul>';
+
+    var actions = el('div', 'game-actions');
+    if (g.play) {
+      var playNow = el('button', 'btn btn-primary');
+      playNow.type = 'button';
+      playNow.innerHTML = icon('gamepad', 16) + ' Play Now';
+      playNow.addEventListener('click', function () { openPlayer(g); });
+      actions.appendChild(playNow);
+    }
+    if (g.url) {
+      var view = el('a', 'btn ' + (g.play ? 'btn-ghost' : 'btn-primary'));
+      view.href = g.url; view.target = '_blank'; view.rel = 'noopener';
+      view.innerHTML = 'View Game ' + icon('arrow', 16);
+      actions.appendChild(view);
+    }
+    if (g.video) {
+      var watch = el('button', 'btn btn-ghost');
+      watch.type = 'button';
+      watch.innerHTML = icon('play', 15) + ' Watch';
+      watch.addEventListener('click', function () { openLightbox(g.name, g.video); });
+      actions.appendChild(watch);
+    }
+    body.appendChild(actions);
+
+    card.appendChild(media);
+    card.appendChild(body);
+
+    if (isClone) {
+      card.classList.add('is-clone');
+      card.setAttribute('aria-hidden', 'true');
+      $$('a, button', card).forEach(function (n) { n.tabIndex = -1; });
+    }
+    return card;
+  }
+
   function buildGames() {
-    var wrap = $('#gamesList');
+    var marquee = $('#gamesList');
+    var track = el('div', 'games-track');
+    marquee.appendChild(track);
 
-    S.games.forEach(function (g) {
-      var card = el('article', 'game-card');
-      card.id = 'game-' + g.id;
+    S.games.forEach(function (g, i) { track.appendChild(makeGameCard(g, i, false)); });
 
-      var media = el('div', 'game-media');
-      var img = el('img');
-      img.src = g.thumb; img.alt = g.name + ' gameplay';
-      img.loading = 'lazy'; img.decoding = 'async';
-      img.width = 1280; img.height = 720;
-      media.appendChild(img);
+    if (reduceMotion || !S.games.length) {
+      marquee.classList.add('is-static');   // plain horizontal scroll, no motion
+      return;
+    }
 
-      if (g.video) {
-        var play = el('button', 'game-play');
-        play.type = 'button';
-        play.setAttribute('aria-label', 'Watch ' + g.name + ' gameplay');
-        play.innerHTML = '<span class="game-play-ring">' + icon('play', 24) + '</span>';
-        play.addEventListener('click', function () { openLightbox(g.name, g.video); });
-        media.appendChild(play);
+    function fill() {
+      $$('.is-clone', track).forEach(function (n) { n.remove(); });
+      var originals = $$('.game-card', track);
+      // each card carries its own trailing margin, so one set's width is exact
+      var setWidth = originals.reduce(function (sum, c) {
+        return sum + c.getBoundingClientRect().width + parseFloat(getComputedStyle(c).marginRight);
+      }, 0);
+      if (!setWidth) return;
+
+      // enough extra sets to cover the viewport while the first set slides out
+      var extraSets = Math.ceil(marquee.clientWidth / setWidth);
+      for (var k = 0; k < extraSets; k++) {
+        S.games.forEach(function (g, i) { track.appendChild(makeGameCard(g, i, true)); });
       }
+      track.style.setProperty('--shift', setWidth + 'px');
+      track.style.setProperty('--dur', (setWidth / MARQUEE_SPEED) + 's');
+      marquee.classList.add('is-running');
+    }
 
-      var body = el('div', 'game-body');
-      var logoHtml = g.logo
-        ? '<img class="game-logo" src="' + esc(g.logo) + '" alt="' + esc(g.name) + ' logo" loading="lazy" decoding="async">'
-        : '';
-      body.innerHTML =
-        logoHtml +
-        '<h3 class="game-name">' + esc(g.name) + '</h3>' +
-        '<span class="game-tagline">' + esc(g.tagline) + '</span>' +
-        '<p class="game-desc">' + esc(g.description) + '</p>' +
-        '<ul class="platforms">' +
-          g.platforms.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') +
-        '</ul>';
+    fill();
+    var lastWidth = marquee.clientWidth, t;
+    window.addEventListener('resize', function () {
+      clearTimeout(t);
+      t = setTimeout(function () {
+        if (marquee.clientWidth !== lastWidth) { lastWidth = marquee.clientWidth; fill(); }
+      }, 200);
+    });
+    // card widths depend on web fonts; re-measure once they're in
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fill);
 
-      var actions = el('div', 'game-actions');
-      if (g.play) {
-        var playNow = el('button', 'btn btn-primary');
-        playNow.type = 'button';
-        playNow.innerHTML = icon('gamepad', 16) + ' Play Now';
-        playNow.addEventListener('click', function () { openPlayer(g); });
-        actions.appendChild(playNow);
-      }
-      if (g.url) {
-        var view = el('a', 'btn ' + (g.play ? 'btn-ghost' : 'btn-primary'));
-        view.href = g.url; view.target = '_blank'; view.rel = 'noopener';
-        view.innerHTML = 'View Game ' + icon('arrow', 16);
-        actions.appendChild(view);
-      }
-      if (g.video) {
-        var watch = el('button', 'btn ' + (g.play || g.url ? 'btn-ghost' : 'btn-primary'));
-        watch.type = 'button';
-        watch.innerHTML = icon('play', 15) + ' Watch Gameplay';
-        watch.addEventListener('click', function () { openLightbox(g.name, g.video); });
-        actions.appendChild(watch);
-      }
-      body.appendChild(actions);
-
-      if (g.shots && g.shots.length) {
-        var shots = el('div', 'game-shots');
-        g.shots.forEach(function (s) {
-          var t = el('img');
-          t.src = s.src; t.alt = s.alt;
-          t.loading = 'lazy'; t.decoding = 'async';
-          t.title = 'View screenshot';
-          t.addEventListener('click', function () { openImageBox(g.name, s); });
-          shots.appendChild(t);
-        });
-        body.appendChild(shots);
-      }
-
-      card.appendChild(media);
-      card.appendChild(body);
-      wrap.appendChild(card);
+    // touch has no hover: pause while the visitor is interacting, then resume
+    var resume;
+    marquee.addEventListener('pointerdown', function () {
+      marquee.classList.add('is-paused');
+      clearTimeout(resume);
+      resume = setTimeout(function () { marquee.classList.remove('is-paused'); }, 4000);
     });
   }
 
@@ -671,16 +720,6 @@
     if (p && p.catch) p.catch(function () { /* user can press play */ });
   }
 
-  function openImageBox(title, shot) {
-    var img = el('img');
-    img.src = shot.src;
-    img.alt = shot.alt || title;
-    img.style.width = '100%';
-    img.style.height = '100%';
-    img.style.objectFit = 'contain';
-    showLightbox(title, img);
-  }
-
   function closeLightbox() {
     lb.root.classList.remove('is-open');
     document.body.classList.remove('no-scroll');
@@ -711,45 +750,6 @@
         '<span class="step-dot">' + esc(p.step) + '</span>' +
         '<h3>' + esc(p.title) + '</h3><p>' + esc(p.text) + '</p>';
       ol.appendChild(li);
-    });
-  }
-
-  function buildPortfolio() {
-    var grid = $('#portfolioGrid');
-    S.portfolio.forEach(function (p) {
-      var card = el('article', 'portfolio-card');
-
-      var playable = p.playGameId
-        ? S.games.filter(function (g) { return g.id === p.playGameId && g.play; })[0]
-        : null;
-
-      var actions = '';
-      if (playable) actions += '<button class="btn btn-primary" type="button" data-pf-play="' + esc(p.id) + '">Play Now</button>';
-      if (p.url)    actions += '<a class="btn ' + (playable ? 'btn-ghost' : 'btn-primary') + '" href="' + esc(p.url) + '" target="_blank" rel="noopener">View Project</a>';
-      if (p.video)  actions += '<button class="btn btn-ghost" type="button" data-pf-video="' + esc(p.id) + '">Watch Gameplay</button>';
-      if (!actions) actions = '<button class="btn btn-ghost" type="button" data-pf-image="' + esc(p.id) + '">View Project</button>';
-
-      card.innerHTML =
-        '<div class="pf-media">' +
-          '<img src="' + esc(p.image) + '" alt="' + esc(p.alt || p.name) + '" loading="lazy" decoding="async" width="1200" height="675">' +
-          '<div class="pf-overlay"><div class="pf-actions">' + actions + '</div></div>' +
-        '</div>' +
-        '<div class="pf-body">' +
-          '<span class="pf-cat">' + esc(p.category) + '</span>' +
-          '<h3>' + esc(p.name) + '</h3>' +
-          '<p>' + esc(p.description) + '</p>' +
-        '</div>';
-
-      var pb = $('[data-pf-play]', card);
-      if (pb) pb.addEventListener('click', function () { openPlayer(playable); });
-      var vb = $('[data-pf-video]', card);
-      if (vb) vb.addEventListener('click', function () { openLightbox(p.name, p.video); });
-      var ib = $('[data-pf-image]', card);
-      if (ib) ib.addEventListener('click', function () {
-        openImageBox(p.name, { src: p.image, alt: p.alt || p.name });
-      });
-
-      grid.appendChild(card);
     });
   }
 
@@ -964,7 +964,7 @@
   /* =============================================================== REVEALS */
   function wireReveals() {
     var targets = $$('.reveal')
-      .concat($$('.card-grid > *, .games-list > *, .timeline > *, .highlight-list > *, .stats-list > *'));
+      .concat($$('.card-grid > *, .timeline > *, .highlight-list > *, .stats-list > *'));
 
     if (reduceMotion || !('IntersectionObserver' in window)) {
       targets.forEach(function (n) { n.classList.add('is-in'); });
@@ -1070,7 +1070,6 @@
     buildShowcase();
     buildServices();
     buildProcess();
-    buildPortfolio();
     buildWhy();
     buildStats();
     buildCta();
