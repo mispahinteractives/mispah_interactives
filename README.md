@@ -1,4 +1,4 @@
-# Mispah Interactives — Studio Website
+# Mizpah Interactives — Studio Website
 
 A static, dependency-free website for a game development and software technology
 studio. No build step, no framework, no package install — open `index.html` or
@@ -13,7 +13,8 @@ mispah_interactives/
 │   │   ├── content.js          ← EDIT THIS: every piece of site content
 │   │   └── main.js             rendering, nav, reveals, video, player, form
 │   ├── img/
-│   │   ├── logo.svg            company logo mark
+│   │   ├── logo.png            company logo (header + footer)
+│   │   ├── logo-icon.png       square icon (browser tab)
 │   │   └── games/              game logos, posters, screenshots
 │   └── video/                  gameplay footage (MP4 + WebM)
 ├── games/                      playable builds, launched in-page
@@ -49,12 +50,27 @@ real values.
 Append one object to the `games` array. The Games section, the video showcase,
 the reel carousel and the footer Games column all update automatically.
 
-The Games section is a full-width row that scrolls left continuously. The
-script repeats the cards until the row is wider than the screen, so the loop
-has no gap whether you have 2 games or 20. It pauses on hover, on keyboard
-focus, for a few seconds after a tap, and while a game or video is open.
-Visitors with reduced motion get a still, swipeable row instead. Speed is
-`MARQUEE_SPEED` (pixels per second) in `main.js`.
+The Games section is a full-width row that scrolls left continuously, with
+‹ › arrow buttons that step exactly one game at a time. The script repeats the
+cards so the loop has no gap whether you have 2 games or 20, in either
+direction. Auto-scroll pauses on hover, on keyboard focus, for a few seconds
+after a tap or arrow click, and while a game or video is open. Visitors with
+reduced motion get a still row that the arrows (or a swipe) still move. Speed
+is `MARQUEE_SPEED` (pixels per second) in `main.js`.
+
+### The hero
+
+The right side of the hero shows one game's title screen on a tilted 3D phone,
+with a floating label naming it. A different game is picked on each page load
+(never the same one twice in a row — the last pick is remembered in
+`localStorage`). Clicking the phone launches that game. The games it picks
+from, and their order, come from `hero.slideOrder` in `content.js`; each uses
+its `slide` image.
+
+Game posters (`thumb` and `video.poster`) and hero slides are all real
+screenshots of each game's title screen, captured from the builds in `games/`.
+Posters use the blurred-backdrop 16:9 treatment; slides are the raw portrait
+capture.
 
 ```js
 {
@@ -157,11 +173,10 @@ Performance rules the site follows:
 
 - The big gameplay videos use `preload="none"` — **no video data downloads until
   the visitor presses play.**
-- The hero shows a separate, heavily compressed ~200KB decorative loop
-  (`hero-loop.mp4/webm`), attached only after the page has loaded and gone idle,
-  and paused whenever it scrolls out of view.
-- Nothing autoplays with sound. The hero loop is muted; every other clip is
-  user-initiated.
+- The hero uses still title-screen images, not video. (`hero-loop.mp4/webm`
+  from the earlier single-game hero are still in `assets/video/` but no longer
+  referenced — safe to delete.)
+- Nothing autoplays with sound; every clip is user-initiated.
 - Closing the lightbox empties it, which stops playback and frees the buffer.
 
 Current critical-path weight is roughly **550KB** with a first contentful paint
@@ -194,9 +209,10 @@ ffmpeg -ss 6 -i out.mp4 -frames:v 1 -q:v 3 poster.jpg
 
 ## Branding
 
-No Mispah logo file existed, so the mark is hand-built SVG — a gradient "M" with
-a play notch. It lives in three places, all identical: `assets/img/logo.svg`
-(favicon + Open Graph) and inline in the header and footer of `index.html`.
+The logo is the studio's own artwork: `assets/img/logo.png` (the full Mizpah
+Interactives lockup, used in the header and footer) and `assets/img/logo-icon.png`
+(the M-and-controller mark on its own, used as the browser-tab icon). Both were
+cut from the supplied `logo.png`. To rebrand, replace those two files.
 
 To use a supplied logo instead, set `company.logoImage` in `content.js` to an
 image path, or replace the inline `<svg>` blocks.

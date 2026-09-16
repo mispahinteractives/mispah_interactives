@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Mispah Interactives — site behaviour
+   Mizpah Interactives — site behaviour
    Renders every section from window.SITE (assets/js/content.js), then wires
    navigation, scroll reveals, the video showcase and the contact form.
    No dependencies.
@@ -93,7 +93,6 @@
     headerCta.href = S.navCta.href;
     headerCta.textContent = S.navCta.label;
 
-    setText('[data-company-name]', S.company.shortName || S.company.name);
   }
 
   function wireHeader() {
@@ -183,100 +182,53 @@
       badges.appendChild(el('li', null, esc(t)));
     });
 
-    var art = h.art || {};
-    var frame = el('div', 'art-frame');
-    var inner = el('div', 'art-inner');
+    // Right side of the hero: one game at a time, on a 3D phone. A different
+    // game is picked on each page load (never the same one twice in a row).
+    var pool = ((h.slideOrder && h.slideOrder.length) ? h.slideOrder : S.games.map(function (g) { return g.id; }))
+      .map(function (id) { return S.games.filter(function (g) { return g.id === id; })[0]; })
+      .filter(function (g) { return g && (g.slide || g.thumb); });
+    if (!pool.length) return;
 
-    // Poster first; the clip is attached only once the hero is on screen
+    var lastId = null;
+    try { lastId = localStorage.getItem('heroGame'); } catch (e) {}
+    var choices = pool.length > 1 ? pool.filter(function (g) { return g.id !== lastId; }) : pool;
+    var g = choices[Math.floor(Math.random() * choices.length)];
+    try { localStorage.setItem('heroGame', g.id); } catch (e) {}
+
+    var playable = !!(g.play || g.video);
+    var stage = el('div', 'hero-phone-stage');
+    stage.style.setProperty('--c', GAME_HUES[S.games.indexOf(g) % GAME_HUES.length]);
+
+    var phone = el(playable ? 'button' : 'div', 'hero-phone');
+    if (playable) {
+      phone.type = 'button';
+      phone.setAttribute('aria-label', (g.play ? 'Play ' : 'Watch ') + g.name);
+      phone.addEventListener('click', function () {
+        if (g.play) openPlayer(g); else openLightbox(g.name, g.video);
+      });
+    }
+    var screen = el('span', 'hero-phone-screen');
     var img = el('img');
-    img.src = art.poster;
-    img.alt = art.alt || '';
-    img.width = 1280; img.height = 720;
+    img.src = g.slide || g.thumb;
+    img.alt = g.name + ' title screen';
+    img.width = 640; img.height = 1138;
     img.setAttribute('fetchpriority', 'high');
     img.decoding = 'async';
-    inner.appendChild(img);
+    screen.appendChild(img);
+    screen.appendChild(el('span', 'hero-phone-glare'));
+    phone.appendChild(screen);
+    phone.appendChild(el('span', 'hero-phone-notch'));
+    stage.appendChild(el('span', 'hero-phone-glow'));
+    stage.appendChild(phone);
 
-    if (art.video && !reduceMotion) {
-      var v = document.createElement('video');
-      v.muted = true; v.loop = true; v.playsInline = true;
-      v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
-      v.preload = 'none';
-      v.poster = art.poster;
-      v.setAttribute('aria-hidden', 'true');
-      v.style.position = 'absolute';
-      v.style.inset = '0';
-      v.style.opacity = '0';
-      v.style.transition = 'opacity .8s ease';
-      inner.appendChild(v);
+    var badge = el('div', 'hero-badge');
+    badge.innerHTML =
+      '<span class="hero-badge-icon">' + icon('gamepad', 18) + '</span>' +
+      '<span><strong>' + esc(g.name) + '</strong>' +
+      '<span>' + esc(g.tagline) + (playable ? ' &bull; tap to play' : '') + '</span></span>';
+    stage.appendChild(badge);
 
-      // Attach sources only once the page is idle, so the decorative loop
-      // never competes with the first paint. Then play/pause on visibility.
-      var started = false;
-      function attach() {
-        if (started) return;
-        started = true;
-        if (art.videoWebm) {
-          var sw = document.createElement('source');
-          sw.src = art.videoWebm; sw.type = 'video/webm';
-          v.appendChild(sw);
-        }
-        var sm = document.createElement('source');
-        sm.src = art.video; sm.type = 'video/mp4';
-        v.appendChild(sm);
-        v.load();
-        v.addEventListener('playing', function () { v.style.opacity = '1'; }, { once: true });
-      }
-
-      var whenIdle = function (fn) {
-        if ('requestIdleCallback' in window) requestIdleCallback(fn, { timeout: 2500 });
-        else setTimeout(fn, 1200);
-      };
-      var afterLoad = function (fn) {
-        if (document.readyState === 'complete') whenIdle(fn);
-        else window.addEventListener('load', function () { whenIdle(fn); }, { once: true });
-      };
-
-      var visible = false;
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) {
-          visible = e.isIntersecting;
-          if (visible) {
-            afterLoad(function () {
-              if (!visible) return;
-              attach();
-              var p = v.play();
-              if (p && p.catch) p.catch(function () { /* autoplay blocked — poster stays */ });
-            });
-          } else if (started) {
-            v.pause();
-          }
-        });
-      }, { threshold: 0.25 });
-      io.observe(inner);
-    }
-
-    inner.appendChild(el('span', 'art-glass'));
-
-    var tag = el('div', 'art-tag', 'Live Gameplay');
-    inner.appendChild(tag);
-
-    if (art.logo) {
-      var lg = el('img', 'art-logo');
-      lg.src = art.logo; lg.alt = ''; lg.setAttribute('aria-hidden', 'true');
-      lg.loading = 'lazy'; lg.decoding = 'async';
-      inner.appendChild(lg);
-    }
-
-    frame.appendChild(inner);
-
-    var float = el('div', 'art-float');
-    float.innerHTML =
-      '<span class="art-float-icon">' + icon('gamepad', 18) + '</span>' +
-      '<span><strong>' + esc(String(S.games.length)) + ' games shipped</strong>' +
-      '<span>HTML5 &bull; Mobile &bull; Web</span></span>';
-    frame.appendChild(float);
-
-    $('#heroArt').appendChild(frame);
+    $('#heroArt').appendChild(stage);
   }
 
   /* ================================================================= ABOUT */
@@ -326,12 +278,6 @@
       play.addEventListener('click', function () { openLightbox(g.name, g.video); });
       media.appendChild(play);
     }
-    if (g.logo) {
-      var badge = el('img', 'game-badge');
-      badge.src = g.logo; badge.alt = ''; badge.setAttribute('aria-hidden', 'true');
-      badge.loading = 'lazy'; badge.decoding = 'async';
-      media.appendChild(badge);
-    }
 
     var body = el('div', 'game-body');
     body.innerHTML =
@@ -378,53 +324,107 @@
 
   function buildGames() {
     var marquee = $('#gamesList');
+    var prevBtn = $('#gamesPrev'), nextBtn = $('#gamesNext');
     var track = el('div', 'games-track');
     marquee.appendChild(track);
 
     S.games.forEach(function (g, i) { track.appendChild(makeGameCard(g, i, false)); });
 
-    if (reduceMotion || !S.games.length) {
-      marquee.classList.add('is-static');   // plain horizontal scroll, no motion
+    if (!S.games.length) { prevBtn.hidden = nextBtn.hidden = true; return; }
+
+    var cardStep = 0;   // one card's outer width; arrows step by this much
+
+    if (reduceMotion) {
+      // plain swipeable/arrow-navigable row, no auto-scroll
+      marquee.classList.add('is-static');
+      var first = $('.game-card', track);
+      cardStep = first ? first.getBoundingClientRect().width + parseFloat(getComputedStyle(first).marginRight) : 0;
+      prevBtn.addEventListener('click', function () { marquee.scrollBy({ left: -cardStep, behavior: 'smooth' }); });
+      nextBtn.addEventListener('click', function () { marquee.scrollBy({ left:  cardStep, behavior: 'smooth' }); });
       return;
     }
 
-    function fill() {
+    // Auto-scroll drives `marquee.scrollLeft` directly every frame (instant,
+    // no CSS transition to fight with arrow-triggered smooth scrolls). The
+    // track is repeated with enough clones to loop seamlessly either way;
+    // scrollLeft starts one set in, so "previous" has somewhere to go too.
+    var setWidth = 0, raf = null, paused = false, lastTs = 0;
+    var pos = 0;   // exact scroll position; scrollLeft itself rounds to whole pixels
+
+    function measure() {
       $$('.is-clone', track).forEach(function (n) { n.remove(); });
       var originals = $$('.game-card', track);
-      // each card carries its own trailing margin, so one set's width is exact
-      var setWidth = originals.reduce(function (sum, c) {
+      if (!originals.length) return;
+      cardStep = originals[0].getBoundingClientRect().width + parseFloat(getComputedStyle(originals[0]).marginRight);
+      setWidth = originals.reduce(function (sum, c) {
         return sum + c.getBoundingClientRect().width + parseFloat(getComputedStyle(c).marginRight);
       }, 0);
       if (!setWidth) return;
 
-      // enough extra sets to cover the viewport while the first set slides out
-      var extraSets = Math.ceil(marquee.clientWidth / setWidth);
-      for (var k = 0; k < extraSets; k++) {
+      // repeat until there are at least two full screens either side of the
+      // starting position, so neither auto-scroll nor an arrow click can
+      // reach a clone boundary the eye would notice
+      var setsNeeded = Math.max(3, Math.ceil((marquee.clientWidth * 2) / setWidth) + 1);
+      for (var k = 0; k < setsNeeded; k++) {
         S.games.forEach(function (g, i) { track.appendChild(makeGameCard(g, i, true)); });
       }
-      track.style.setProperty('--shift', setWidth + 'px');
-      track.style.setProperty('--dur', (setWidth / MARQUEE_SPEED) + 's');
-      marquee.classList.add('is-running');
+      marquee.scrollLeft = pos = setWidth;
     }
 
-    fill();
+    measure();
     var lastWidth = marquee.clientWidth, t;
     window.addEventListener('resize', function () {
       clearTimeout(t);
       t = setTimeout(function () {
-        if (marquee.clientWidth !== lastWidth) { lastWidth = marquee.clientWidth; fill(); }
+        if (marquee.clientWidth !== lastWidth) { lastWidth = marquee.clientWidth; measure(); }
       }, 200);
     });
     // card widths depend on web fonts; re-measure once they're in
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fill);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
 
+    function frame(ts) {
+      if (!lastTs) lastTs = ts;
+      var dt = (ts - lastTs) / 1000;
+      lastTs = ts;
+      if (!paused && setWidth && !document.body.classList.contains('no-scroll')) {
+        pos += MARQUEE_SPEED * dt;
+        // one set has scrolled past — jump back a set width, invisibly,
+        // since the next set is identical
+        if (pos >= setWidth * 2) pos -= setWidth;
+        marquee.scrollLeft = pos;
+      } else {
+        // arrows, swipes and trackpads move the row too; pick up from there
+        pos = marquee.scrollLeft;
+      }
+      raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+
+    var resumeTimer;
+    function pause() { paused = true; clearTimeout(resumeTimer); }
+    function resumeSoon(delay) {
+      clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(function () { paused = false; }, delay || 0);
+    }
+    marquee.addEventListener('mouseenter', pause);
+    marquee.addEventListener('mouseleave', function () { resumeSoon(0); });
+    marquee.addEventListener('focusin', pause);
+    marquee.addEventListener('focusout', function () { resumeSoon(0); });
     // touch has no hover: pause while the visitor is interacting, then resume
-    var resume;
-    marquee.addEventListener('pointerdown', function () {
-      marquee.classList.add('is-paused');
-      clearTimeout(resume);
-      resume = setTimeout(function () { marquee.classList.remove('is-paused'); }, 4000);
-    });
+    marquee.addEventListener('pointerdown', function () { pause(); resumeSoon(4000); });
+
+    function step(dir) {
+      pause();
+      marquee.scrollBy({ left: dir * cardStep, behavior: 'smooth' });
+      resumeSoon(3500);
+      // recentre if an arrow was clicked enough times to near a clone edge
+      setTimeout(function () {
+        if (marquee.scrollLeft < setWidth * 0.5) marquee.scrollLeft += setWidth;
+        else if (marquee.scrollLeft > setWidth * 1.5) marquee.scrollLeft -= setWidth;
+      }, 450);
+    }
+    prevBtn.addEventListener('click', function () { step(-1); });
+    nextBtn.addEventListener('click', function () { step(1); });
   }
 
   /* ============================================================== SHOWCASE */

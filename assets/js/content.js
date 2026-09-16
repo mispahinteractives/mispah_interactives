@@ -14,15 +14,14 @@ window.SITE = {
 
   /* ---------------------------------------------------------------- company */
   company: {
-    name: 'Mispah Interactives',
-    shortName: 'Mispah',
+    name: 'Mizpah Interactives',
+    shortName: 'Mizpah',
     tagline: 'Game Development & Software Technology Studio',
     description:
       'We design and build games, playable experiences and digital products — ' +
       'from first concept through to launch.',
-    // Logo is drawn as inline SVG (assets/img/logo.svg). Swap that file to
-    // rebrand, or set `logoImage` to a path to use a bitmap logo instead.
-    logoImage: null,
+    // Logo: assets/img/logo.png (header + footer) and assets/img/logo-icon.png
+    // (browser tab). Replace those two files to rebrand.
     foundedYear: 2026
   },
 
@@ -45,16 +44,11 @@ window.SITE = {
       'digital solutions that bring ideas to life.',
     primaryCta:   { label: 'Explore Our Games', href: '#games' },
     secondaryCta: { label: 'Get In Touch',      href: '#contact' },
-    // Visual shown on the right of the hero. `video` is a short, heavily
-    // compressed decorative loop (~200KB) — not the full gameplay clip — so
-    // it never competes with the first paint. Set to null for a static poster.
-    art: {
-      video:     'assets/video/hero-loop.mp4',
-      videoWebm: 'assets/video/hero-loop.webm',
-      poster:    'assets/img/games/uno-clash-poster.jpg',
-      logo:      'assets/img/games/uno-clash-logo.png',
-      alt:       'UNO Clash multiplayer card game gameplay'
-    }
+    // Right side of the hero: one portrait "slide" per game, each using that
+    // game's own `slide` image (its title screen) and `logo`. Clicking a
+    // slide launches that game if it has a `play` build, same as the Games
+    // section. Order here is deliberate — edit to change the arrangement.
+    slideOrder: ['uno-clash', 'cinemoji', 'dog-crush', 'golf-solitaire']
   },
 
   /* ----------------------------------------------------------------- about */
@@ -105,6 +99,7 @@ window.SITE = {
       platforms: ['HTML5', 'Mobile', 'Web'],
       logo:  'assets/img/games/uno-clash-logo.png',
       thumb: 'assets/img/games/uno-clash-poster.jpg',
+      slide: 'assets/img/games/uno-clash-slide.jpg',
       shots: [
         { src: 'assets/img/games/uno-clash-menu.jpg',      alt: 'UNO Clash main menu' },
         { src: 'assets/img/games/uno-clash-landscape.jpg', alt: 'UNO Clash landscape gameplay' }
@@ -130,6 +125,7 @@ window.SITE = {
       platforms: ['HTML5', 'Mobile', 'Web'],
       logo:  'assets/img/games/golf-solitaire-logo.png',
       thumb: 'assets/img/games/golf-solitaire-poster.jpg',
+      slide: 'assets/img/games/golf-solitaire-slide.jpg',
       shots: [
         { src: 'assets/img/games/golf-solitaire-menu.jpg',   alt: 'Golf Solitaire main menu' },
         { src: 'assets/img/games/golf-solitaire-levels.jpg', alt: 'Golf Solitaire level select' }
@@ -154,6 +150,7 @@ window.SITE = {
       platforms: ['HTML5', 'Mobile', 'Web'],
       logo:  'assets/img/games/cinemoji-logo.png',
       thumb: 'assets/img/games/cinemoji-poster.jpg',
+      slide: 'assets/img/games/cinemoji-slide.jpg',
       shots: [
         { src: 'assets/img/games/cinemoji-menu.jpg',     alt: 'Cinemoji title screen' },
         { src: 'assets/img/games/cinemoji-chapters.jpg', alt: 'Cinemoji chapter select' }
@@ -178,6 +175,7 @@ window.SITE = {
       platforms: ['HTML5', 'Mobile', 'Web'],
       logo:  'assets/img/games/dog-crush-logo.png',
       thumb: 'assets/img/games/dog-crush-poster.jpg',
+      slide: 'assets/img/games/dog-crush-slide.jpg',
       shots: [
         { src: 'assets/img/games/dog-crush-menu.jpg', alt: 'Animal Café gameplay' }
       ],
