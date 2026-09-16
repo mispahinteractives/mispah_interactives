@@ -101,12 +101,24 @@ That's all — a **Play Now** button appears on the game card.
   costs nothing until someone asks for it, and its memory is released on exit.
 - The player has a fullscreen toggle, `Esc` to close, and locks page scroll
   while open.
-- Both current builds probe for `mraid.js` (an ad-SDK that only exists inside
-  an ad network). Each game folder carries an empty `mraid.js` stub purely to
-  keep that 404 out of the console — the games don't use the API.
+- UNO Clash and Golf Solitaire each probe for `mraid.js` (an ad-SDK that only
+  exists inside an ad network). Their game folders carry an empty `mraid.js`
+  stub purely to keep that 404 out of the console — the games don't use the
+  API. Cinemoji and Animal Café don't reference it at all.
 
-Current builds: UNO Clash is a 15MB self-contained file, Golf Solitaire 4MB.
-They are the studio's own shipped artifacts, copied in unmodified.
+Current builds, all the studio's own shipped artifacts:
+
+| Game | Format | Weight |
+|---|---|---|
+| UNO Clash    | single-file HTML build          | 15 MB |
+| Golf Solitaire | single-file HTML build        | 4 MB  |
+| Cinemoji     | webpack production build        | 18 MB |
+| Animal Café  | plain ES-module source (no build step) | 25 MB |
+
+Animal Café's source had one broken path — `scenes/BootScene.js` loaded a
+webfont via `'../../js/webfont.js'`, which pointed outside the game folder.
+It was fixed to `'js/webfont.js'` in the copy under `games/dog-crush/` only;
+the original project is untouched.
 
 ### Other arrays
 
