@@ -1,0 +1,266 @@
+[
+  {
+    "file": "backgrounds/cafe-1240x1920.png",
+    "width": 1240,
+    "height": 1920,
+    "alpha": false,
+    "edgeTreatment": "Original supplied or previously antialiased artwork preserved"
+  },
+  {
+    "file": "backgrounds/home-1240x1920.png",
+    "width": 1240,
+    "height": 1920,
+    "alpha": false,
+    "edgeTreatment": "Original supplied or previously antialiased artwork preserved"
+  },
+  {
+    "file": "buttons/back.png",
+    "width": 316,
+    "height": 314,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 2442
+  },
+  {
+    "file": "buttons/cream-blank.png",
+    "width": 713,
+    "height": 227,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 3876
+  },
+  {
+    "file": "buttons/green-blank.png",
+    "width": 713,
+    "height": 217,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 3650
+  },
+  {
+    "file": "buttons/home-icon.png",
+    "width": 318,
+    "height": 313,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 2456
+  },
+  {
+    "file": "buttons/home-text.png",
+    "width": 706,
+    "height": 232,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 3810
+  },
+  {
+    "file": "buttons/next-level.png",
+    "width": 419,
+    "height": 169,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 2286
+  },
+  {
+    "file": "buttons/play-approved-home.png",
+    "width": 2025,
+    "height": 777,
+    "alpha": true,
+    "edgeTreatment": "Original supplied or previously antialiased artwork preserved"
+  },
+  {
+    "file": "buttons/play.png",
+    "width": 398,
+    "height": 169,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 2208
+  },
+  {
+    "file": "buttons/retry.png",
+    "width": 318,
+    "height": 311,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 2441
+  },
+  {
+    "file": "buttons/watch-video.png",
+    "width": 412,
+    "height": 167,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 2234
+  },
+  {
+    "file": "food/burger.png",
+    "width": 110,
+    "height": 102,
+    "alpha": true,
+    "edgeTreatment": "Original supplied or previously antialiased artwork preserved"
+  },
+  {
+    "file": "food/cupcake.png",
+    "width": 86,
+    "height": 110,
+    "alpha": true,
+    "edgeTreatment": "Original supplied or previously antialiased artwork preserved"
+  },
+  {
+    "file": "food/donut.png",
+    "width": 110,
+    "height": 90,
+    "alpha": true,
+    "edgeTreatment": "Original supplied or previously antialiased artwork preserved"
+  },
+  {
+    "file": "food/popcorn.png",
+    "width": 82,
+    "height": 106,
+    "alpha": true,
+    "edgeTreatment": "Original supplied or previously antialiased artwork preserved"
+  },
+  {
+    "file": "icons/extra-five-moves.png",
+    "width": 475,
+    "height": 315,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 3468
+  },
+  {
+    "file": "icons/goal-tick.png",
+    "width": 304,
+    "height": 264,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 2359
+  },
+  {
+    "file": "icons/lock.png",
+    "width": 235,
+    "height": 292,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 2504
+  },
+  {
+    "file": "icons/star-earned.png",
+    "width": 293,
+    "height": 282,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 2419
+  },
+  {
+    "file": "icons/star-unearned.png",
+    "width": 287,
+    "height": 277,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 2372
+  },
+  {
+    "file": "panels/goal-card.png",
+    "width": 362,
+    "height": 239,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 2336
+  },
+  {
+    "file": "panels/popup-cafe-panel.png",
+    "width": 725,
+    "height": 749,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 6439
+  },
+  {
+    "file": "panels/tall-cafe-panel.png",
+    "width": 675,
+    "height": 985,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 7154
+  },
+  {
+    "file": "tiles/completed.png",
+    "width": 349,
+    "height": 329,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 2719
+  },
+  {
+    "file": "tiles/current.png",
+    "width": 348,
+    "height": 330,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 2685
+  },
+  {
+    "file": "tiles/locked.png",
+    "width": 347,
+    "height": 329,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 2675
+  },
+  {
+    "file": "titles/animal-cafe.png",
+    "width": 1536,
+    "height": 1024,
+    "alpha": true,
+    "edgeTreatment": "Original supplied or previously antialiased artwork preserved"
+  },
+  {
+    "file": "titles/level-complete-stacked.png",
+    "width": 416,
+    "height": 221,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 2955
+  },
+  {
+    "file": "titles/level-complete.png",
+    "width": 970,
+    "height": 195,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 6583
+  },
+  {
+    "file": "titles/level-failed-stacked.png",
+    "width": 361,
+    "height": 232,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 2733
+  },
+  {
+    "file": "titles/level-failed.png",
+    "width": 872,
+    "height": 191,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 5914
+  },
+  {
+    "file": "titles/sunny-day-stacked.png",
+    "width": 373,
+    "height": 257,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 2687
+  },
+  {
+    "file": "titles/sunny-day.png",
+    "width": 665,
+    "height": 193,
+    "alpha": true,
+    "edgeTreatment": "Fringe removed; antialiased alpha; interior detail retained",
+    "partialAlphaPixels": 4474
+  }
+]

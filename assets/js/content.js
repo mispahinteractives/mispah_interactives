@@ -142,6 +142,53 @@ window.SITE = {
       play: { src: 'games/golf-solitaire/', orientation: 'portrait', weight: '4 MB' },
       url: null,
       featured: true
+    },
+    {
+      id: 'cinemoji',
+      name: 'Cinemoji',
+      tagline: 'Emoji Puzzle',
+      description:
+        'Find the two matching emojis that spell out the clue before the ' +
+        'timer and hearts run out. 100 puzzles across food, animals, plants ' +
+        'and more, with hints and 50/50 lifelines along the way.',
+      platforms: ['HTML5', 'Mobile', 'Web'],
+      logo:  'assets/img/games/cinemoji-logo.png',
+      thumb: 'assets/img/games/cinemoji-poster.jpg',
+      shots: [
+        { src: 'assets/img/games/cinemoji-menu.jpg',     alt: 'Cinemoji title screen' },
+        { src: 'assets/img/games/cinemoji-chapters.jpg', alt: 'Cinemoji chapter select' }
+      ],
+      video: {
+        mp4:    'assets/video/cinemoji-gameplay.mp4',
+        webm:   'assets/video/cinemoji-gameplay.webm',
+        poster: 'assets/img/games/cinemoji-poster.jpg'
+      },
+      play: { src: 'games/cinemoji/', orientation: 'portrait', weight: '18 MB' },
+      url: null,
+      featured: true
+    },
+    {
+      id: 'dog-crush',
+      name: 'Animal Café',
+      tagline: 'Match-3 Puzzle',
+      description:
+        'A cosy match-3 where every level feeds a hungry customer. Swap ' +
+        'ingredients to clear their order, chain combos into power-ups, and ' +
+        'work through a growing menu of levels.',
+      platforms: ['HTML5', 'Mobile', 'Web'],
+      logo:  'assets/img/games/dog-crush-logo.png',
+      thumb: 'assets/img/games/dog-crush-poster.jpg',
+      shots: [
+        { src: 'assets/img/games/dog-crush-menu.jpg', alt: 'Animal Café gameplay' }
+      ],
+      video: {
+        mp4:    'assets/video/dog-crush-gameplay.mp4',
+        webm:   'assets/video/dog-crush-gameplay.webm',
+        poster: 'assets/img/games/dog-crush-poster.jpg'
+      },
+      play: { src: 'games/dog-crush/', orientation: 'portrait', weight: '25 MB' },
+      url: null,
+      featured: true
     }
   ],
 

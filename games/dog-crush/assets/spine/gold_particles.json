@@ -1,0 +1,249 @@
+{
+"skeleton": { "hash": "HAUuX4vC032X5zxZRNiX5N12dtg", "spine": "3.2.01", "width": 0, "height": 0, "images": "" },
+"bones": [
+	{ "name": "root" },
+	{ "name": "bone", "parent": "root", "x": 0.5, "y": 81.27 },
+	{ "name": "gold_particles/particle_1", "parent": "bone", "x": 5.07, "y": -19.3 },
+	{ "name": "gold_particles/particle_2", "parent": "bone", "rotation": 50.36, "x": -1.89, "y": -19.42 },
+	{ "name": "gold_particles/particle_3", "parent": "bone", "x": -8.68, "y": -18.99 },
+	{ "name": "gold_particles/particle_4", "parent": "bone", "x": 8.42, "y": -18.76 },
+	{ "name": "gold_particles/particle_5", "parent": "bone", "x": 7.48, "y": -18.77 },
+	{ "name": "gold_particles/particle_6", "parent": "bone", "rotation": 169.72, "x": 1.89, "y": -19.42 },
+	{ "name": "gold_particles/particle_7", "parent": "bone", "rotation": 124.98, "x": -5.84, "y": -19.22 },
+	{ "name": "gold_particles/smoke", "parent": "root", "x": 0.79, "y": 61.75 }
+],
+"slots": [
+	{ "name": "gold_particles/particle_1", "bone": "gold_particles/particle_1", "attachment": "gold_particles/particle_1" },
+	{ "name": "gold_particles/particle_2", "bone": "gold_particles/particle_2", "attachment": "gold_particles/particle_2" },
+	{ "name": "gold_particles/particle_6", "bone": "gold_particles/particle_6", "attachment": "gold_particles/particle_2" },
+	{ "name": "gold_particles/particle_3", "bone": "gold_particles/particle_3", "attachment": "gold_particles/particle_3" },
+	{ "name": "gold_particles/particle_4", "bone": "gold_particles/particle_4", "attachment": "gold_particles/particle_4" },
+	{ "name": "gold_particles/particle_5", "bone": "gold_particles/particle_5", "attachment": "gold_particles/particle_5" },
+	{ "name": "gold_particles/particle_7", "bone": "gold_particles/particle_7", "attachment": "gold_particles/particle_5" },
+	{ "name": "gold_particles/smoke", "bone": "gold_particles/smoke", "attachment": "gold_particles/smoke" }
+],
+"skins": {
+	"default": {
+		"gold_particles/particle_1": {
+			"gold_particles/particle_1": { "x": -0.5, "y": -0.06, "width": 4, "height": 5 }
+		},
+		"gold_particles/particle_2": {
+			"gold_particles/particle_2": { "y": 0.07, "width": 8, "height": 11 }
+		},
+		"gold_particles/particle_3": {
+			"gold_particles/particle_3": { "x": 0.17, "y": -0.1, "width": 1, "height": 4 }
+		},
+		"gold_particles/particle_4": {
+			"gold_particles/particle_4": { "x": -0.4, "y": -0.24, "width": 5, "height": 4 }
+		},
+		"gold_particles/particle_5": {
+			"gold_particles/particle_5": { "x": -0.33, "y": -0.01, "width": 3, "height": 6 }
+		},
+		"gold_particles/particle_6": {
+			"gold_particles/particle_2": { "y": 0.07, "width": 8, "height": 11 }
+		},
+		"gold_particles/particle_7": {
+			"gold_particles/particle_5": { "x": -0.33, "y": -0.01, "width": 3, "height": 6 }
+		},
+		"gold_particles/smoke": {
+			"gold_particles/smoke": { "x": -0.33, "y": 1.36, "width": 54, "height": 53 }
+		}
+	}
+},
+"animations": {
+	"animation": {
+		"slots": {
+			"gold_particles/smoke": {
+				"color": [
+					{
+						"time": 0.2,
+						"color": "ffffffff",
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.6, "color": "ffffff00" }
+				]
+			}
+		},
+		"bones": {
+			"gold_particles/smoke": {
+				"rotate": [
+					{
+						"time": 0,
+						"angle": 0,
+						"curve": [ 0, 0.4, 0.75, 1 ]
+					},
+					{ "time": 0.6, "angle": 79.73 }
+				],
+				"translate": [
+					{
+						"time": 0,
+						"x": 0,
+						"y": 0.49,
+						"curve": [ 0, 0.4, 0.75, 1 ]
+					},
+					{ "time": 0.5, "x": 0, "y": 53.28 }
+				],
+				"scale": [
+					{
+						"time": 0,
+						"x": 0.104,
+						"y": 0.104,
+						"curve": [ 0, 0.4, 0.75, 1 ]
+					},
+					{ "time": 0.5, "x": 0.967, "y": 0.967 }
+				]
+			},
+			"gold_particles/particle_3": {
+				"rotate": [
+					{ "time": 0, "angle": 0 },
+					{ "time": 0.4333, "angle": 139.26 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 },
+					{ "time": 0.4333, "x": -38.46, "y": -7.28 }
+				],
+				"scale": [
+					{
+						"time": 0.2333,
+						"x": 1,
+						"y": 1,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.4333, "x": 0.1, "y": 0.1 }
+				]
+			},
+			"gold_particles/particle_7": {
+				"rotate": [
+					{ "time": 0, "angle": 0 },
+					{ "time": 0.4333, "angle": -237.4 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 },
+					{ "time": 0.4333, "x": -18.86, "y": -23.24 }
+				],
+				"scale": [
+					{
+						"time": 0.2333,
+						"x": 1,
+						"y": 1,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.4333, "x": 0.1, "y": 0.1 }
+				]
+			},
+			"gold_particles/particle_2": {
+				"rotate": [
+					{ "time": 0, "angle": 0 },
+					{ "time": 0.4333, "angle": 87.82 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 },
+					{ "time": 0.4333, "x": -24.63, "y": 9.91 }
+				],
+				"scale": [
+					{
+						"time": 0.2333,
+						"x": 1,
+						"y": 1,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.4333, "x": 0.1, "y": 0.1 }
+				]
+			},
+			"gold_particles/particle_6": {
+				"rotate": [
+					{ "time": 0, "angle": 0 },
+					{ "time": 0.4333, "angle": -117.82 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 },
+					{ "time": 0.4333, "x": 25.37, "y": -36.11 }
+				],
+				"scale": [
+					{
+						"time": 0.2333,
+						"x": 1,
+						"y": 1,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.4333, "x": 0.1, "y": 0.1 }
+				]
+			},
+			"gold_particles/particle_1": {
+				"rotate": [
+					{ "time": 0, "angle": 0 },
+					{ "time": 0.4333, "angle": -146.36 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 },
+					{ "time": 0.4333, "x": 11.01, "y": -5.88 }
+				],
+				"scale": [
+					{
+						"time": 0.2333,
+						"x": 1,
+						"y": 1,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.4333, "x": 0.1, "y": 0.1 }
+				]
+			},
+			"gold_particles/particle_5": {
+				"rotate": [
+					{ "time": 0, "angle": 0 },
+					{ "time": 0.4333, "angle": -89.75 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 },
+					{ "time": 0.4333, "x": 31.58, "y": 13.17 }
+				],
+				"scale": [
+					{
+						"time": 0.2333,
+						"x": 1,
+						"y": 1,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.4333, "x": 0.1, "y": 0.1 }
+				]
+			},
+			"gold_particles/particle_4": {
+				"rotate": [
+					{ "time": 0, "angle": 0 },
+					{ "time": 0.4333, "angle": -106.1 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0 },
+					{ "time": 0.4333, "x": 42.76, "y": -11.15 }
+				],
+				"scale": [
+					{
+						"time": 0.2333,
+						"x": 1,
+						"y": 1,
+						"curve": [ 0.25, 0, 0.75, 1 ]
+					},
+					{ "time": 0.4333, "x": 0.1, "y": 0.1 }
+				]
+			},
+			"bone": {
+				"translate": [
+					{
+						"time": 0,
+						"x": -0.05,
+						"y": 0,
+						"curve": [ 0, 0.3, 0.75, 1 ]
+					},
+					{
+						"time": 0.2333,
+						"x": -0.05,
+						"y": 25.26,
+						"curve": [ 0.25, 0, 1, 0.69 ]
+					},
+					{ "time": 0.4333, "x": -0.05, "y": 10.53 }
+				]
+			}
+		}
+	}
+}
+}

@@ -1,0 +1,9 @@
+@font-face {
+    font-family: 'betmrounded_black';
+    src: url('../fonts/betmrounded_black.otf') format("opentype")
+}
+
+@font-face {
+    font-family: 'FredokaOne_Regular';
+    src: url('../fonts/FredokaOne_Regular.otf') format("opentype")
+}

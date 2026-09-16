@@ -1,0 +1,111 @@
+
+spine_sheet.png
+size: 502,1169
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+bomb/blast_0
+  rotate: false
+  xy: 348, 1
+  size: 92, 98
+  orig: 92, 98
+  offset: 0, 0
+  index: -1
+bomb/blast_1
+  rotate: false
+  xy: 119, 120
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+bomb/blast_2
+  rotate: false
+  xy: 248, 120
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+bomb/bomb
+  rotate: false
+  xy: 182, 1
+  size: 82, 82
+  orig: 82, 82
+  offset: 0, 0
+  index: -1
+bomb/bomb_final
+  rotate: false
+  xy: 265, 1
+  size: 82, 82
+  orig: 82, 82
+  offset: 0, 0
+  index: -1
+bomb/bomb_final_big
+  rotate: false
+  xy: 1, 668
+  size: 500, 500
+  orig: 500, 500
+  offset: 0, 0
+  index: -1
+bomb/bomb_glow
+  rotate: false
+  xy: 61, 1
+  size: 55, 53
+  orig: 55, 53
+  offset: 0, 0
+  index: -1
+bomb/bomb_icon_glow
+  rotate: false
+  xy: 1, 249
+  size: 136, 140
+  orig: 136, 140
+  offset: 0, 0
+  index: -1
+bomb/bomb_spark
+  rotate: false
+  xy: 1, 1
+  size: 22, 19
+  orig: 22, 19
+  offset: 0, 0
+  index: -1
+bomb/explosion_1
+  rotate: false
+  xy: 1, 120
+  size: 117, 123
+  orig: 117, 123
+  offset: 0, 0
+  index: -1
+bomb/explosion_2
+  rotate: false
+  xy: 138, 249
+  size: 151, 158
+  orig: 151, 158
+  offset: 0, 0
+  index: -1
+bomb/explosion_strike
+  rotate: false
+  xy: 24, 1
+  size: 36, 118
+  orig: 36, 118
+  offset: 0, 0
+  index: -1
+bomb/fx_ring_explosion_1
+  rotate: false
+  xy: 290, 249
+  size: 186, 186
+  orig: 186, 186
+  offset: 0, 0
+  index: -1
+bomb/fx_ring_explosion_2
+  rotate: false
+  xy: 1, 436
+  size: 230, 231
+  orig: 230, 231
+  offset: 0, 0
+  index: -1
+bomb/fx_star_glow
+  rotate: false
+  xy: 117, 1
+  size: 64, 65
+  orig: 64, 65
+  offset: 0, 0
+  index: -1

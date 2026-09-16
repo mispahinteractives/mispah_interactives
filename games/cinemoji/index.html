@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Quizzical Emojis</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <link rel="icon" href="favicon.ico">
+    <link rel="stylesheet" href="fonts/fonts.css">
+    <style>
+        body {
+            background-color: #7cdcf7;
+            overflow: hidden;
+            margin: auto;
+            width: 100%;
+        }
+        
+        #loader {
+            position: fixed;
+            width: 100%;
+            height: 100vh;
+            z-index: 1;
+            overflow: visible;
+            background: #7cdcf7 url('logo.gif') no-repeat center center;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loader"></div>
+
+    <script>
+        // Load Web Fonts
+        var fonts = ['betmrounded_black.otf', 'FredokaOne_Regular.otf'];
+
+        var fontDiv = document.createElement('fonts-to-load');
+        document.body.appendChild(fontDiv);
+
+        for (var i = 0; i < fonts.length; i++) {
+            fonts[i] = fonts[i].substr(0, fonts[i].lastIndexOf('.'));
+
+            var div = document.createElement('font-div');
+            div.id = fonts[i];
+            div.style.fontFamily = fonts[i];
+            div.style.position = 'absolute';
+            div.style.top = 0;
+            div.style.left = 0;
+            div.style.visibility = 'hidden';
+            div.innerHTML = 'Hello world.';
+            fontDiv.appendChild(div);
+        }
+
+        setTimeout(function() {
+            document.body.removeChild(fontDiv);
+        }, 500);
+    </script>
+<script type="text/javascript" src="bundle.min.js"></script></body>
+
+</html>
