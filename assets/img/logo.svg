@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Mispah Interactives">
+  <defs>
+    <linearGradient id="mi-g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF3D9A"/>
+      <stop offset="0.55" stop-color="#FF8A1F"/>
+      <stop offset="1" stop-color="#FFD426"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="18" fill="#1A1638"/>
+  <rect x="2" y="2" width="60" height="60" rx="18" fill="none" stroke="url(#mi-g)" stroke-width="2.5" opacity="0.9"/>
+  <!-- M built from two rising strokes -->
+  <path d="M17 44 L17 21 L32 36 L47 21 L47 44"
+        fill="none" stroke="url(#mi-g)" stroke-width="5.5"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- play notch -->
+  <path d="M29 26 L37 30.5 L29 35 Z" fill="#3DDC7F" opacity="0.95"/>
+</svg>
