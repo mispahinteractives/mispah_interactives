@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GameVerse · Monster Hills</title>
+<meta name="description" content="GameVerse: drive the Monster Hills physics truck through an arcade town, enter a door to play Animal Café, Cinemoji or UNO Clash, and race the hills to the flag.">
+<meta name="theme-color" content="#0f0b24">
+<link rel="icon" type="image/png" href="../assets/img/logo-icon.png">
+<meta property="og:title" content="GameVerse · Monster Hills">
+<meta property="og:description" content="A playable physics truck game and arcade hub, right in your browser.">
+<meta property="og:image" content="../assets/img/assets/truckbody.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Rubik:wght@400;500;700;800&display=swap">
+<link rel="stylesheet" href="css/hub.css">
+</head>
+<body>
+<a class="skip" href="#games">Skip to the game list</a>
+
+<!-- ================================================================ top bar -->
+<header class="topbar">
+  <a class="brand" href="#top" aria-label="GameVerse home">
+    <span class="brand-wheel"><img src="../assets/img/assets/truckwheel.png" alt=""></span>
+    <span class="brand-word">GAME<b>VERSE</b></span>
+  </a>
+  <nav class="menu" aria-label="Main">
+    <a class="menu-chip is-hot" href="#stage" data-action="play">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>Play
+    </a>
+    <a class="menu-chip" href="#games">Games</a>
+    <a class="menu-chip" href="#controls">Controls</a>
+  </nav>
+  <div class="player">
+    <span class="coin-count" title="Coins collected, all runs">
+      <i class="coin-ico" aria-hidden="true"></i><b id="lifetime-coins">0</b><span class="sr">coins collected</span>
+    </span>
+    <button class="icon-btn" type="button" data-action="mute" aria-label="Mute sound" aria-pressed="false">
+      <svg class="ico-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg class="ico-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 9.5l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ============================================================ game stage -->
+<section id="stage" class="stage" aria-label="Monster Hills">
+  <canvas id="game-canvas" tabindex="-1" aria-label="Monster Hills: a monster truck driving through an arcade town and over hills"></canvas>
+  <div class="stage-scrim" aria-hidden="true"></div>
+
+  <!-- hero overlay, shown while the demo drives itself -->
+  <div class="hero" id="hero">
+    <div class="hero-card">
+      <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span>Featured · Physics racer</p>
+      <h1 class="title"><span class="t1">Monster</span><span class="t2">Hills</span></h1>
+      <p class="lede">Real suspension, real air. Cruise Main Street, drive into a door to play an arcade game, then race the hills to the flag.</p>
+      <div class="hero-actions">
+        <button class="btn-play" type="button" data-action="play" data-autofocus>
+          <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span>
+          Play now
+          <kbd class="hint-kbd">Enter</kbd>
+        </button>
+        <a class="btn-ghost" href="#games">More games</a>
+      </div>
+      <div class="ride-picker" role="group" aria-label="Choose your ride">
+        <button type="button" data-vehicle="truck" aria-pressed="true"><span class="ride-slot" data-ride="truck"></span><span class="ride-name">Monster Truck</span></button>
+        <button type="button" data-vehicle="beetle" aria-pressed="false"><span class="ride-slot" data-ride="beetle"></span><span class="ride-name">Blue Bubble</span></button>
+        <button type="button" data-vehicle="sedan" aria-pressed="false"><span class="ride-slot" data-ride="sedan"></span><span class="ride-name">Green Cruiser</span></button>
+      </div>
+    </div>
+    <ul class="hero-stats" aria-label="Course">
+      <li><b>12</b><span>coins</span></li>
+      <li><b>3</b><span>arcade doors</span></li>
+      <li><b data-best-hero>--:--.-</b><span>your best</span></li>
+    </ul>
+    <a class="scroll-cue" href="#games" aria-label="Scroll to games"><span></span></a>
+  </div>
+
+  <!-- in-game HUD -->
+  <div class="hud" id="hud">
+    <div class="hud-left">
+      <div class="hud-pill hud-coins" id="hud-coins"><i class="coin-ico" aria-hidden="true"></i><span data-val>0/12</span></div>
+      <div class="hud-pill"><span class="lbl">Time</span><span id="hud-time" class="mono">00:00.0</span></div>
+      <div class="hud-pill hud-speed"><span id="hud-speed" class="mono">0</span><span class="lbl">km/h</span></div>
+    </div>
+    <div class="hud-progress" id="hud-progress" aria-hidden="true">
+      <span class="track"><span class="fill"></span><span class="marker"></span></span>
+      <span class="flag"></span>
+    </div>
+    <div class="hud-right">
+      <button class="icon-btn" type="button" data-action="respawn" aria-label="Back to last checkpoint" title="Reset (R)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2.1-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M4 3.5v5h5z"/></svg>
+      </button>
+      <button class="icon-btn" type="button" data-action="garage" aria-label="Change ride" title="Garage (1, 2, 3)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 14l2-5h9l3 3h3a1 1 0 0 1 1 1v2H3z"/><circle cx="7.5" cy="16.5" r="2.5"/><circle cx="17" cy="16.5" r="2.5"/></svg>
+      </button>
+      <button class="icon-btn" type="button" data-action="mute" aria-label="Mute sound" aria-pressed="false" title="Sound (M)">
+        <svg class="ico-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <svg class="ico-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 9.5l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="icon-btn icon-exit" type="button" data-action="exit" aria-label="Exit to the hub" title="Exit (Esc)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <p class="key-hints" aria-hidden="true"><kbd>→</kbd> gas <kbd>←</kbd> brake / reverse <kbd>↑</kbd><kbd>↓</kbd> lean <kbd>E</kbd> enter door <kbd>R</kbd> reset <kbd>B</kbd> horn</p>
+
+  <button id="door-prompt" class="door-prompt" type="button" data-action="enter-door" hidden>
+    <kbd>E</kbd><span class="dp-verb">Enter</span><b id="door-prompt-name"></b>
+  </button>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <div class="pedals">
+    <button class="pedal pedal-brake" type="button" data-pedal="brake" aria-label="Brake and reverse">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 5L7 12l9 7z"/></svg><span>Brake</span>
+    </button>
+    <button class="pedal pedal-gas" type="button" data-pedal="gas" aria-label="Gas">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l9 7-9 7z"/></svg><span>Gas</span>
+    </button>
+  </div>
+</section>
+
+<!-- ================================================================ ticker -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    <span>Drive into a door to play</span><i></i><span>12 coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>3 rides in the garage</span><i></i>
+    <span>Drive into a door to play</span><i></i><span>12 coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>3 rides in the garage</span><i></i>
+  </div>
+</div>
+
+<!-- ========================================================= game select -->
+<section id="games" class="select">
+  <header class="section-head reveal">
+    <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span>Arcade · 4 games online</p>
+    <h2>Select your game</h2>
+  </header>
+
+  <article class="feature reveal" aria-labelledby="feature-title">
+    <div class="feature-scene" aria-hidden="true">
+      <span class="fs-sun"></span>
+      <span class="fs-cloud c1"></span><span class="fs-cloud c2"></span>
+      <svg class="fs-hills" viewBox="0 0 800 300" preserveAspectRatio="none">
+        <path class="h1" d="M0 190 L140 70 L260 190 L380 40 L520 190 L640 90 L800 190 V300 H0Z"/>
+        <path class="h2" d="M0 300 V230 C120 205 220 250 340 228 S560 195 680 225 S780 240 800 232 V300Z"/>
+      </svg>
+      <div class="fs-road"></div>
+      <div class="fs-ride" data-ride="truck"></div>
+      <span class="fs-coin k1"></span><span class="fs-coin k2"></span><span class="fs-coin k3"></span>
+    </div>
+    <div class="feature-info">
+      <p class="badge">★ Main game</p>
+      <h3 id="feature-title">Monster Hills</h3>
+      <p>A physics truck game with working suspension. The body squats, pitches and bounces over every bump. Collect 12 coins, clear two jumps, and knock down the can pyramid on your way to the flag.</p>
+      <ul class="chips">
+        <li>Matter.js physics</li><li>3 rides</li><li>Keyboard · Touch · Gamepad</li>
+      </ul>
+      <div class="feature-actions">
+        <button class="btn-play" type="button" data-action="play">
+          <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span>
+          Play
+        </button>
+        <button class="btn-ghost" type="button" data-action="garage">Choose ride</button>
+        <p class="best">Best <b data-best-feature>--:--.-</b></p>
+      </div>
+    </div>
+  </article>
+
+  <div class="card-row" id="card-row"></div>
+</section>
+
+<!-- ============================================================ controls -->
+<section id="controls" class="controls">
+  <header class="section-head reveal">
+    <p class="eyebrow">Tutorial</p>
+    <h2>How to drive</h2>
+  </header>
+  <div class="howto">
+    <div class="howto-card reveal">
+      <h3>Keyboard</h3>
+      <ul class="keys">
+        <li><span><kbd>→</kbd><kbd>D</kbd></span>Gas</li>
+        <li><span><kbd>←</kbd><kbd>A</kbd></span>Brake and reverse</li>
+        <li><span><kbd>↑</kbd><kbd>↓</kbd></span>Lean in the air</li>
+        <li><span><kbd>E</kbd><kbd>Enter</kbd></span>Enter a door</li>
+        <li><span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd></span>Switch ride</li>
+        <li><span><kbd>R</kbd></span>Back to checkpoint</li>
+      </ul>
+    </div>
+    <div class="howto-card reveal">
+      <h3>Touch</h3>
+      <div class="touch-demo" aria-hidden="true">
+        <span class="td-pedal l">Brake</span><span class="td-phone"></span><span class="td-pedal r">Gas</span>
+      </div>
+      <p>Hold the pedals in the bottom corners. Tap the gold <b>Enter</b> button at a door.</p>
+    </div>
+    <div class="howto-card reveal">
+      <h3>Pro tips</h3>
+      <ul class="tips">
+        <li><b>Airborne?</b> Gas lifts the nose and brake drops it, so you can line up your landing.</li>
+        <li><b>Steep climb?</b> Ease off the gas so the front wheels stay down.</li>
+        <li><b>Gamepad:</b> RT is gas and LT is brake. The stick leans the car.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <a class="foot-brand" href="../index.html"><img src="../assets/img/logo.png" alt="Mizpah Interactives"></a>
+  <p>GameVerse is a Mizpah Interactives playground. Monster truck art by madmarcel.</p>
+  <a class="btn-ghost small" href="#top">Back to top ↑</a>
+</footer>
+</main>
+
+<!-- ============================================================== modals -->
+<div class="modal" id="modal-door" role="dialog" aria-modal="true" aria-labelledby="door-title" hidden>
+  <div class="modal-panel door-panel">
+    <div class="door-cover"><img data-door-cover alt=""></div>
+    <div class="door-info">
+      <p class="eyebrow" data-door-genre></p>
+      <h2 id="door-title" class="sr-title"><img data-door-logo alt=""></h2>
+      <p data-door-blurb></p>
+      <div class="modal-actions">
+        <a class="btn-play" data-door-play href="#" target="_blank" rel="noopener" data-autofocus>
+          <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span>Play now
+        </a>
+        <button class="btn-ghost" type="button" data-action="close-modal">Keep driving</button>
+      </div>
+      <p class="fine">Opens in a new tab. Your run waits here.</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-garage" role="dialog" aria-modal="true" aria-labelledby="garage-title" hidden>
+  <div class="modal-panel garage-panel">
+    <p class="eyebrow">Garage</p>
+    <h2 id="garage-title">Pick your ride</h2>
+    <div class="garage-grid">
+      <button type="button" class="garage-card" data-vehicle="truck" aria-pressed="true" data-autofocus>
+        <span class="ride-slot" data-ride="truck"></span><b>Monster Truck</b><span>4x4 · Long travel · Big air</span><kbd>1</kbd>
+      </button>
+      <button type="button" class="garage-card" data-vehicle="beetle" aria-pressed="false">
+        <span class="ride-slot" data-ride="beetle"></span><b>Blue Bubble</b><span>Light · Nimble · Quick flips</span><kbd>2</kbd>
+      </button>
+      <button type="button" class="garage-card" data-vehicle="sedan" aria-pressed="false">
+        <span class="ride-slot" data-ride="sedan"></span><b>Green Cruiser</b><span>Long · Stable · Steady</span><kbd>3</kbd>
+      </button>
+    </div>
+    <button class="modal-x" type="button" data-action="close-modal" aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="modal" id="modal-finish" role="dialog" aria-modal="true" aria-labelledby="finish-title" hidden>
+  <div class="modal-panel finish-panel">
+    <p class="badge-record" data-finish-badge hidden>New record!</p>
+    <h2 id="finish-title">Finish!</h2>
+    <p class="finish-ride" data-finish-ride></p>
+    <dl class="finish-stats">
+      <div><dt>Time</dt><dd class="mono" data-finish-time></dd></div>
+      <div><dt>Coins</dt><dd class="mono" data-finish-coins></dd></div>
+      <div><dt>Best</dt><dd class="mono" data-finish-best></dd></div>
+    </dl>
+    <div class="modal-actions">
+      <button class="btn-play" type="button" data-action="restart" data-autofocus>
+        <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span>Race again
+      </button>
+      <button class="btn-ghost" type="button" data-action="garage">Change ride</button>
+      <button class="btn-ghost" type="button" data-action="exit">Back to hub</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/vendor/matter.min.js"></script>
+<script src="js/physics.js"></script>
+<script src="js/games.js"></script>
+<script src="js/game.js"></script>
+<script src="js/hub.js"></script>
+</body>
+</html>
