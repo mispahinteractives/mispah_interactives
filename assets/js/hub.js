@@ -1,5 +1,5 @@
 /* ==========================================================================
-   GAMEVERSE — page behaviour around the game stage
+   MIZPAH INTERACTIVES — page behaviour around the game stage
    --------------------------------------------------------------------------
    Game cards, ride previews, stats, reveals, and pausing the canvas while it
    is scrolled out of view. The game itself is in game.js.
@@ -140,6 +140,40 @@
   const onScroll = () => bar.classList.toggle('solid', window.scrollY > 40);
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
+
+  /* ------------------------------------------------------------- contact */
+  // No mail server behind this static site: the form writes the message into
+  // the visitor's own email app, addressed to the studio.
+  const CONTACT_EMAIL = 'mispahinteractives@gmail.com';
+  const form = $('#contact-form');
+  const status = $('#contact-status');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    let bad = null;
+    ['name', 'email', 'message'].forEach((n) => {
+      const f = form.elements[n];
+      const ok = f.value.trim() && (n !== 'email' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.value.trim()));
+      f.setAttribute('aria-invalid', String(!ok));
+      if (!ok && !bad) bad = f;
+    });
+    if (bad) {
+      status.textContent = 'Please fill in your name, a valid email and a message.';
+      status.classList.add('err'); bad.focus();
+      return;
+    }
+    const name = form.elements.name.value.trim(), from = form.elements.email.value.trim();
+    const body = form.elements.message.value.trim() + '\n\n— ' + name + ' (' + from + ')';
+    window.location.href = 'mailto:' + CONTACT_EMAIL + '?subject=' + encodeURIComponent('Hello from ' + name) +
+      '&body=' + encodeURIComponent(body);
+    status.textContent = 'Your email app should open with the message ready. If not, write to ' + CONTACT_EMAIL + '.';
+    status.classList.remove('err');
+  });
+  form.addEventListener('input', (e) => e.target.removeAttribute('aria-invalid'));
+
+  $$('[data-copy]').forEach((b) => b.addEventListener('click', () => {
+    const done = () => { b.textContent = 'Copied!'; setTimeout(() => { b.textContent = 'Copy email'; }, 1600); };
+    if (navigator.clipboard) navigator.clipboard.writeText(b.dataset.copy).then(done, () => {});
+  }));
 
   /* mark touch devices so the pedals show even on hybrid laptops */
   window.addEventListener('touchstart', () => document.documentElement.classList.add('touch'), { once: true, passive: true });

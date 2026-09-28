@@ -13,7 +13,7 @@
   const P = window.GVPhysics(window.Matter);
   const GAMES = window.GV_GAMES || [];
   const VEHICLES = P.VEHICLES;
-  const ASSET = '../assets/img/assets/';
+  const ASSET = 'assets/img/assets/';
   const SPRITES = ['truckbody', 'truckwheel', 'carbody', 'carbody2', 'wheel', 'wheel2', 'strut',
     'rampleft', 'crate', 'box', 'suitcase', 'oilcan', 'beercan', 'sodacan'];
   const FONT = '"Lilita One", "Rubik", system-ui, sans-serif';

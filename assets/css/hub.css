@@ -1,5 +1,5 @@
 /* ==========================================================================
-   GAMEVERSE — hub styles
+   MIZPAH INTERACTIVES — hub styles
    Palette pulled from the truck sprite (purple / tan) plus arcade gold.
    ========================================================================== */
 :root {
@@ -127,7 +127,10 @@ kbd {
 }
 .topbar.solid { background: rgba(15, 11, 36, 0.82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding-block: 10px; box-shadow: 0 1px 0 var(--line); }
 .is-playing .topbar { opacity: 0; pointer-events: none; transform: translateY(-100%); }
-.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+.brand { display: inline-flex; align-items: center; text-decoration: none; }
+.brand-logo { height: 58px; width: auto; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35)); transition: transform 0.25s cubic-bezier(.2, 1.4, .4, 1), height 0.3s; }
+.brand:hover .brand-logo { transform: scale(1.06) rotate(-2deg); }
+.topbar.solid .brand-logo { height: 46px; }
 .brand-wheel { width: 40px; height: 40px; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.35)); }
 .brand-wheel img { width: 100%; animation: spin 3.5s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -442,7 +445,40 @@ kbd {
   border-top: 1px solid var(--line); color: var(--muted); font-size: 14px;
 }
 .foot p { margin: 0; flex: 1; min-width: 220px; }
-.foot-brand img { height: 46px; width: auto; }
+.foot-brand img { height: 64px; width: auto; }
+.foot a:not(.btn-ghost):not(.foot-brand) { color: var(--gold); }
+
+/* contact */
+.contact { padding: clamp(40px, 6vw, 80px) var(--gutter) 20px; max-width: 1320px; margin: 0 auto; }
+.contact-card {
+  display: grid; grid-template-columns: 1fr 1.1fr; gap: clamp(24px, 4vw, 56px); padding: clamp(24px, 4vw, 48px);
+  border-radius: 32px; border: 3px solid var(--outline);
+  background: radial-gradient(600px 300px at 0% 0%, rgba(255, 200, 61, 0.14), transparent 60%), linear-gradient(135deg, var(--panel-2), var(--panel));
+  box-shadow: 0 10px 0 #070514, 0 40px 80px rgba(0, 0, 0, 0.4);
+}
+.contact-intro h2 { margin: 10px 0 12px; font: 400 clamp(40px, 5.5vw, 68px)/0.95 var(--display); text-transform: uppercase; -webkit-text-stroke: 2px var(--outline); paint-order: stroke fill; text-shadow: 0 6px 0 #070514; }
+.contact-intro > p { margin: 0 0 22px; color: #dcd6fb; max-width: 42ch; }
+.contact-mail {
+  display: flex; align-items: center; gap: 14px; padding: 14px 18px; margin-bottom: 12px; border-radius: 18px;
+  background: rgba(255, 255, 255, 0.06); border: 2px solid rgba(255, 255, 255, 0.14); text-decoration: none;
+  font: 700 clamp(15px, 1.6vw, 18px)/1.2 var(--body); word-break: break-all; transition: border-color 0.2s, background 0.2s;
+}
+.contact-mail:hover { border-color: var(--gold); background: rgba(255, 200, 61, 0.1); }
+.contact-mail small { display: block; margin-bottom: 4px; font: 700 11px/1 var(--body); letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); }
+.contact-ico { display: grid; place-items: center; flex: none; width: 46px; height: 46px; border-radius: 14px; background: var(--gold); color: var(--outline); }
+.contact-ico svg { width: 24px; height: 24px; }
+.contact-form { display: grid; gap: 14px; align-content: start; }
+.contact-form label { display: grid; gap: 6px; font: 700 12px/1 var(--body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.contact-form input, .contact-form textarea {
+  width: 100%; padding: 13px 15px; border-radius: 14px; border: 2px solid rgba(255, 255, 255, 0.16);
+  background: rgba(8, 5, 24, 0.5); color: #fff; font: 400 16px/1.4 var(--body); letter-spacing: 0; text-transform: none; resize: vertical;
+  transition: border-color 0.2s, background 0.2s;
+}
+.contact-form input:focus, .contact-form textarea:focus { outline: none; border-color: var(--gold); background: rgba(8, 5, 24, 0.75); }
+.contact-form [aria-invalid="true"] { border-color: var(--pink); }
+.contact-form .btn-play { justify-self: start; margin-top: 4px; }
+.contact-form .fine { margin: 0; font-size: 13px; color: var(--muted); }
+.contact-form .fine.err { color: #ff9fbf; }
 
 /* ------------------------------------------------------------------ modals */
 .modal {
@@ -530,7 +566,9 @@ kbd {
 }
 @media (max-width: 760px) {
   .menu { display: none; }
-  .brand-word { font-size: 22px; }
+  .brand-logo { height: 46px; }
+  .topbar.solid .brand-logo { height: 40px; }
+  .contact-card { grid-template-columns: 1fr; border-radius: 26px; }
   .hero-card { padding: 20px; border-radius: 24px; }
   .title { flex-direction: row; flex-wrap: wrap; gap: 0 0.25em; font-size: clamp(44px, 13vw, 64px); margin: 10px 0 8px; }
   .lede { margin-bottom: 16px; font-size: 14.5px; }
