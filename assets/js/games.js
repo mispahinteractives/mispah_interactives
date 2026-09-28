@@ -47,5 +47,17 @@ window.GV_GAMES = [
     color: '#4a6bff',
     roof: '#3b4fd8',
     door: 3
+  },
+  {
+    id: 'baggage-out',
+    name: 'Baggage Out!',
+    genre: 'Traffic Puzzle',
+    blurb: 'Steer luggage-cart trains through a busy airport apron and guide every cart to its matching garage before time runs out.',
+    url: 'https://malathivanitha.github.io/bus_build/',
+    logo: 'assets/img/games/baggage-out-logo.png',
+    cover: 'assets/img/games/baggage-out-slide.jpg',
+    color: '#ff5a5f',
+    roof: '#1fa38a',
+    door: 4
   }
 ];

@@ -28,7 +28,7 @@ The art lives in `assets/`: the truck and car sprites in `assets/img/assets/`, p
 
 ## Adding or changing a game
 
-Edit `assets/js/games.js`. Each entry becomes a card in "Select your game" and a building with a door on Main Street. To add a fourth door, add a matching entry to `BUILDINGS` in `physics.js`, with an `x` position before `TOWN_END`.
+Edit `assets/js/games.js`. Each entry becomes a card in "Select your game" and a building with a door on Main Street. To give a game a door, add its `id` to the `BUILDINGS` list in `physics.js`. The doors are placed `DOOR_SPACING` (1250px) apart, and the town, speed bumps, coins and checkpoints move to fit. The hills are placed relative to the end of the town, so they're never affected.
 
 ## Controls
 

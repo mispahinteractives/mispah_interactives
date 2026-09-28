@@ -69,30 +69,34 @@
   /* ------------------------------------------------------------------ course */
   const STEP = 40;               // terrain sample spacing
   const START_X = -700;
-  const TOWN_END = 4300;
-  const FINISH_X = 15200;
-  const END_X = 16200;
   const SPAWN_X = 260;
+
+  // Buildings on the town street, DOOR_SPACING apart. `kind: 'game'` doors
+  // open a game, `garage` opens vehicle select. `id` is looked up by game.js.
+  const FIRST_DOOR = 950;
+  const DOOR_SPACING = 1250;
+  const BUILDINGS = ['garage', 'animal-cafe', 'cinemoji', 'uno-clash', 'baggage-out'].map((id, i) => ({
+    id, x: FIRST_DOOR + i * DOOR_SPACING, kind: id === 'garage' ? 'garage' : 'game'
+  }));
+  const DOOR_HALF = 150;
+  // a speed bump halfway between each pair of buildings
+  const SPEED_BUMPS = BUILDINGS.slice(1).map((b) => b.x - DOOR_SPACING / 2);
+
+  // Everything past the town is placed relative to where the town ends, so
+  // adding a building or changing the spacing never disturbs the hills.
+  const TOWN_END = BUILDINGS[BUILDINGS.length - 1].x + 1000;
+  const hill = (d) => TOWN_END + d;
+  const FINISH_X = hill(10900);
+  const END_X = FINISH_X + 1000;
 
   // Stretches of level ground cut into the hills for ramps, props, finish.
   const FLATS = [
-    [5350, 6350],   // first ramp + landing
-    [7300, 7900],   // can pyramid
-    [9600, 10700],  // second ramp
-    [12150, 12650], // crate wall
-    [14800, END_X + 400]
+    [hill(1050), hill(2050)],   // first ramp + landing
+    [hill(3000), hill(3600)],   // can pyramid
+    [hill(5300), hill(6400)],   // second ramp
+    [hill(7850), hill(8350)],   // crate wall
+    [hill(10500), END_X + 400]
   ];
-
-  // Buildings on the town street. `kind: 'game'` doors open a game,
-  // `garage` opens vehicle select. `id` is looked up by game.js.
-  const BUILDINGS = [
-    { id: 'garage',      x: 950,  kind: 'garage' },
-    { id: 'animal-cafe', x: 1750, kind: 'game' },
-    { id: 'cinemoji',    x: 2550, kind: 'game' },
-    { id: 'uno-clash',   x: 3350, kind: 'game' }
-  ];
-  const DOOR_HALF = 150;
-  const SPEED_BUMPS = [1350, 2150, 2950];
 
   // Collision categories. Props bounce off the wheels (which bat them away)
   // and each other, but pass the chassis: otherwise small cans slip under a
@@ -184,8 +188,8 @@
       Composite.add(world, body);
       ramps.push({ x, y: gy, w, h, body });
     }
-    addRamp(5520, 0.62);
-    addRamp(9800, 0.78);
+    addRamp(hill(1220), 0.62);
+    addRamp(hill(5500), 0.78);
 
     /* props: knock-over clutter, drawn with the matching sprite */
     const PROP_TYPES = {
@@ -211,10 +215,11 @@
       props.push({ type, w: t.w, h: t.h, body });
     }
     // town: a delivery pile outside the last building
-    addProp('box', 3760); addProp('box', 3845); addProp('box', 3800, 47);
-    addProp('suitcase', 3900); addProp('oilcan', 3960);
+    const pile = TOWN_END - 540;
+    addProp('box', pile); addProp('box', pile + 85); addProp('box', pile + 40, 47);
+    addProp('suitcase', pile + 140); addProp('oilcan', pile + 200);
     // hills: can pyramid on the flat
-    const canX = 7560;
+    const canX = hill(3260);
     for (let row = 0; row < 4; row++) {
       for (let i = 0; i < 4 - row; i++) {
         addProp(i % 2 ? 'sodacan' : 'beercan', canX + (i - (3 - row) / 2) * 19, row * 29.5);
@@ -222,19 +227,25 @@
     }
     // crate pyramid
     for (let row = 0; row < 2; row++) {
-      for (let i = 0; i < 2 - row; i++) addProp('crate', 12380 + i * 67 + row * 33, row * 66.5);
+      for (let i = 0; i < 2 - row; i++) addProp('crate', hill(8080) + i * 67 + row * 33, row * 66.5);
     }
-    addProp('box', 12520);
-    addProp('suitcase', 12250); addProp('oilcan', 12600);
+    addProp('box', hill(8220));
+    addProp('suitcase', hill(7950)); addProp('oilcan', hill(8300));
 
     /* coins: plain data, collected by distance */
-    const COIN_X = [1350, 2150, 2950, 3620, 4850, 5980, 6700, 8300, 9150, 10250, 11600, 13600];
-    const AIR = { 5980: 250, 10250: 330 };
-    const coins = COIN_X.map((x) => ({
-      x, y: heightAt(x) - (AIR[x] || 105), taken: false
+    // one over each speed bump, the rest out in the hills; `air` lifts a
+    // coin high enough that only a jump off the ramp before it reaches it
+    const coinSpots = [
+      ...SPEED_BUMPS.map((x) => ({ x })),
+      { x: hill(550) }, { x: hill(1680), air: 250 }, { x: hill(2400) }, { x: hill(4000) },
+      { x: hill(4850) }, { x: hill(5950), air: 330 }, { x: hill(7300) }, { x: hill(9300) }
+    ];
+    const coins = coinSpots.map(({ x, air }) => ({
+      x, y: heightAt(x) - (air || 105), taken: false
     }));
 
-    const checkpoints = [SPAWN_X, 1550, 2350, 3150, 4600, 5300, 7300, 9600, 12100, 14800];
+    const checkpoints = [SPAWN_X, ...BUILDINGS.slice(1).map((b) => b.x - 200),
+      hill(300), hill(1000), hill(3000), hill(5300), hill(7800), hill(10500)];
 
     /* ---------------------------------------------------------------- the car */
     const car = { parts: [], constraints: [] };

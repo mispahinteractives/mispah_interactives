@@ -29,7 +29,7 @@
     card.innerHTML = `
       <div class="gcard-media">
         <img class="gcard-cover" src="${g.cover}" alt="" loading="lazy">
-        <video class="gcard-video" muted loop playsinline preload="none" aria-hidden="true"></video>
+        ${g.video ? '<video class="gcard-video" muted loop playsinline preload="none" aria-hidden="true"></video>' : ''}
         <span class="gcard-door">Door ${g.door}</span>
         <span class="gcard-shine" aria-hidden="true"></span>
       </div>
@@ -50,15 +50,15 @@
     const media = $('.gcard-media', card);
     let loaded = false;
     const playPreview = () => {
-      if (reduceMotion) return;
+      if (reduceMotion || !g.video) return;
       if (!loaded) {
-        video.innerHTML = `<source src="${g.videoWebm}" type="video/webm"><source src="${g.video}" type="video/mp4">`;
+        video.innerHTML = (g.videoWebm ? `<source src="${g.videoWebm}" type="video/webm">` : '') + `<source src="${g.video}" type="video/mp4">`;
         video.load(); loaded = true;
       }
       const p = video.play(); if (p && p.catch) p.catch(() => {});
       card.classList.add('previewing');
     };
-    const stopPreview = () => { video.pause(); card.classList.remove('previewing'); };
+    const stopPreview = () => { if (video) video.pause(); card.classList.remove('previewing'); };
 
     if (canHover) {
       card.addEventListener('pointerenter', playPreview);
@@ -78,7 +78,7 @@
       card.addEventListener('focusout', (e) => { if (!card.contains(e.relatedTarget)) stopPreview(); });
     } else {
       // touch: a tap on the artwork toggles the gameplay preview
-      media.addEventListener('click', () => (video.paused ? playPreview() : stopPreview()));
+      if (video) media.addEventListener('click', () => (video.paused ? playPreview() : stopPreview()));
     }
   });
 

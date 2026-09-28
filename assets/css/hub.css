@@ -335,6 +335,7 @@ kbd {
 
 /* ---------------------------------------------------------------- sections */
 .select, .controls { position: relative; padding: clamp(64px, 9vw, 120px) var(--gutter) 40px; max-width: 1320px; margin: 0 auto; }
+.select { max-width: 1480px; }
 .section-head { margin-bottom: 32px; }
 .section-head h2 {
   margin: 10px 0 0; font: 400 clamp(40px, 6vw, 76px)/0.95 var(--display); text-transform: uppercase; letter-spacing: 0.01em;
@@ -349,7 +350,7 @@ kbd {
   border-radius: 32px; border: 3px solid var(--outline);
   background: linear-gradient(135deg, var(--panel-2), var(--panel));
   box-shadow: 0 10px 0 #070514, 0 40px 80px rgba(0, 0, 0, 0.4);
-  margin-bottom: 32px;
+  margin-bottom: clamp(40px, 5vw, 64px);
 }
 .feature-scene { position: relative; min-height: 360px; overflow: hidden; background: linear-gradient(180deg, #5bb8f0, #bfe6fb); }
 .fs-sun { position: absolute; right: 12%; top: 12%; width: 70px; height: 70px; border-radius: 50%; background: #fff6c9; box-shadow: 0 0 60px 20px rgba(255, 246, 201, 0.7); }
@@ -389,7 +390,7 @@ kbd {
 .best b { display: block; margin-top: 6px; font: 400 24px/1 var(--display); letter-spacing: 0; color: #fff; font-variant-numeric: tabular-nums; }
 
 /* game cards */
-.card-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(16px, 2vw, 28px); perspective: 1200px; }
+.card-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(24px, 3.2vw, 48px); perspective: 1200px; }
 .gcard {
   --rx: 0deg; --ry: 0deg; --mx: 50%;
   position: relative; display: flex; flex-direction: column; border-radius: 26px; overflow: hidden;
@@ -543,8 +544,8 @@ kbd {
 .ride-wheel { z-index: 2; height: auto; }
 
 /* --------------------------------------------------------------- responsive */
-@media (max-width: 1080px) {
-  .card-row { grid-template-columns: repeat(3, minmax(260px, 1fr)); overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 4px 22px; margin: 0 -4px; scrollbar-width: thin; }
+@media (max-width: 1240px) {
+  .card-row { grid-template-columns: repeat(4, minmax(260px, 1fr)); overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 4px 22px; margin: 0 -4px; scrollbar-width: thin; }
   .gcard { scroll-snap-align: start; }
   .howto { grid-template-columns: 1fr 1fr; }
   .howto-card:last-child { grid-column: 1 / -1; }
@@ -585,7 +586,7 @@ kbd {
   .hud-right .icon-btn[data-action="mute"] { display: none; }
   .door-prompt { font-size: 18px; bottom: auto; top: 118px; }
   .toast { top: 30%; }
-  .card-row { grid-template-columns: repeat(3, 82%); gap: 14px; }
+  .card-row { grid-template-columns: repeat(4, 80%); gap: 20px; }
   .howto { grid-template-columns: 1fr; }
   .door-panel { grid-template-columns: 1fr; }
   .door-cover { max-height: 200px; border-right: 0; border-bottom: 4px solid var(--accent); overflow: hidden; }
