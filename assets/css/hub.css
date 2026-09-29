@@ -18,8 +18,9 @@
   --truck: #7b3a8f;
   --outline: #1b2033;
   --radius: 22px;
-  --display: "Lilita One", "Rubik", system-ui, sans-serif;
-  --body: "Rubik", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* racing type: Russo One for headings, buttons and game text; Exo 2 for body copy */
+  --display: "Russo One", "Exo 2", system-ui, sans-serif;
+  --body: "Exo 2", system-ui, -apple-system, "Segoe UI", sans-serif;
   --gutter: clamp(16px, 4vw, 48px);
   color-scheme: dark;
 }
@@ -1255,3 +1256,7 @@ kbd {
 .door-prompt.is-mystery .dp-icon { background: linear-gradient(180deg, #b79cff, #7a55d8); color: #1a1033; }
 .door-prompt.is-mystery .dp-icon::after { border-color: rgba(183, 156, 255, 0.6); }
 .door-prompt.is-mystery b { letter-spacing: 0.3em; color: #d8ccff; }
+
+/* Russo One runs wider: keep ride names on one line */
+.ride-name { white-space: nowrap; font-size: 12.5px; letter-spacing: 0; }
+@media (max-width: 760px) { .ride-name { font-size: 11px; } }

@@ -76,6 +76,9 @@
     }
   });
 
+  // coin count in the page text always matches the course
+  $$('[data-coin-total]').forEach((el) => { el.textContent = G.coinsTotal; });
+
   /* ---------------------------------------------------------------- stats */
   function refreshStats() {
     $('#lifetime-coins').textContent = G.lifetimeCoins();

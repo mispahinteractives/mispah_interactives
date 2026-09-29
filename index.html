@@ -10,10 +10,10 @@
 <meta property="og:title" content="Mizpah Interactives · Monster Hills">
 <meta property="og:description" content="A playable physics truck game and arcade hub, right in your browser.">
 <meta property="og:image" content="assets/img/logo.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Rubik:wght@400;500;700;800&display=swap">
-<link rel="stylesheet" href="assets/css/hub.css?v=20261001z">
+<link rel="preload" href="assets/fonts/russo-one-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/exo-2-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261002e">
+<link rel="stylesheet" href="assets/css/hub.css?v=20261002e">
 </head>
 <body>
 <a class="skip" href="#games">Skip to the game list</a>
@@ -94,7 +94,7 @@
       <p class="doors-label"><b>Arcade doors</b><span>on Main Street · skip the haunted ones</span></p>
       <div class="door-chips" id="door-chips"></div>
       <ul class="hero-stats" aria-label="Your progress">
-        <li><i class="coin-ico" aria-hidden="true"></i><b>12</b><span>coins to find</span></li>
+        <li><i class="coin-ico" aria-hidden="true"></i><b data-coin-total>44</b><span>coins to find</span></li>
         <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 9v4l2.5 2M9 3h6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><b data-best-hero>--:--.-</b><span>your best</span></li>
       </ul>
     </div>
@@ -104,7 +104,7 @@
   <!-- in-game HUD -->
   <div class="hud" id="hud">
     <div class="hud-left">
-      <div class="hud-pill hud-coins" id="hud-coins"><i class="coin-ico" aria-hidden="true"></i><span data-val>0/12</span></div>
+      <div class="hud-pill hud-coins" id="hud-coins"><i class="coin-ico" aria-hidden="true"></i><span data-val>0/44</span></div>
       <div class="hud-pill"><span class="lbl">Time</span><span id="hud-time" class="mono">00:00.0</span></div>
       <div class="hud-pill hud-speed"><span id="hud-speed" class="mono">0</span><span class="lbl">km/h</span></div>
     </div>
@@ -169,8 +169,8 @@
 <!-- ================================================================ ticker -->
 <div class="ticker" aria-hidden="true">
   <div class="ticker-track">
-    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span>12 coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>3 rides in the garage</span><i></i>
-    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span>12 coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>3 rides in the garage</span><i></i>
+    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>3 rides in the garage</span><i></i>
+    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>3 rides in the garage</span><i></i>
   </div>
 </div>
 
@@ -196,7 +196,7 @@
     <div class="feature-info">
       <p class="badge">★ Main game</p>
       <h3 id="feature-title">Monster Hills</h3>
-      <p>A physics truck game with working suspension. The body squats, pitches and bounces over every bump. Collect 12 coins, clear two jumps, and knock down the can pyramid on your way to the flag.</p>
+      <p>A physics truck game with working suspension. The body squats, pitches and bounces over every bump. Collect <span data-coin-total>44</span> coins, clear two jumps, and knock down the can pyramid on your way to the flag.</p>
       <ul class="chips">
         <li>Matter.js physics</li><li>3 rides</li><li>Buttons · Keyboard</li>
       </ul>
@@ -353,9 +353,9 @@
 </div>
 
 <script src="assets/js/vendor/matter.min.js"></script>
-<script src="assets/js/physics.js?v=20261001z"></script>
-<script src="assets/js/games.js?v=20261001z"></script>
-<script src="assets/js/game.js?v=20261001z"></script>
-<script src="assets/js/hub.js?v=20261001z"></script>
+<script src="assets/js/physics.js?v=20261002e"></script>
+<script src="assets/js/games.js?v=20261002e"></script>
+<script src="assets/js/game.js?v=20261002e"></script>
+<script src="assets/js/hub.js?v=20261002e"></script>
 </body>
 </html>

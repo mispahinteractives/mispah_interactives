@@ -20,7 +20,7 @@
     'ghost_1', 'ghost_2', 'ghost_3', 'ghost_4', 'ghost_5', 'background_house1',
     'wrong_house_5', 'wrong_house_6', 'correct_house_1', 'correct_house_2', 'correct_house_3', 'correct_house_4', 'correct_house_5',
     'mountain_1', 'mountain_2', 'mountain_3', 'mountain_4', 'grass_1', 'crow_1', 'crow_2', 'tree_2'];
-  const FONT = '"Lilita One", "Rubik", system-ui, sans-serif';
+  const FONT = '"Russo One", "Exo 2", system-ui, sans-serif';
   const TAU = Math.PI * 2;
 
   /* ------------------------------------------------------------ utilities */

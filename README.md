@@ -8,6 +8,8 @@ The contact email lives in two places: the Contact section of `index.html` and `
 ./
 ├── index.html            page: live game stage, game select, controls, contact
 ├── assets/css/hub.css    all styling
+├── assets/css/fonts.css  @font-face rules for the local fonts
+├── assets/fonts/         Russo One + Exo 2 (woff2, Latin subsets)
 └── assets/js/
     ├── vendor/matter.min.js   Matter.js 0.20 (physics engine, vendored)
     ├── physics.js        course, props, vehicles, suspension (no DOM; runs in Node)
@@ -82,3 +84,11 @@ In Morning only, three crows fly far off in the sky, between the clouds and the 
 - **Endless CSS animations:** paused for sections that are off screen (`anim-paused`), and pulses animate transform/opacity rather than box-shadow.
 - **Image cache:** pre-sized sprite copies are kept in a least-recently-used cache of 120 entries.
 - **Gamepad:** only polled after a gamepad connects, because polling it every frame keeps macOS's game-controller service busy.
+
+## Coins
+
+There are 44 coins: a pair over every speed bump on Main Street, rows of three along the hills, and an arc of three over each jump (`coinSpots` in `physics.js`). Every vehicle can collect all of them. The coin total shown on the page updates itself from the course.
+
+## Fonts
+
+The site uses **Russo One** (headings, buttons and in-game text) and **Exo 2** (body text), both under the SIL Open Font License 1.1. They're served locally from `assets/fonts/` (Latin and Latin Extended subsets in woff2, about 83 KB in total) via `assets/css/fonts.css`, so nothing is loaded from Google Fonts. Exo 2 is a variable font, so one file covers weights 400–800.

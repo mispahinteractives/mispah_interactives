@@ -240,11 +240,22 @@
     /* coins: plain data, collected by distance */
     // one over every other speed bump, the rest out in the hills; `air` lifts a
     // coin high enough that only a jump off the ramp before it reaches it
-    const coinSpots = [
-      ...SPEED_BUMPS.filter((_, i) => i % 2 === 0).slice(0, 4).map((x) => ({ x })),
-      { x: hill(550) }, { x: hill(1680), air: 250 }, { x: hill(2400) }, { x: hill(4000) },
-      { x: hill(4850) }, { x: hill(5950), air: 330 }, { x: hill(7300) }, { x: hill(9300) }
-    ];
+    const coinSpots = [];
+    const row = (cx, n, gap, air) => {
+      for (let i = 0; i < n; i++) coinSpots.push({ x: cx + (i - (n - 1) / 2) * gap, air });
+    };
+    const arc = (cx, n, gap, top, drop) => {         // an arc of coins over a jump
+      for (let i = 0; i < n; i++) {
+        const u = i - (n - 1) / 2;
+        coinSpots.push({ x: cx + u * gap, air: top - drop * u * u });
+      }
+    };
+    // Main Street: a pair of coins over every speed bump between the houses
+    SPEED_BUMPS.forEach((x) => row(x, 2, 80));
+    // the hills: rows of three along the road, and an arc over each jump
+    [550, 2400, 4000, 4850, 7300, 9300].forEach((d) => row(hill(d), 3, 85));
+    arc(hill(1680), 3, 80, 250, 25);
+    arc(hill(5950), 3, 90, 330, 30);
     const coins = coinSpots.map(({ x, air }) => ({
       x, y: heightAt(x) - (air || 105), taken: false
     }));
