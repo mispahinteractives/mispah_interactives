@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Rubik:wght@400;500;700;800&display=swap">
-<link rel="stylesheet" href="assets/css/hub.css?v=20260930b">
+<link rel="stylesheet" href="assets/css/hub.css?v=20260930i">
 </head>
 <body>
 <a class="skip" href="#games">Skip to the game list</a>
@@ -68,6 +68,10 @@
         <button type="button" data-vehicle="beetle" aria-pressed="false"><span class="ride-slot" data-ride="beetle"></span><span class="ride-name">Blue Bubble</span></button>
         <button type="button" data-vehicle="sedan" aria-pressed="false"><span class="ride-slot" data-ride="sedan"></span><span class="ride-name">Green Cruiser</span></button>
       </div>
+      <div class="time-toggle" role="group" aria-label="Time of day">
+        <button type="button" data-time="morning" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Morning</button>
+        <button type="button" data-time="night" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>Night</button>
+      </div>
     </div>
     <ul class="hero-stats" aria-label="Course">
       <li><b>12</b><span>coins</span></li>
@@ -92,6 +96,10 @@
       <button class="icon-btn" type="button" data-action="respawn" aria-label="Back to last checkpoint" title="Reset (R)">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2.1-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M4 3.5v5h5z"/></svg>
       </button>
+      <button class="icon-btn time-btn" type="button" data-action="toggle-time" aria-label="Switch to night" title="Morning / Night (N)">
+        <svg class="ico-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <svg class="ico-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+      </button>
       <button class="icon-btn" type="button" data-action="garage" aria-label="Change ride" title="Garage (1, 2, 3)">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 14l2-5h9l3 3h3a1 1 0 0 1 1 1v2H3z"/><circle cx="7.5" cy="16.5" r="2.5"/><circle cx="17" cy="16.5" r="2.5"/></svg>
       </button>
@@ -105,7 +113,7 @@
     </div>
   </div>
 
-  <p class="key-hints" aria-hidden="true"><kbd>→</kbd> gas <kbd>←</kbd> brake <kbd>Space</kbd> jump <kbd>↑</kbd><kbd>↓</kbd> lean <kbd>E</kbd> enter door <kbd>R</kbd> reset <kbd>B</kbd> horn</p>
+  <p class="key-hints" aria-hidden="true"><kbd>→</kbd> gas <kbd>←</kbd> brake <kbd>Space</kbd> jump <kbd>↑</kbd><kbd>↓</kbd> lean <kbd>E</kbd> enter door <kbd>R</kbd> reset <kbd>N</kbd> night <kbd>B</kbd> horn</p>
 
   <button id="door-prompt" class="door-prompt" type="button" data-action="enter-door" hidden>
     <kbd>E</kbd><span class="dp-verb">Enter</span><b id="door-prompt-name"></b>
@@ -201,6 +209,7 @@
         <li><span><kbd>E</kbd><kbd>Enter</kbd></span>Enter a door</li>
         <li><span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd></span>Switch ride</li>
         <li><span><kbd>R</kbd></span>Back to checkpoint</li>
+        <li><span><kbd>N</kbd></span>Morning / Night</li>
       </ul>
     </div>
     <div class="howto-card reveal">
@@ -334,9 +343,9 @@
 </div>
 
 <script src="assets/js/vendor/matter.min.js"></script>
-<script src="assets/js/physics.js?v=20260930b"></script>
-<script src="assets/js/games.js?v=20260930b"></script>
-<script src="assets/js/game.js?v=20260930b"></script>
-<script src="assets/js/hub.js?v=20260930b"></script>
+<script src="assets/js/physics.js?v=20260930i"></script>
+<script src="assets/js/games.js?v=20260930i"></script>
+<script src="assets/js/game.js?v=20260930i"></script>
+<script src="assets/js/hub.js?v=20260930i"></script>
 </body>
 </html>

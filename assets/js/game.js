@@ -19,7 +19,7 @@
     'wrong_house_1', 'wrong_house_2', 'wrong_house_3', 'wrong_house_4',
     'ghost_1', 'ghost_2', 'ghost_3', 'ghost_4', 'ghost_5', 'background_house1',
     'wrong_house_5', 'wrong_house_6', 'correct_house_1', 'correct_house_2', 'correct_house_3', 'correct_house_4', 'correct_house_5',
-    'mountain_1', 'mountain_2', 'mountain_3', 'mountain_4'];
+    'mountain_1', 'mountain_2', 'mountain_3', 'mountain_4', 'grass_1'];
   const FONT = '"Lilita One", "Rubik", system-ui, sans-serif';
   const TAU = Math.PI * 2;
 
@@ -143,6 +143,7 @@
     paused: false,            // a modal is open
     active: true,             // stage on screen
     vehicle: VEHICLES[store.get('vehicle', 'truck')] ? store.get('vehicle', 'truck') : 'truck',
+    night: store.get('time', 'morning') === 'night',
     time: 0, started: false, finished: false,
     coins: 0, checkpoint: W.SPAWN_X,
     door: null, auto: { stall: 0, reverse: 0 },
@@ -420,10 +421,30 @@
     return { x: (x - cam.x) * cam.z + cam.fx * Wd, y: (y - cam.y) * cam.z + cam.fy * Ht };
   }
 
+  /* Frame order. The world is drawn first onto a cleared (transparent)
+     canvas. At night a single moonlight tint is laid over whatever was drawn
+     ('source-atop' touches only drawn pixels), then light sources are added
+     on top ('lighter'). The sky goes in last, behind everything
+     ('destination-over'), so stars and the moon sit behind the mountains and
+     clouds without repainting the world twice. */
+  const lights = [];
+  function addLight(x, y, r, rgb, a) { if (state.night) lights.push({ x, y, r, rgb, a }); }
+
   function render() {
+    lights.length = 0;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawSky();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.clearRect(0, 0, Wd, Ht);
     drawParallax();
+    // At night the far background (mountains, skyline, clouds) gets a strong
+    // night tint here, before the world is drawn over it; the world itself
+    // only gets a light moonlight tint later, so it stays clearly visible.
+    if (state.night) {
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.fillStyle = 'rgba(12,18,56,0.52)';
+      ctx.fillRect(0, 0, Wd, Ht);
+      ctx.globalCompositeOperation = 'source-over';
+    }
     const sx = (Math.random() - 0.5) * state.shake, sy = (Math.random() - 0.5) * state.shake;
     const z = cam.z * dpr;
     ctx.setTransform(z, 0, 0, z, (cam.fx * Wd - cam.x * cam.z + sx) * dpr, (cam.fy * Ht - cam.y * cam.z + sy) * dpr);
@@ -438,6 +459,64 @@
     drawCar();
     drawParticles('front');
     drawForeground(x0, x1);
+    if (state.night) drawNight();
+    drawSky();
+  }
+
+  function drawNight() {
+    // moonlight: a light cool tint over the world, so the truck, trees and
+    // houses keep close to their own brightness against the night sky
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.globalCompositeOperation = 'source-atop';
+    ctx.fillStyle = 'rgba(30,45,120,0.14)';
+    ctx.fillRect(0, 0, Wd, Ht);
+    ctx.globalCompositeOperation = 'lighter';
+    // moon glitter on the water
+    const t = state.t / 1000;
+    const seaY = (SEA - cam.y) * cam.z + cam.fy * Ht, mx = Wd * 0.82;
+    if (seaY < Ht) {
+      for (let k = 0; k < 12; k++) {
+        const y = seaY + 8 + k * 13 * Math.max(0.6, cam.z);
+        if (y > Ht) break;
+        const w = (130 - k * 8) * (0.6 + 0.4 * Math.sin(t * 2.2 + k * 1.7));
+        ctx.fillStyle = `rgba(255,244,205,${0.3 * (1 - k / 12)})`;
+        ctx.fillRect(mx - w / 2 + Math.sin(t * 1.3 + k) * 10, y, w, 3);
+      }
+    }
+    // light sources, in world space
+    const z = cam.z * dpr;
+    ctx.setTransform(z, 0, 0, z, (cam.fx * Wd - cam.x * cam.z) * dpr, (cam.fy * Ht - cam.y * cam.z) * dpr);
+    for (const L of lights) {
+      if (L.sign) continue;
+      if (L.cone) {
+        const g = ctx.createLinearGradient(0, L.y, 0, L.ground);
+        g.addColorStop(0, `rgba(255,226,150,${L.a})`); g.addColorStop(1, 'rgba(255,226,150,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.moveTo(L.x - 10, L.y); ctx.lineTo(L.x + 10, L.y);
+        ctx.lineTo(L.x + L.spread, L.ground); ctx.lineTo(L.x - L.spread, L.ground); ctx.closePath(); ctx.fill();
+      } else drawGlow(L.x, L.y, L.r, L.rgb, L.a, 0.05);
+    }
+    drawHeadlights();
+    ctx.globalCompositeOperation = 'source-over';
+    for (const L of lights) if (L.sign) drawSignFace(L.cx, L.sy, L.g);
+  }
+
+  // Headlight beam from the front of whichever car is being driven.
+  function drawHeadlights() {
+    const c = car.chassis, v = car.v;
+    if (!c) return;
+    const f = spriteLocal(v.bodySize[0] - 12, v.bodySize[1] * (car.key === 'truck' ? 0.58 : 0.62));
+    const p = localToWorld(f.x, f.y);
+    const len = 460, spread = 0.2;
+    const ax = Math.cos(c.angle), ay = Math.sin(c.angle);
+    const g = ctx.createLinearGradient(p.x, p.y, p.x + ax * len, p.y + ay * len);
+    g.addColorStop(0, 'rgba(255,242,200,0.42)'); g.addColorStop(1, 'rgba(255,242,200,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(p.x, p.y - 4);
+    ctx.lineTo(p.x + Math.cos(c.angle - spread) * len, p.y + Math.sin(c.angle - spread) * len);
+    ctx.lineTo(p.x + Math.cos(c.angle + spread * 0.6) * len, p.y + Math.sin(c.angle + spread * 0.6) * len);
+    ctx.lineTo(p.x, p.y + 4); ctx.closePath(); ctx.fill();
+    drawGlow(p.x, p.y, 40, '255,244,210', 0.8, 0.05);
   }
 
   /* Image quality. The browser's per-frame resizing is fast but rough: big
@@ -505,17 +584,45 @@
   }
 
   let skyCache = null;
+  // Stars for the night sky, as fractions of the screen; they twinkle.
+  const STARS = Array.from({ length: 150 }, (_, i) => ({
+    x: rnd(i * 3.7 + 1), y: rnd(i * 5.3 + 2) * 0.72, r: 0.6 + rnd(i * 2.1 + 3) * 1.4, p: rnd(i + 9) * TAU
+  }));
+
+  // The sky is painted behind everything already on the canvas, so each
+  // piece here goes *behind* the one before it (front-most first).
   function drawSky() {
-    if (!skyCache || skyCache.h !== Ht) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.globalCompositeOperation = 'destination-over';
+    const cx = Wd * (state.night ? 0.82 : 0.84), cy = Ht * (state.night ? 0.17 : 0.16);
+    const r = Math.min(Wd, Ht) * (state.night ? 0.055 : 0.07);
+    if (state.night) {
+      ctx.fillStyle = 'rgba(120,120,100,0.22)';                  // moon craters
+      for (const [dx, dy, cr] of [[-0.3, -0.2, 0.22], [0.25, 0.1, 0.16], [-0.05, 0.35, 0.12], [0.35, -0.35, 0.1]]) {
+        ctx.beginPath(); ctx.arc(cx + dx * r, cy + dy * r, cr * r, 0, TAU); ctx.fill();
+      }
+      ctx.fillStyle = '#f5f1da'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fill();
+      drawGlow(cx, cy, r * 4, '200,215,255', 0.35, 0.1);
+      const t = state.t / 1000, drift = cam.x * 0.01;
+      for (const st of STARS) {
+        const tw = 0.45 + 0.55 * Math.abs(Math.sin(t * 1.2 + st.p));
+        ctx.fillStyle = `rgba(255,255,255,${tw})`;
+        const sx = ((st.x * Wd - drift) % Wd + Wd) % Wd;
+        ctx.beginPath(); ctx.arc(sx, st.y * Ht, st.r, 0, TAU); ctx.fill();
+      }
+    } else {
+      ctx.fillStyle = '#fff6c9'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fill();
+      drawGlow(cx, cy, r * 3.2, '255,248,200', 0.9, 0.12);
+    }
+    const key = Ht + (state.night ? 'n' : 'd');
+    if (!skyCache || skyCache.key !== key) {
       const g = ctx.createLinearGradient(0, 0, 0, Ht);
-      g.addColorStop(0, '#5bb8f0'); g.addColorStop(0.55, '#a9ddf8'); g.addColorStop(1, '#e3f5ff');
-      skyCache = { h: Ht, g };
+      if (state.night) { g.addColorStop(0, '#060d2b'); g.addColorStop(0.55, '#132256'); g.addColorStop(1, '#2a3d7a'); }
+      else { g.addColorStop(0, '#5bb8f0'); g.addColorStop(0.55, '#a9ddf8'); g.addColorStop(1, '#e3f5ff'); }
+      skyCache = { key, g };
     }
     ctx.fillStyle = skyCache.g; ctx.fillRect(0, 0, Wd, Ht);
-    // sun
-    const sx = Wd * 0.84, sy = Ht * 0.16, r = Math.min(Wd, Ht) * 0.07;
-    drawGlow(sx, sy, r * 3.2, '255,248,200', 0.9, 0.12);
-    ctx.fillStyle = '#fff6c9'; ctx.beginPath(); ctx.arc(sx, sy, r, 0, TAU); ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
   }
 
   // Layers behind the world scroll slower than the camera (factor f).
@@ -690,9 +797,17 @@
       } else if (x < W.TOWN_END - 100) {
         if (i % 4 === 0 && clearOf(x, 260)) drawLamp(x, gy);
         else if (rnd(i + 21) > 0.45 && clearOf(tx, 330)) drawTree(tx, vergeAt(tx), 0.75 + rnd(i + 4) * 0.35, rnd(i + 5) > 0.5);
-        else if (rnd(i) > 0.45) drawBush(x + rnd(i + 1) * 60, gy, 0.8 + rnd(i + 2) * 0.6);
+        else if (rnd(i) > 0.72) { const gx = x + rnd(i + 1) * 60; drawGrass('grass_1', gx, vergeAt(gx), 8, rnd(i + 2) > 0.5); }
       } else if (x > W.TOWN_END + 200 && rnd(i + 11) > 0.35) {
         drawTree(tx, vergeAt(tx), 0.8 + rnd(i + 4) * 0.6, rnd(i + 5) > 0.5);
+      }
+    }
+    // an occasional grass clump (grass_1) by the roadside in the hills
+    for (let x = Math.floor(x0 / 300) * 300; x < x1; x += 300) {
+      const k = Math.round(x / 300);
+      if ((x <= 0 || x > W.TOWN_END + 100) && rnd(k + 71) > 0.6) {
+        const gx = x + rnd(k + 72) * 50;
+        drawGrass('grass_1', gx, vergeAt(gx), 8, rnd(k + 73) > 0.5);
       }
     }
     // "MOUNTAINS -->" sign, like the reference
@@ -708,12 +823,26 @@
   function outline(w) { ctx.lineWidth = w || 4; ctx.strokeStyle = '#1b2033'; ctx.lineJoin = 'round'; }
 
   function drawLamp(x, gy) {
+    addLight(x + 36, gy - 198, 90, '255,226,150', 0.75);
+    if (state.night) lights.push({ cone: true, x: x + 36, y: gy - 190, ground: gy + 40, spread: 90, a: 0.28 });
     outline(3);
     ctx.fillStyle = '#3b3f58';
     ctx.fillRect(x - 4, gy - 190, 8, 190); ctx.strokeRect(x - 4, gy - 190, 8, 190);
     ctx.beginPath(); ctx.moveTo(x, gy - 186); ctx.quadraticCurveTo(x + 4, gy - 214, x + 34, gy - 206); ctx.stroke();
     ctx.fillStyle = '#ffe79a';
     ctx.beginPath(); ctx.arc(x + 36, gy - 198, 10, 0, TAU); ctx.fill(); ctx.stroke();
+  }
+
+  // Grass sprites at scale 1, standing on the verge. `sink` sets how far the
+  // base goes down behind the road edge; `flip` mirrors it for variety.
+  function drawGrass(key, x, gy, sink, flip) {
+    const g = img[key];
+    if (!ready(g)) { if (key === 'grass_1') drawBush(x, gy, 1); return; }
+    const w = g.naturalWidth, h = g.naturalHeight;
+    ctx.save(); ctx.translate(x, gy + sink);
+    if (flip) ctx.scale(-1, 1);
+    ctx.drawImage(hq(g, w, h), -w / 2, -h, w, h);
+    ctx.restore();
   }
 
   function drawBush(x, gy, s) {
@@ -821,6 +950,7 @@
     b.appear = lerp(b.appear || 0, active ? 1 : 0, 0.05);
 
     drawGlow(left + hw / 2, gy - hh * 0.55, Math.max(hw, hh) * 0.75, '96,36,150', 0.3 + 0.15 * b.appear, 0.08);
+    addLight(left + hw / 2, gy - hh * 0.55, Math.max(hw, hh) * 0.55, '140,70,210', 0.12 + 0.08 * b.appear);
     blit(house, left, gy - hh, hw, hh);
 
     const t = state.t / 1000;
@@ -836,6 +966,7 @@
     const a = b.appear;
     drawGhostSprite(g, b.x + Math.sin(t * 1.3) * (6 + 18 * a),
       gy - gh / 2 - 14 - a * 70 + Math.sin(t * 2.1) * 6, (0.3 + 0.65 * a) * flicker, false);
+    addLight(b.x, gy - gh / 2 - 14 - a * 70, 60 + 30 * a, '185,210,255', (0.12 + 0.22 * a) * flicker);
     // bats: figure-of-eight loops round the roof, flapping
     const bat = img.bat;
     if (ready(bat)) {
@@ -867,9 +998,19 @@
 
   // Sign board with the game's own logo, ringed with chasing bulbs.
   function drawSignBoard(cx, sy, g) {
+    addLight(cx, sy + 52, 200, '255,205,120', 0.32);
+    // at night the sign's face is drawn again after the moonlight tint, so
+    // it stays bright like a lit billboard
+    if (state.night) lights.push({ sign: true, cx, sy, g });
     const sw = 270, sh = 104, sx = cx - sw / 2;
     outline(5);
     ctx.fillStyle = '#231c3d'; roundRect(sx, sy, sw, sh, 14); ctx.fill(); ctx.stroke();
+    drawSignFace(cx, sy, g);
+  }
+
+  // The lit part of a sign: chasing bulbs and the game's logo.
+  function drawSignFace(cx, sy, g) {
+    const sw = 270, sh = 104, sx = cx - sw / 2;
     const bulbs = 18;
     for (let k = 0; k < bulbs; k++) {
       const t = k / bulbs, per = 2 * (sw + sh);
@@ -935,6 +1076,8 @@
       ctx.fillRect(px - 6, bbTop + 90, 12, 130 + hh * 0.3); ctx.strokeRect(px - 6, bbTop + 90, 12, 130 + hh * 0.3);
     }
     blit(house, left, top, hw, hh);
+    addLight(left + hw * 0.5, top + hh * 0.55, Math.max(hw, hh) * 0.45, '255,200,120', 0.2);   // lights on inside
+    if (active) addLight(b.x, (doorTop + doorBottom) / 2, 160, '255,214,90', 0.55);
     if (active) {
       // the doorway lights up warm when you pull up
       const pulse = 0.5 + 0.5 * Math.sin(state.t / 160);
@@ -1157,6 +1300,7 @@
       const sx = Math.abs(Math.cos(state.t / 420 + c.x * 0.01));
       const y = c.y + bob, r = 24;
       drawGlow(c.x, y, 60, '255,220,80', 0.45, 0.07);
+      addLight(c.x, y, 70, '255,220,80', 0.55);
       ctx.save(); ctx.translate(c.x, y); ctx.scale(Math.max(0.15, sx), 1);
       outline(4);
       ctx.fillStyle = '#f2a900'; ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill(); ctx.stroke();
@@ -1311,6 +1455,18 @@
     openModal(ui.modalGarage);
   }
 
+  // Morning or Night. Remembered between visits; the page mirrors it with
+  // an \`is-night\` class so the toggles and the featured card can follow.
+  function setTime(mode) {
+    state.night = mode === 'night';
+    store.set('time', state.night ? 'night' : 'morning');
+    document.documentElement.classList.toggle('is-night', state.night);
+    document.querySelectorAll('[data-time]').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.time === 'night') === state.night)));
+    document.querySelectorAll('[data-action="toggle-time"]').forEach((b) => b.setAttribute('aria-label', state.night ? 'Switch to morning' : 'Switch to night'));
+    skyCache = null;
+    emit('time', { mode: state.night ? 'night' : 'morning' });
+  }
+
   function setVehicle(key) {
     if (!VEHICLES[key]) return;
     state.vehicle = key; store.set('vehicle', key);
@@ -1409,6 +1565,7 @@
       else if (e.code === 'KeyR') spawnAt(state.checkpoint, true);
       else if (e.code === 'KeyB' || e.code === 'KeyH') Sound.horn();
       else if (e.code === 'KeyM') setMuteUi(Sound.toggle());
+      else if (e.code === 'KeyN') setTime(state.night ? 'morning' : 'night');
       else if (e.code === 'Digit1') setVehicle('truck');
       else if (e.code === 'Digit2') setVehicle('beetle');
       else if (e.code === 'Digit3') setVehicle('sedan');
@@ -1471,7 +1628,9 @@
       else if (a === 'close-modal') closeModal(el.closest('.modal'));
       else if (a === 'restart') { closeAllModals(); start(); }
       else if (a === 'respawn') spawnAt(state.checkpoint, true);
+      else if (a === 'toggle-time') setTime(state.night ? 'morning' : 'night');
     });
+    document.querySelectorAll('[data-time]').forEach((b) => b.addEventListener('click', () => setTime(b.dataset.time)));
     document.querySelectorAll('[data-vehicle]').forEach((b) => {
       b.addEventListener('click', () => {
         setVehicle(b.dataset.vehicle);
@@ -1546,13 +1705,14 @@
     bindInput();
     bindActions();
     setMuteUi(Sound.muted);
+    setTime(state.night ? 'night' : 'morning');
     document.querySelectorAll('[data-vehicle]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.vehicle === state.vehicle)));
     loadImages();
     requestAnimationFrame(frame);
   }
 
   window.GVGame = {
-    init, start, exit, setVehicle, vehiclePreview,
+    init, start, exit, setVehicle, setTime, vehiclePreview,
     setActive(on) { state.active = on; if (!on) Sound.engine(0, 0, false); },
     get mode() { return state.mode; },
     get vehicle() { return state.vehicle; },

@@ -226,6 +226,30 @@ kbd {
 .scroll-cue span { position: absolute; left: 50%; top: 9px; width: 4px; height: 10px; margin-left: -2px; border-radius: 2px; background: #fff; animation: cue 1.6s infinite; }
 @keyframes cue { 0% { transform: translateY(0); opacity: 1; } 70% { transform: translateY(16px); opacity: 0; } 100% { opacity: 0; } }
 
+/* Morning / Night toggle on the hero card */
+.time-toggle {
+  display: inline-flex; gap: 4px; margin-top: 14px; padding: 4px; border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06); border: 2px solid rgba(255, 255, 255, 0.14);
+}
+.time-toggle button {
+  display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border: 0; border-radius: 10px;
+  background: transparent; color: #e8e4ff; font: 700 13px/1 var(--body); transition: background 0.2s, color 0.2s;
+}
+.time-toggle button svg { width: 16px; height: 16px; fill: currentColor; }
+.time-toggle button:hover { background: rgba(255, 255, 255, 0.08); }
+.time-toggle button[aria-pressed="true"][data-time="morning"] { background: var(--gold); color: var(--outline); }
+.time-toggle button[aria-pressed="true"][data-time="night"] { background: #3b4fd8; color: #fff; }
+.time-btn .ico-moon, .is-night .time-btn .ico-sun { display: none; }
+.is-night .time-btn .ico-moon { display: block; }
+.is-night .stage { background: #0b1640; }
+/* the featured card's little scene follows the time of day */
+.is-night .feature-scene { background: linear-gradient(180deg, #060d2b, #2a3d7a); }
+.is-night .fs-sun { background: #f5f1da; box-shadow: 0 0 50px 14px rgba(200, 215, 255, 0.45); }
+.is-night .fs-cloud { opacity: 0.35; }
+.is-night .fs-hills .h1 { fill: #3a4a78; }
+.is-night .fs-road, .is-night .fs-hills .h2 { filter: brightness(0.6); }
+.is-night .fs-ride { filter: brightness(0.65) saturate(0.9); }
+
 /* ---------------------------------------------------------------------- HUD */
 .hud {
   position: absolute; inset: 0 0 auto; z-index: 5;
@@ -684,6 +708,9 @@ html.touch .is-playing .pedals { display: flex; }
 }
 @media (max-width: 440px) {
   .hud-speed { display: none; }
+  /* no room for the sun/moon button on small phones: Morning / Night is
+     chosen on the title card there */
+  .hud .time-btn { display: none; }
 }
 @media (max-width: 380px) {
   .coin-count { font-size: 17px; padding: 6px 10px 6px 7px; }

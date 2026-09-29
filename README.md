@@ -42,7 +42,7 @@ Brake slows the car and then holds it still (on slopes too); it never reverses. 
 
 The touch buttons show on touch screens and on any screen narrower than 900px while playing. Jump hops once per press, only with a wheel on the ground; its strength per vehicle is `jump` in `VEHICLES`.
 
-Other keys: `1` `2` `3` switch ride · `R` checkpoint · `B` horn · `M` mute · `Esc` exit.
+Other keys: `1` `2` `3` switch ride · `R` checkpoint · `N` Morning/Night · `B` horn · `M` mute · `Esc` exit.
 
 ## Tuning headless
 
@@ -72,3 +72,7 @@ Main Street alternates game houses and haunted houses (the `STREET` list in `ass
 ## Image quality
 
 Every sprite is resized once, with high quality, to the size it covers on screen, and that copy is drawn 1:1 (`hq()` in `game.js`). Bigger source images simply come out sharper; there's nothing else to change.
+
+## Morning and Night
+
+Players pick the time of day on the title card (Morning | Night), with the sun/moon button in the in-game top bar, or with `N`. The choice is remembered. At night the sky turns navy with stars and a moon (reflected on the water), and the world is tinted to moonlight in one pass (`drawNight()` in `game.js`). Light sources are then added on top: street lamps, headlights, game signs, coins, house windows, and the haunted houses and ghosts. Anything that should glow at night registers itself with `addLight()`.
