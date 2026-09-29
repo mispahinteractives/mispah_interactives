@@ -155,10 +155,26 @@
   const ui = {};
 
   /* --------------------------------------------------------------- canvas */
+  /* Resolution. Start reasonably sharp, and if frames keep taking too long
+     (a slower computer or phone), step the canvas resolution down until the
+     game runs smoothly. It never steps back up, so it can't flicker. */
+  const QUALITY = [1.5, 1.25, 1];
+  let quality = 0, slowFor = 0, frameAvg = 16.7, settleUntil = 0;
+  function watchFrameRate(gap, now) {
+    if (now < settleUntil || gap > 120) return;         // ignore start-up and tab switches
+    frameAvg += (gap - frameAvg) * 0.08;
+    slowFor = frameAvg > 21 ? slowFor + gap : 0;        // under ~48 fps
+    if (slowFor > 1500 && quality < QUALITY.length - 1 && dpr > 1) {
+      quality++; slowFor = 0; frameAvg = 16.7; settleUntil = now + 1500;
+      resize();
+    }
+  }
+
   function resize() {
     const r = canvas.getBoundingClientRect();
     Wd = Math.max(1, r.width); Ht = Math.max(1, r.height);
-    dpr = Math.min(window.devicePixelRatio || 1, Wd < 700 ? 2 : 1.75);
+    dpr = Math.min(window.devicePixelRatio || 1, QUALITY[quality]);
+    skyCache = null;
     canvas.width = Math.round(Wd * dpr); canvas.height = Math.round(Ht * dpr);
   }
 
@@ -422,15 +438,39 @@
     drawForeground(x0, x1);
   }
 
+  /* Glows (sun, coins, doors, haunted houses) are soft radial gradients.
+     Building a big gradient and filling it every frame was one of the most
+     expensive things on screen, so each colour is rendered once into a small
+     sprite and then just stamped where it's needed. */
+  const glowCache = {};
+  function glowSprite(rgb, inner) {
+    const key = rgb + '|' + inner;
+    if (glowCache[key]) return glowCache[key];
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const g = c.getContext('2d');
+    const gr = g.createRadialGradient(64, 64, 64 * inner, 64, 64, 64);
+    gr.addColorStop(0, `rgba(${rgb},1)`); gr.addColorStop(1, `rgba(${rgb},0)`);
+    g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+    return (glowCache[key] = c);
+  }
+  function drawGlow(x, y, radius, rgb, alpha, inner) {
+    if (alpha <= 0.01) return;
+    ctx.globalAlpha = Math.min(1, alpha);
+    ctx.drawImage(glowSprite(rgb, inner || 0), x - radius, y - radius, radius * 2, radius * 2);
+    ctx.globalAlpha = 1;
+  }
+
+  let skyCache = null;
   function drawSky() {
-    const g = ctx.createLinearGradient(0, 0, 0, Ht);
-    g.addColorStop(0, '#5bb8f0'); g.addColorStop(0.55, '#a9ddf8'); g.addColorStop(1, '#e3f5ff');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, Wd, Ht);
+    if (!skyCache || skyCache.h !== Ht) {
+      const g = ctx.createLinearGradient(0, 0, 0, Ht);
+      g.addColorStop(0, '#5bb8f0'); g.addColorStop(0.55, '#a9ddf8'); g.addColorStop(1, '#e3f5ff');
+      skyCache = { h: Ht, g };
+    }
+    ctx.fillStyle = skyCache.g; ctx.fillRect(0, 0, Wd, Ht);
     // sun
     const sx = Wd * 0.84, sy = Ht * 0.16, r = Math.min(Wd, Ht) * 0.07;
-    const sg = ctx.createRadialGradient(sx, sy, r * 0.4, sx, sy, r * 3.2);
-    sg.addColorStop(0, 'rgba(255,248,200,0.9)'); sg.addColorStop(1, 'rgba(255,248,200,0)');
-    ctx.fillStyle = sg; ctx.fillRect(sx - r * 4, sy - r * 4, r * 8, r * 8);
+    drawGlow(sx, sy, r * 3.2, '255,248,200', 0.9, 0.12);
     ctx.fillStyle = '#fff6c9'; ctx.beginPath(); ctx.arc(sx, sy, r, 0, TAU); ctx.fill();
   }
 
@@ -700,13 +740,10 @@
     const active = state.door === b;
     b.appear = lerp(b.appear || 0, active ? 1 : 0, 0.05);
 
-    const glow = ctx.createRadialGradient(b.x, gy - hh * 0.55, 30, b.x, gy - hh * 0.55, hh * 0.95);
-    glow.addColorStop(0, `rgba(96,36,150,${0.3 + 0.15 * b.appear})`); glow.addColorStop(1, 'rgba(96,36,150,0)');
-    ctx.fillStyle = glow; ctx.fillRect(b.x - hh, gy - hh * 1.6, hh * 2, hh * 1.65);
-    if (house) {
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(house, b.x - HAUNT_W / 2, gy - hh, HAUNT_W, hh);
-    }
+    drawGlow(b.x, gy - hh * 0.55, hh * 0.95, '96,36,150', 0.3 + 0.15 * b.appear, 0.08);
+    // the pre-smoothed copy is drawn with normal (fast) resampling: asking for
+    // high-quality resampling every frame was a major cause of lag
+    if (house) ctx.drawImage(house, b.x - HAUNT_W / 2, gy - hh, HAUNT_W, hh);
 
     const t = state.t / 1000;
     // window ghost: faint, drifting side to side
@@ -794,9 +831,7 @@
     const doorW = hw * GAME_DOOR.w;
     if (active) {
       const pulse = 0.55 + 0.45 * Math.sin(state.t / 180);
-      const lg = ctx.createRadialGradient(b.x, (doorTop + doorBottom) / 2, 10, b.x, (doorTop + doorBottom) / 2, 200);
-      lg.addColorStop(0, `rgba(255,214,90,${0.6 * pulse})`); lg.addColorStop(1, 'rgba(255,214,90,0)');
-      ctx.fillStyle = lg; ctx.fillRect(b.x - 210, doorTop - 150, 420, 330);
+      drawGlow(b.x, (doorTop + doorBottom) / 2, 200, '255,214,90', 0.6 * pulse, 0.05);
     }
     // billboard posts, drawn first so the house covers their feet
     const bbTop = top - 122;
@@ -804,7 +839,6 @@
     for (const px of [b.x - 80, b.x + 70]) {
       ctx.fillRect(px - 6, bbTop + 90, 12, 130); ctx.strokeRect(px - 6, bbTop + 90, 12, 130);
     }
-    ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(house, left, top, hw, hh);
     if (active) {
       // the doorway lights up warm when you pull up
@@ -846,9 +880,7 @@
       const dw = b.kind === 'garage' ? 150 : 96, dh = b.kind === 'garage' ? 150 : 156;
       if (active) {
         const pulse = 0.55 + 0.45 * Math.sin(state.t / 180);
-        const lg = ctx.createRadialGradient(b.x, gy - dh / 2, 10, b.x, gy - dh / 2, 190);
-        lg.addColorStop(0, `rgba(255,214,90,${0.55 * pulse})`); lg.addColorStop(1, 'rgba(255,214,90,0)');
-        ctx.fillStyle = lg; ctx.fillRect(b.x - 200, gy - dh - 140, 400, dh + 150);
+        drawGlow(b.x, gy - dh / 2, 190, '255,214,90', 0.55 * pulse, 0.05);
       }
       ctx.fillStyle = active ? '#ffcf4d' : '#4c2c2c';
       ctx.fillRect(b.x - dw / 2, gy - dh, dw, dh); ctx.strokeRect(b.x - dw / 2, gy - dh, dw, dh);
@@ -920,9 +952,7 @@
       const bob = Math.sin(state.t / 300 + c.x) * 6;
       const sx = Math.abs(Math.cos(state.t / 420 + c.x * 0.01));
       const y = c.y + bob, r = 24;
-      const gl = ctx.createRadialGradient(c.x, y, 4, c.x, y, 60);
-      gl.addColorStop(0, 'rgba(255,220,80,0.45)'); gl.addColorStop(1, 'rgba(255,220,80,0)');
-      ctx.fillStyle = gl; ctx.fillRect(c.x - 60, y - 60, 120, 120);
+      drawGlow(c.x, y, 60, '255,220,80', 0.45, 0.07);
       ctx.save(); ctx.translate(c.x, y); ctx.scale(Math.max(0.15, sx), 1);
       outline(4);
       ctx.fillStyle = '#f2a900'; ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill(); ctx.stroke();
@@ -1259,8 +1289,10 @@
   let last = 0;
   function frame(now) {
     requestAnimationFrame(frame);
-    const dt = last ? Math.min(50, now - last) : 16.67;
+    const gap = last ? now - last : 16.67;
+    const dt = Math.min(50, gap);
     last = now;
+    if (state.active && !document.hidden) watchFrameRate(gap, now); else settleUntil = now + 1500;
     if (!state.active || document.hidden) return;
     if (!state.paused) update(dt);
     else updateParticles(dt);
@@ -1303,6 +1335,7 @@
       modalDoor: $('#modal-door'), modalGarage: $('#modal-garage'), modalFinish: $('#modal-finish'),
       modalFail: $('#modal-fail'), spook: $('#spook'), spookImg: $('#spook img')
     });
+    settleUntil = performance.now() + 2500;
     resize();
     new ResizeObserver(resize).observe(canvas);
     spawnAt(W.SPAWN_X);
