@@ -631,23 +631,23 @@
     const clearOf = (x, gap) => !W.buildings.some((b) => Math.abs(b.x - x) < gap) &&
       !signs.some((sx) => Math.abs(sx - x) < 130);
     for (let x = Math.floor(x0 / 170) * 170; x < x1; x += 170) {
-      const i = Math.round(x / 170), gy = W.heightAt(x);
+      const i = Math.round(x / 170), gy = vergeAt(x);
       const tx = x + rnd(i) * 80;
       if (x <= 0) {
-        if (rnd(i + 11) > 0.25 && clearOf(tx, 0)) drawTree(tx, W.heightAt(tx), 0.85 + rnd(i + 4) * 0.5, rnd(i + 5) > 0.5);
+        if (rnd(i + 11) > 0.25 && clearOf(tx, 0)) drawTree(tx, vergeAt(tx), 0.85 + rnd(i + 4) * 0.5, rnd(i + 5) > 0.5);
       } else if (x < W.TOWN_END - 100) {
         if (i % 4 === 0 && clearOf(x, 260)) drawLamp(x, gy);
-        else if (rnd(i + 21) > 0.45 && clearOf(tx, 330)) drawTree(tx, W.heightAt(tx), 0.75 + rnd(i + 4) * 0.35, rnd(i + 5) > 0.5);
+        else if (rnd(i + 21) > 0.45 && clearOf(tx, 330)) drawTree(tx, vergeAt(tx), 0.75 + rnd(i + 4) * 0.35, rnd(i + 5) > 0.5);
         else if (rnd(i) > 0.45) drawBush(x + rnd(i + 1) * 60, gy, 0.8 + rnd(i + 2) * 0.6);
       } else if (x > W.TOWN_END + 200 && rnd(i + 11) > 0.35) {
-        drawTree(tx, W.heightAt(tx), 0.8 + rnd(i + 4) * 0.6, rnd(i + 5) > 0.5);
+        drawTree(tx, vergeAt(tx), 0.8 + rnd(i + 4) * 0.6, rnd(i + 5) > 0.5);
       }
     }
     // "MOUNTAINS -->" sign, like the reference
     const mx = W.TOWN_END - 250;
-    if (mx > x0 && mx < x1) drawSign(mx, W.heightAt(mx), 'MOUNTAINS  →');
+    if (mx > x0 && mx < x1) drawSign(mx, vergeAt(mx), 'MOUNTAINS  →');
     // start line
-    if (W.SPAWN_X + 180 > x0 && W.SPAWN_X - 400 < x1) drawSign(W.SPAWN_X - 250, W.heightAt(W.SPAWN_X - 250), 'START ▶');
+    if (W.SPAWN_X + 180 > x0 && W.SPAWN_X - 400 < x1) drawSign(W.SPAWN_X - 250, vergeAt(W.SPAWN_X - 250), 'START ▶');
     // finish arch
     if (W.FINISH_X > x0 - 300 && W.FINISH_X < x1 + 300) drawFinish(W.FINISH_X);
     if (W.END_X > x0 - 100 && W.END_X < x1 + 100) drawBarrier(W.END_X);
@@ -716,7 +716,7 @@
   }
 
   function drawFinish(x) {
-    const gy = W.heightAt(x), h = 380, half = 230;
+    const gy = vergeAt(x), h = 380, half = 230;
     outline(5);
     for (const px of [x - half, x + half]) {
       ctx.fillStyle = '#e9ecf5'; ctx.fillRect(px - 9, gy - h, 18, h); ctx.strokeRect(px - 9, gy - h, 18, h);
@@ -761,7 +761,7 @@
   function drawHaunted(b) {
     const house = img['wrong_house_' + b.variant];
     if (!ready(house)) return;
-    const gy = W.heightAt(b.x) + 4;
+    const gy = vergeAt(b.x) + 4;
     const hw = house.naturalWidth * HAUNT_K, hh = house.naturalHeight * HAUNT_K;
     const doorF = HAUNT_DOOR[b.variant] || 0.5;
     const left = b.x - hw * doorF;
@@ -867,7 +867,7 @@
   function drawGameHouse(b, g, pick) {
     const { n, house } = pick;
     const d = GAME_DOOR[n];
-    const gy = W.heightAt(b.x) + 3;
+    const gy = vergeAt(b.x) + 3;
     const hw = house.naturalWidth * GAME_K, hh = house.naturalHeight * GAME_K;
     const left = b.x - hw * d.x, top = gy - hh;
     const active = state.door === b;
@@ -900,7 +900,7 @@
       const pick = b.kind !== 'wrong' && houseFor(b);
       if (pick) { drawGameHouse(b, gameById[b.id], pick); continue; }
       const g = gameById[b.id];
-      const gy = W.heightAt(b.x) + 2;
+      const gy = vergeAt(b.x) + 2;
       const w = 420, h = 300, left = b.x - w / 2, top = gy - h;
       const roof = g ? g.roof : '#7b3a8f';
       const active = state.door === b;
@@ -947,7 +947,14 @@
      with depth; and water at a fixed sea level with moving waves. The
      asphalt, sand and gravel textures are tiles rendered once and anchored
      to the world, so they scroll with the road instead of swimming. */
-  const ROAD_D = 46, BASE_D = 12;
+  // The truck's wheels roll on the physics ground line. The road is drawn
+  // around that line like a side-view road seen slightly from above: its far
+  // edge (kerb and grass verge) sits ROAD_FAR above the wheels and its near
+  // edge ROAD_NEAR below, so the truck drives in the lane, with the centre
+  // line behind its wheels. Houses, trees and signs stand on the far verge.
+  const ROAD_FAR = -30, ROAD_NEAR = 18;
+  const ROAD_D = ROAD_NEAR - ROAD_FAR, BASE_D = 12;
+  const vergeAt = (x) => W.heightAt(x) + ROAD_FAR;
   const SEA = 175;                 // water surface: below the lowest road + its base (74 + 58)
   let arcLen = null;
   function roadArc() {
@@ -1014,7 +1021,7 @@
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
 
     // sandy embankment below the road, darker with depth, with strata
-    const under = ROAD_D + BASE_D;
+    const under = ROAD_NEAR + BASE_D;
     ctx.beginPath(); trace(under - 1);
     ctx.lineTo(pts[i1].x, bottom); ctx.lineTo(pts[i0].x, bottom); ctx.closePath();
     ctx.fillStyle = sandTex(); ctx.fill();
@@ -1026,24 +1033,26 @@
     line(under + 190, 'rgba(140,96,54,0.24)', 14);
 
     // gravel base
-    band(ROAD_D - 1, BASE_D + 1);
+    band(ROAD_NEAR - 1, BASE_D + 1);
     ctx.fillStyle = gravelTex(); ctx.fill();
 
     // asphalt, with its lower edge in shadow
-    band(0, ROAD_D);
+    band(ROAD_FAR, ROAD_D);
     ctx.fillStyle = asphaltTex(); ctx.fill();
-    line(ROAD_D - 4, 'rgba(0,0,0,0.28)', 8);
-    line(ROAD_D - 0.5, 'rgba(0,0,0,0.35)', 1.5);
+    line(ROAD_NEAR - 4, 'rgba(0,0,0,0.28)', 8);
+    line(ROAD_NEAR - 0.5, 'rgba(0,0,0,0.35)', 1.5);
 
-    // grass verge on the far side, kerb and white edge line on top
-    line(-3, '#5f9d45', 7);
-    line(-5.5, '#8bd064', 2.5);
-    line(1.5, '#b9b7c3', 3.5);
-    line(8, 'rgba(255,255,255,0.7)', 2.5);
+    // grass verge on the far side, kerb and white edge line along it
+    line(ROAD_FAR - 3, '#5f9d45', 7);
+    line(ROAD_FAR - 5.5, '#8bd064', 2.5);
+    line(ROAD_FAR + 1.5, '#b9b7c3', 3.5);
+    line(ROAD_FAR + 7, 'rgba(255,255,255,0.7)', 2.5);
+    // near edge line, just in front of the wheels
+    line(ROAD_NEAR - 8, 'rgba(255,255,255,0.45)', 2);
 
-    // dashed centre line, the whole course; anchored to the road by arc length
+    // dashed centre line behind the wheels, anchored to the road by arc length
     ctx.lineCap = 'butt';
-    line(ROAD_D * 0.52, '#f2c230', 4, [46, 42], roadArc()[i0]);
+    line(ROAD_FAR + ROAD_D * 0.36, '#f2c230', 4, [46, 42], roadArc()[i0]);
     ctx.lineCap = 'round';
 
     // water at sea level: gentle waves, a foam line and drifting sparkles
