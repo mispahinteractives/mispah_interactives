@@ -39,6 +39,7 @@
   GAMES.forEach((g, i) => {
     const card = document.createElement('article');
     card.className = 'gcard reveal';
+    card.dataset.game = g.id;
     card.style.setProperty('--accent', g.color);
     card.style.setProperty('--delay', (i * 90) + 'ms');
     card.innerHTML = `

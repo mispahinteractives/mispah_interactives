@@ -91,6 +91,19 @@
       maxSpeed: 25, reverseSpeed: 9, accel: 0.075, brake: 0.86,
       spring: 0.009, springDamp: 0.05, travel: 22, arm: 0.9,
       density: 0.002, wheelDensity: 0.0024, wheelie: 0.0003, airTorque: 0.0011, jump: 12
+    },
+    // green_car.png faces left: drawn mirrored, coordinates in the mirrored image
+    sport: {
+      name: 'Green Sports',
+      tag: 'Fast · Grippy',
+      body: 'green_car', bodySize: [1000, 267], scale: 0.3, flip: true,
+      wheel: 'green_tire.pnge', wheelRadius: 82,
+      wheels: [[194, 210], [760, 210]],
+      hull: [[120, 100, 880, 232], [880, 110, 995, 212], [5, 95, 120, 222], [140, 22, 640, 100]],
+      exhaust: [10, 215],
+      maxSpeed: 26, reverseSpeed: 9, accel: 0.08, brake: 0.84,
+      spring: 0.011, springDamp: 0.06, travel: 18, arm: 0.9,
+      density: 0.0017, wheelDensity: 0.0026, wheelie: 0.00025, airTorque: 0.0012, jump: 11
     }
   };
 
@@ -98,38 +111,15 @@
   const STEP = 40;               // terrain sample spacing
   const START_X = -700;
   const SPAWN_X = 260;
+  const LEVELS = 20;
 
-  // Buildings on the town street, DOOR_SPACING apart. `kind: 'game'` doors
-  // open a game, `garage` opens vehicle select. `id` is looked up by game.js.
+  // Level 1 is Main Street: the town with the game doors, DOOR_SPACING apart,
+  // then the hills. `kind: 'game'` doors open a game, `garage` opens vehicle
+  // select, `wrong` is a haunted house (entering fails the run).
   const FIRST_DOOR = 950;
   const DOOR_SPACING = 1250;
-  // A haunted house follows each game building. Entering one of those
-  // (`kind: 'wrong'`) fails the run; `variant` picks its house and ghost art.
   const STREET = ['garage', 'animal-cafe', 'wrong-1', 'wrong-2', 'cinemoji', 'wrong-3', 'uno-clash', 'wrong-4', 'wrong-5', 'baggage-out', 'wrong-6'];
-  const BUILDINGS = STREET.map((id, i) => ({
-    id, x: FIRST_DOOR + i * DOOR_SPACING,
-    kind: id === 'garage' ? 'garage' : id.startsWith('wrong-') ? 'wrong' : 'game',
-    variant: id.startsWith('wrong-') ? Number(id.slice(6)) : 0
-  }));
   const DOOR_HALF = 150;
-  // a speed bump halfway between each pair of buildings
-  const SPEED_BUMPS = BUILDINGS.slice(1).map((b) => b.x - DOOR_SPACING / 2);
-
-  // Everything past the town is placed relative to where the town ends, so
-  // adding a building or changing the spacing never disturbs the hills.
-  const TOWN_END = BUILDINGS[BUILDINGS.length - 1].x + 1000;
-  const hill = (d) => TOWN_END + d;
-  const FINISH_X = hill(10900);
-  const END_X = FINISH_X + 1000;
-
-  // Stretches of level ground cut into the hills for ramps, props, finish.
-  const FLATS = [
-    [hill(1050), hill(2050)],   // first ramp + landing
-    [hill(3000), hill(3600)],   // can pyramid
-    [hill(5300), hill(6400)],   // second ramp
-    [hill(7850), hill(8350)],   // crate wall
-    [hill(10500), END_X + 400]
-  ];
 
   // Collision categories. Props bounce off the wheels (which bat them away)
   // and each other, but pass the chassis: otherwise small cans slip under a
@@ -137,45 +127,172 @@
   const CAT = { ground: 0x1, chassis: 0x2, wheel: 0x4, prop: 0x8 };
 
   function smooth(t) { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); }
+  function rand(n) { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
 
-  function hills(x) {
-    const t = x - TOWN_END;
-    const grow = smooth(t / 2200);
-    const trend = -250 * (1 - Math.cos((2 * Math.PI * t) / 7400)) / 2;
-    const wave = Math.sin(t * 0.0021) * 88 + Math.sin(t * 0.0047 + 1.3) * 34 +
-                 Math.sin(t * 0.0113 + 2.1) * 11;
-    return (trend - wave + 30 * Math.sin(1.3)) * grow;
-  }
+  /* A course for a level. Level 1 is the original hand-tuned layout. Levels
+     2-20 are generated from the level number (always the same course for the
+     same level): with `d` running 0 -> 1 from level 2 to 20, they get longer,
+     hillier and bumpier, with more ramps, more props and more haunted houses.
+     Everything is expressed as distance `hill(d)` past the start of the hills,
+     and each feature gets a flat stretch cut into the hills. */
+  function makeCourse(level) {
+    level = Math.max(1, Math.min(LEVELS, level | 0));
+    const C = { level, buildings: [], speedBumps: [], flats: [], ramps: [], props: [], coins: [], checkpoints: [SPAWN_X] };
+    let hillLen, amp, f, ph, trendDepth, trendLen;
+    if (level === 1) {
+      C.buildings = STREET.map((id, i) => ({
+        id, x: FIRST_DOOR + i * DOOR_SPACING,
+        kind: id === 'garage' ? 'garage' : id.startsWith('wrong-') ? 'wrong' : 'game',
+        variant: id.startsWith('wrong-') ? Number(id.slice(6)) : 0
+      }));
+      C.speedBumps = C.buildings.slice(1).map((b) => b.x - DOOR_SPACING / 2);
+      C.townEnd = C.buildings[C.buildings.length - 1].x + 1000;
+      hillLen = 10900; amp = 1; f = [0.0021, 0.0047, 0.0113]; ph = [0, 1.3, 2.1]; trendDepth = 250; trendLen = 7400;
+    } else {
+      const d = (level - 2) / (LEVELS - 2);
+      C.townEnd = SPAWN_X + 900;
+      hillLen = Math.round(7000 + 11000 * d);
+      amp = 0.6 + 0.38 * d;
+      const k = 1 + 0.15 * d;
+      f = [0.0021 * k, 0.0047 * k, 0.0113 * k];
+      ph = [rand(level) * 6.28, rand(level + 9) * 6.28, rand(level + 17) * 6.28];
+      trendDepth = 150 + 140 * d; trendLen = 6000 + 3000 * d;
+    }
+    const TOWN_END = C.townEnd, hill = (x) => TOWN_END + x;
+    C.finishX = hill(hillLen);
+    C.endX = C.finishX + 1000;
 
-  function rawHeight(x) {
-    if (x < TOWN_END) {
-      let y = Math.sin(x * 0.013) * 1.5;
-      for (const b of SPEED_BUMPS) {
-        const d = (x - b) / 70;
-        if (Math.abs(d) < 1) y -= 13 * (0.5 + 0.5 * Math.cos(d * Math.PI));
+    function hills(x) {
+      const t = x - TOWN_END;
+      const grow = smooth(t / 2200);
+      const trend = -trendDepth * (1 - Math.cos((2 * Math.PI * t) / trendLen)) / 2;
+      const wave = amp * (Math.sin(t * f[0] + ph[0]) * 88 + Math.sin(t * f[1] + ph[1]) * 34 + Math.sin(t * f[2] + ph[2]) * 11);
+      return (trend - wave + 30 * amp * Math.sin(ph[1])) * grow;
+    }
+    function rawHeight(x) {
+      let y;
+      if (x < TOWN_END) {
+        y = Math.sin(x * 0.013) * 1.5;
+        for (const b of C.speedBumps) {
+          const dd = (x - b) / 70;
+          if (Math.abs(dd) < 1) y -= 13 * (0.5 + 0.5 * Math.cos(dd * Math.PI));
+        }
+      } else y = hills(x);
+      // keep valleys above the water (sea level ~175, road base ~58 deep)
+      return y > 90 ? 90 + (y - 90) * 0.3 : y;
+    }
+    function heightAt(x) {
+      let y = rawHeight(x);
+      for (const [a, b] of C.flats) {
+        const edge = 260;
+        if (x > a - edge && x < b + edge) {
+          const lvl = rawHeight(a);
+          const w = x < a ? smooth((x - (a - edge)) / edge)
+                  : x > b ? 1 - smooth((x - b) / edge) : 1;
+          y = y + (lvl - y) * w;
+        }
       }
       return y;
     }
-    return hills(x);
-  }
+    C.heightAt = heightAt;
 
-  function heightAt(x) {
-    let y = rawHeight(x);
-    for (const [a, b] of FLATS) {
-      const edge = 260;
-      if (x > a - edge && x < b + edge) {
-        const level = rawHeight(a);
-        const w = x < a ? smooth((x - (a - edge)) / edge)
-                : x > b ? 1 - smooth((x - b) / edge) : 1;
-        y = y + (level - y) * w;
+    const row = (cx, n, gap, air) => { for (let i = 0; i < n; i++) C.coins.push({ x: cx + (i - (n - 1) / 2) * gap, air }); };
+    const arc = (cx, n, gap, top, drop) => {
+      for (let i = 0; i < n; i++) { const u = i - (n - 1) / 2; C.coins.push({ x: cx + u * gap, air: top - drop * u * u }); }
+    };
+    const cans = (cx) => { for (let r = 0; r < 4; r++) for (let i = 0; i < 4 - r; i++) C.props.push(['sodacan beercan'.split(' ')[i % 2], cx + (i - (3 - r) / 2) * 19, r * 29.5]); };
+    const crates = (cx) => {
+      for (let r = 0; r < 2; r++) for (let i = 0; i < 2 - r; i++) C.props.push(['crate', cx + i * 67 + r * 33, r * 66.5]);
+      C.props.push(['box', cx + 140]); C.props.push(['suitcase', cx - 130]); C.props.push(['oilcan', cx + 220]);
+    };
+    const pile = (cx) => { C.props.push(['box', cx], ['box', cx + 85], ['box', cx + 40, 47], ['suitcase', cx + 140], ['oilcan', cx + 200]); };
+
+    if (level === 1) {
+      C.flats = [[hill(1050), hill(2050)], [hill(3000), hill(3600)], [hill(5300), hill(6400)], [hill(7850), hill(8350)], [hill(10500), C.endX + 400]];
+      C.ramps = [[hill(1220), 0.62], [hill(5500), 0.78]];
+      pile(TOWN_END - 540);
+      cans(hill(3260));
+      for (let r = 0; r < 2; r++) for (let i = 0; i < 2 - r; i++) C.props.push(['crate', hill(8080) + i * 67 + r * 33, r * 66.5]);
+      C.props.push(['box', hill(8220)], ['suitcase', hill(7950)], ['oilcan', hill(8300)]);
+      C.speedBumps.forEach((x) => row(x, 2, 80));
+      [550, 2400, 4000, 4850, 7300, 9300].forEach((dd) => row(hill(dd), 3, 85));
+      arc(hill(1680), 3, 80, 250, 25);
+      arc(hill(5950), 3, 90, 330, 30);
+      C.checkpoints.push(...C.buildings.slice(1).filter((b) => b.kind !== 'wrong').map((b) => b.x - 200),
+        hill(300), hill(1000), hill(3000), hill(5300), hill(7800), hill(10500));
+    } else {
+      const d = (level - 2) / (LEVELS - 2);
+      const nR = 1 + Math.floor(d * 4.99), nH = Math.min(6, Math.floor(level / 3)), nP = 1 + Math.floor(d * 3.99);
+      // interleave the features, then space them evenly along the hills
+      const feats = [];
+      for (let i = 0; i < Math.max(nR, nH, nP); i++) {
+        if (i < nR) feats.push('ramp');
+        if (i < nH) feats.push('house');
+        if (i < nP) feats.push('props');
       }
+      const span = hillLen - 2200, gap = span / feats.length;
+      let houseNo = 0;
+      const mids = [hill(450)];
+      feats.forEach((kind, i) => {
+        const x = hill(1100 + gap * (i + 0.5));
+        if (kind === 'ramp') {
+          const sc = 0.55 + 0.25 * d * rand(level * 3 + i) + 0.05;
+          C.flats.push([x - 170, x + 720]);
+          C.ramps.push([x, sc]);
+          arc(x + 460, 3, 85, 250 + (sc - 0.62) * 500, 26);
+          C.checkpoints.push(x - 300);
+        } else if (kind === 'house') {
+          C.flats.push([x - 330, x + 330]);
+          C.buildings.push({ id: 'wrong-' + (houseNo + 1), x, kind: 'wrong', variant: (houseNo % 6) + 1 });
+          houseNo++;
+          C.checkpoints.push(x - 650);
+        } else {
+          C.flats.push([x - 260, x + 300]);
+          [cans, crates][i % 2](x);
+          C.checkpoints.push(x - 450);
+        }
+        mids.push(x + gap / 2);
+      });
+      // a row of coins between each pair of features
+      mids.forEach((mx) => { if (mx < C.finishX - 500) row(mx, 3, 85); });
+      C.flats.push([hill(hillLen - 400), C.endX + 400]);
+      C.checkpoints.push(hill(hillLen - 450));
+      C.checkpoints.sort((a, b) => a - b);
+
+      // Maximum-slope filter: sample the course, then limit how much the road
+      // may rise or fall between neighbouring samples (forward and backward
+      // passes until nothing changes). Hills that happen to stack up, and the
+      // edges where a flat stretch is cut into a hill, are eased to at most
+      // 30 degrees on level 2 rising to 38 on level 20 (Level 1 peaks at 39).
+      const dx = 20, x0 = START_X - 2500, n = Math.ceil((C.endX + 2600 - x0) / dx);
+      const tab = new Float64Array(n + 1);
+      for (let i = 0; i <= n; i++) tab[i] = heightAt(x0 + i * dx);
+      const m = Math.tan((30 + 8 * d) * Math.PI / 180) * dx;
+      for (let pass = 0, changed = true; changed && pass < 50; pass++) {
+        changed = false;
+        for (let i = 1; i <= n; i++) {
+          if (tab[i] > tab[i - 1] + m) { tab[i] = tab[i - 1] + m; changed = true; }
+          else if (tab[i] < tab[i - 1] - m) { tab[i] = tab[i - 1] - m; changed = true; }
+        }
+        for (let i = n - 1; i >= 0; i--) {
+          if (tab[i] > tab[i + 1] + m) { tab[i] = tab[i + 1] + m; changed = true; }
+          else if (tab[i] < tab[i + 1] - m) { tab[i] = tab[i + 1] - m; changed = true; }
+        }
+      }
+      C.heightAt = (x) => {
+        const u = Math.max(0, Math.min(n - 1e-6, (x - x0) / dx)), i = Math.floor(u), t = u - i;
+        return tab[i] + (tab[i + 1] - tab[i]) * t;
+      };
     }
-    return y;
+    return C;
   }
 
   /* ------------------------------------------------------------------- world */
   function createWorld(opts) {
     opts = opts || {};
+    const C = makeCourse(opts.level || 1);
+    const heightAt = C.heightAt, TOWN_END = C.townEnd, FINISH_X = C.finishX, END_X = C.endX;
+    const BUILDINGS = C.buildings;
     const engine = Engine.create({
       positionIterations: 10, velocityIterations: 8, constraintIterations: 4,
       enableSleeping: true
@@ -221,8 +338,7 @@
       Composite.add(world, body);
       ramps.push({ x, y: gy, w, h, body });
     }
-    addRamp(hill(1220), 0.62);
-    addRamp(hill(5500), 0.78);
+    C.ramps.forEach(([x, sc]) => addRamp(x, sc));
 
     /* props: knock-over clutter, drawn with the matching sprite */
     const PROP_TYPES = {
@@ -247,49 +363,12 @@
       Composite.add(world, body);
       props.push({ type, w: t.w, h: t.h, body });
     }
-    // town: a delivery pile outside the last building
-    const pile = TOWN_END - 540;
-    addProp('box', pile); addProp('box', pile + 85); addProp('box', pile + 40, 47);
-    addProp('suitcase', pile + 140); addProp('oilcan', pile + 200);
-    // hills: can pyramid on the flat
-    const canX = hill(3260);
-    for (let row = 0; row < 4; row++) {
-      for (let i = 0; i < 4 - row; i++) {
-        addProp(i % 2 ? 'sodacan' : 'beercan', canX + (i - (3 - row) / 2) * 19, row * 29.5);
-      }
-    }
-    // crate pyramid
-    for (let row = 0; row < 2; row++) {
-      for (let i = 0; i < 2 - row; i++) addProp('crate', hill(8080) + i * 67 + row * 33, row * 66.5);
-    }
-    addProp('box', hill(8220));
-    addProp('suitcase', hill(7950)); addProp('oilcan', hill(8300));
+    C.props.forEach(([type, x, lift]) => addProp(type, x, lift));
 
-    /* coins: plain data, collected by distance */
-    // one over every other speed bump, the rest out in the hills; `air` lifts a
-    // coin high enough that only a jump off the ramp before it reaches it
-    const coinSpots = [];
-    const row = (cx, n, gap, air) => {
-      for (let i = 0; i < n; i++) coinSpots.push({ x: cx + (i - (n - 1) / 2) * gap, air });
-    };
-    const arc = (cx, n, gap, top, drop) => {         // an arc of coins over a jump
-      for (let i = 0; i < n; i++) {
-        const u = i - (n - 1) / 2;
-        coinSpots.push({ x: cx + u * gap, air: top - drop * u * u });
-      }
-    };
-    // Main Street: a pair of coins over every speed bump between the houses
-    SPEED_BUMPS.forEach((x) => row(x, 2, 80));
-    // the hills: rows of three along the road, and an arc over each jump
-    [550, 2400, 4000, 4850, 7300, 9300].forEach((d) => row(hill(d), 3, 85));
-    arc(hill(1680), 3, 80, 250, 25);
-    arc(hill(5950), 3, 90, 330, 30);
-    const coins = coinSpots.map(({ x, air }) => ({
-      x, y: heightAt(x) - (air || 105), taken: false
-    }));
-
-    const checkpoints = [SPAWN_X, ...BUILDINGS.slice(1).filter((b) => b.kind !== 'wrong').map((b) => b.x - 200),
-      hill(300), hill(1000), hill(3000), hill(5300), hill(7800), hill(10500)];
+    /* coins: plain data, collected by distance; `air` lifts a coin high
+       enough that only a jump off the ramp before it reaches it */
+    const coins = C.coins.map(({ x, air }) => ({ x, y: heightAt(x) - (air || 105), taken: false }));
+    const checkpoints = C.checkpoints;
 
     /* ---------------------------------------------------------------- the car */
     const car = { parts: [], constraints: [] };
@@ -386,6 +465,7 @@
           const other = a.label === 'prop' ? a : b.label === 'prop' ? b : null;
           if (other && (a.label === 'wheel' || a.label === 'chassis' || b.label === 'wheel' || b.label === 'chassis')) {
             api.events.push({ type: 'hit', x: other.position.x, y: other.position.y, sprite: other.sprite });
+            if (!other.hitAt) other.hitAt = engine.timing.timestamp;
           }
         }
       }
@@ -563,6 +643,16 @@
     function step(input, dtMs) {
       tryJump(input);
       acc += Math.min(dtMs, 50);
+      // a prop the car has knocked over tumbles away and, after ~0.9s, stops
+      // colliding with the car, so it can never end up wedged under a wheel
+      const nowT = engine.timing.timestamp;
+      for (const pr of props) {
+        const b = pr.body;
+        if (b.hitAt && !b.passed && nowT - b.hitAt > 900) {
+          b.passed = true;
+          b.collisionFilter.mask = CAT.ground | CAT.prop;
+        }
+      }
       let n = 0;
       while (acc >= SUB && n < 8) {
         applyControls(input, SUB);
@@ -585,6 +675,8 @@
 
     function resetProps() {
       for (const p of props) {
+        p.body.hitAt = 0; p.body.passed = false;
+        p.body.collisionFilter.mask = CAT.ground | CAT.wheel | CAT.prop;
         Body.setPosition(p.body, p.body.home);
         Body.setAngle(p.body, p.body.home.angle);
         Body.setVelocity(p.body, { x: 0, y: 0 });
@@ -595,12 +687,12 @@
 
     const api = {
       engine, points: drawPoints, ground, ramps, props, coins, checkpoints, events: [],
-      buildings: BUILDINGS, doorHalf: DOOR_HALF,
+      buildings: BUILDINGS, doorHalf: DOOR_HALF, level: C.level, levels: LEVELS,
       car, spawn, step, heightAt, forwardSpeed, resetProps,
       TOWN_END, FINISH_X, END_X, START_X, SPAWN_X
     };
     return api;
   }
 
-  return { VEHICLES, createWorld, heightAt };
+  return { VEHICLES, createWorld, LEVELS, heightAt: makeCourse(1).heightAt };
 });

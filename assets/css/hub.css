@@ -700,7 +700,7 @@ kbd {
 }
 @media (max-width: 380px) {
   .coin-count { font-size: 17px; padding: 6px 10px 6px 7px; }
-  .hud-left .hud-pill:nth-child(2) { display: none; }
+  .hud-left .hud-pill:nth-child(3) { display: none; }   /* the timer; coins stay */
 }
 @media (max-height: 520px) and (orientation: landscape) {
   .stage { min-height: 100svh; }
@@ -1300,10 +1300,93 @@ kbd {
   overflow: visible; scroll-snap-type: none;
 }
 .ride-picker > button { grid-column: span 2; }
-.ride-picker > button:nth-child(4) { grid-column: 2 / span 2; }
+.ride-picker > button:nth-child(4) { grid-column: span 2; }
 .hero-main { width: min(500px, 100%); }
 .hero-setup .ride-name { font-size: 12px; }
 @media (max-width: 760px) {
   .ride-picker, .hero-setup .ride-picker { grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-flow: row; overflow: visible; }
   .hero-setup .ride-name { font-size: 10.5px; }
 }
+
+/* ==========================================================================
+   LEVELS: Play shows the level, a Levels button opens the level map (20
+   tiles, locked ones greyed with a padlock, stars earned), the HUD shows the
+   level, and the finish panel shows the stars earned and "Next level".
+   ========================================================================== */
+.play-lv {
+  margin-left: 4px; padding: 5px 8px; border-radius: 9px; background: var(--outline); color: var(--gold);
+  font: 400 12px/1 var(--display); letter-spacing: 0.04em;
+}
+.btn-levels svg { width: 16px; height: 16px; }
+.hud-level { color: var(--gold); font-size: 16px; }
+@media (max-width: 760px) {
+  .hide-phone { display: none !important; }
+  .play-lv { font-size: 10px; padding: 4px 6px; }
+  .hud-level { font-size: 13px; padding: 0 8px; }
+}
+
+.levels-panel { padding: 30px; width: min(760px, 100%); }
+.levels-panel h2 { margin: 8px 0 6px; font: 400 clamp(30px, 4.5vw, 44px)/1 var(--display); text-transform: uppercase; }
+.levels-sub { margin: 0 0 20px; color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.levels-total { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 10px; background: rgba(255, 200, 61, 0.12); color: var(--gold); font: 400 14px/1 var(--display); }
+.levels-total i, .level-tile .stars i, .finish-stars i {
+  display: inline-block; width: 14px; height: 14px; background: var(--gold);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+.level-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.level-tile {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+  aspect-ratio: 1.15; border-radius: 18px; border: 2px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  color: #fff; cursor: pointer; animation: stat-pop 0.4s var(--snap) backwards; animation-delay: calc(var(--i) * 22ms);
+  transition: transform 0.2s var(--snap), border-color 0.2s, background 0.2s;
+}
+.level-tile b { font: 400 26px/1 var(--display); }
+.level-tile small { position: absolute; top: 7px; left: 0; right: 0; text-align: center; font: 700 9px/1 var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+.level-tile .stars { display: flex; gap: 3px; }
+.level-tile .stars i { width: 13px; height: 13px; background: rgba(255, 255, 255, 0.18); }
+.level-tile .stars i.on { background: var(--gold); }
+.level-tile:not(.locked):hover { transform: translateY(-4px) scale(1.04); border-color: var(--gold); background: rgba(255, 200, 61, 0.1); }
+.level-tile.current { border-color: var(--gold); box-shadow: 0 0 0 4px rgba(255, 200, 61, 0.15); }
+.level-tile.locked { cursor: not-allowed; opacity: 0.45; background: rgba(0, 0, 0, 0.2); }
+.level-tile .lock { width: 18px; height: 18px; fill: currentColor; color: #a79fd6; }
+@media (max-width: 760px) {
+  .levels-panel { padding: 22px 16px; }
+  .level-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .level-tile { border-radius: 14px; gap: 5px; }
+  .level-tile b { font-size: 20px; }
+  .level-tile .stars i { width: 10px; height: 10px; }
+  .level-tile small { font-size: 7px; top: 5px; }
+}
+
+.finish-stars { display: flex; justify-content: center; gap: 10px; margin: 4px 0 8px; }
+.finish-stars i { width: 38px; height: 38px; background: rgba(255, 255, 255, 0.15); }
+.modal.open .finish-stars i.on { background: var(--gold); animation: star-pop 0.5s var(--snap) backwards; animation-delay: var(--d); filter: drop-shadow(0 0 10px rgba(255, 200, 61, 0.7)); }
+@keyframes star-pop { from { transform: scale(0) rotate(-40deg); } }
+.finish-panel .modal-actions { flex-wrap: wrap; }
+
+/* phone HUD with the level pill: keep everything on screen */
+.hud-level { white-space: nowrap; }
+@media (max-width: 440px) {
+  .hud { gap: 6px; padding-left: 10px; padding-right: 10px; }
+  .hud-left, .hud-right { gap: 5px; }
+  .hud-pill { height: 36px; padding: 0 8px; font-size: 15px; border-radius: 11px; }
+  .hud-level { font-size: 12px; padding: 0 7px; }
+  .hud .icon-btn { width: 36px; height: 36px; border-radius: 11px; }
+  .hud .icon-btn svg { width: 18px; height: 18px; }
+  .hud-progress { padding: 0 2px; }
+}
+
+/* the taller logos (Animal Café, UNO Clash) sit a little higher on their card */
+.gcard[data-game="animal-cafe"] .gcard-title,
+.gcard[data-game="uno-clash"] .gcard-title { top: -70px; }
+
+/* arcade-door logos always fit inside their box, whatever their shape:
+   pinned to the box's inner area and scaled to fit */
+.door-chip img {
+  position: absolute; left: 7px; top: 5px; width: calc(100% - 14px); height: calc(100% - 10px);
+  max-width: none; max-height: none; object-fit: contain;
+}
+.door-chip .door-no { z-index: 1; }
+/* the map icon on the Levels button keeps its size */
+.btn-levels svg { flex: none; width: 17px; height: 17px; fill: none; }

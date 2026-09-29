@@ -101,3 +101,18 @@ Five rides: Monster Truck, Blue Bubble, Green Cruiser, **Red Classic** (`red_car
 - **Skull Crusher:** its art is small (192×119), so it's scaled up 1.55× to monster-truck size. Its collision hull covers only the body, not the X-frame underneath.
 
 On phones the ride picker becomes a swipeable row.
+
+## Levels
+
+There are 20 levels (`makeCourse(level)` in `physics.js`):
+
+- **Level 1** is Main Street: the town with the four game doors and the haunted houses, then the hills. It's hand-tuned.
+- **Levels 2–20** are generated from the level number, so each level is always the same course. They get longer (7,000 → 18,000), hillier and bumpier. Ramps grow from 1 to 5, haunted houses (with roof and door ghosts) from 0 to 6, and knock-over props from 1 to 4 stacks, with coin rows and jump arcs placed to match.
+- **Slope limit:** a maximum-slope filter keeps every generated hill at 30° (level 2) to 38° (level 20).
+- **Tested:** every level has been run in the simulator with all six cars, both driving carefully and just holding gas. All finish.
+
+**Progress** is saved in the browser (`gv:levels`). Finishing a level unlocks the next and awards 1–3 stars: one for finishing, one for half the coins, and one for 80% of the coins. The best time per level is kept too. **Play now** starts the last level you played; **Levels** opens the level map. The "Drive there" door buttons always start Main Street (level 1).
+
+## Character
+
+`char.png` sits in the driver's window of every car, drawn behind the car body so the door, roof and tinted glass frame him. `CHAR_SEAT` in `game.js` gives his head position and size for each car.

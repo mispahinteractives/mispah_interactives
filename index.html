@@ -12,8 +12,8 @@
 <meta property="og:image" content="assets/img/logo.png">
 <link rel="preload" href="assets/fonts/russo-one-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/exo-2-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/fonts.css?v=20261002r">
-<link rel="stylesheet" href="assets/css/hub.css?v=20261002r">
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261003g">
+<link rel="stylesheet" href="assets/css/hub.css?v=20261003g">
 </head>
 <body>
 <a class="skip" href="#games">Skip to the game list</a>
@@ -69,9 +69,10 @@
         <button class="btn-play xl" type="button" data-action="play" data-autofocus>
           <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span>
           Play now
-          <kbd class="hint-kbd">Enter</kbd>
+          <span class="play-lv" data-level-label>LV 1</span>
         </button>
-        <a class="btn-ghost" href="#games">Browse games</a>
+        <button class="btn-ghost btn-levels" type="button" data-action="levels"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 4v13.5M15 6.5V20" stroke="currentColor" stroke-width="2"/></svg>Levels</button>
+        <a class="btn-ghost hide-phone" href="#games">Browse games</a>
       </div>
       <div class="hero-setup" style="--i:4">
         <div class="setup-head">
@@ -88,6 +89,7 @@
           <button type="button" data-vehicle="sedan" aria-pressed="false"><span class="ride-slot" data-ride="sedan"></span><span class="ride-name">Green Cruiser</span><span class="ride-tag">Steady</span></button>
           <button type="button" data-vehicle="classic" aria-pressed="false"><span class="ride-slot" data-ride="classic"></span><span class="ride-name">Red Classic</span><span class="ride-tag">Smooth</span></button>
           <button type="button" data-vehicle="skull" aria-pressed="false"><span class="ride-slot" data-ride="skull"></span><span class="ride-name">Skull Crusher</span><span class="ride-tag">Spooky</span></button>
+          <button type="button" data-vehicle="sport" aria-pressed="false"><span class="ride-slot" data-ride="sport"></span><span class="ride-name">Green Sports</span><span class="ride-tag">Fast</span></button>
         </div>
       </div>
     </div>
@@ -106,6 +108,7 @@
   <!-- in-game HUD -->
   <div class="hud" id="hud">
     <div class="hud-left">
+      <div class="hud-pill hud-level"><span data-level-label>LV 1</span></div>
       <div class="hud-pill hud-coins" id="hud-coins"><i class="coin-ico" aria-hidden="true"></i><span data-val>0/44</span></div>
       <div class="hud-pill"><span class="lbl">Time</span><span id="hud-time" class="mono">00:00.0</span></div>
       <div class="hud-pill hud-speed"><span id="hud-speed" class="mono">0</span><span class="lbl">km/h</span></div>
@@ -171,8 +174,8 @@
 <!-- ================================================================ ticker -->
 <div class="ticker" aria-hidden="true">
   <div class="ticker-track">
-    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>5 rides in the garage</span><i></i>
-    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>5 rides in the garage</span><i></i>
+    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span>20 levels to unlock</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>6 rides in the garage</span><i></i>
+    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span>20 levels to unlock</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>6 rides in the garage</span><i></i>
   </div>
 </div>
 
@@ -200,7 +203,7 @@
       <h3 id="feature-title">Monster Hills</h3>
       <p>A physics truck game with working suspension. The body squats, pitches and bounces over every bump. Collect <span data-coin-total>44</span> coins, clear two jumps, and knock down the can pyramid on your way to the flag.</p>
       <ul class="chips">
-        <li>Matter.js physics</li><li>5 rides</li><li>Buttons · Keyboard</li>
+        <li>20 levels</li><li>Matter.js physics</li><li>6 rides</li><li>Buttons · Keyboard</li>
       </ul>
       <div class="feature-actions">
         <button class="btn-play" type="button" data-action="play">
@@ -315,6 +318,9 @@
       <button type="button" class="garage-card" data-vehicle="skull" aria-pressed="false">
         <span class="ride-slot" data-ride="skull"></span><b>Skull Crusher</b><span>Monster · Spooky · Big air</span><kbd>5</kbd>
       </button>
+      <button type="button" class="garage-card" data-vehicle="sport" aria-pressed="false">
+        <span class="ride-slot" data-ride="sport"></span><b>Green Sports</b><span>Fast · Grippy · Sporty</span><kbd>6</kbd>
+      </button>
     </div>
     <button class="modal-x" type="button" data-action="close-modal" aria-label="Close">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
@@ -335,8 +341,21 @@
       <button class="btn-play" type="button" data-action="restart" data-autofocus>
         <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span>Try again
       </button>
+      <button class="btn-ghost" type="button" data-action="levels">Levels</button>
       <button class="btn-ghost" type="button" data-action="exit">Back to hub</button>
     </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-levels" role="dialog" aria-modal="true" aria-labelledby="levels-title" hidden>
+  <div class="modal-panel levels-panel">
+    <p class="eyebrow">Monster Hills</p>
+    <h2 id="levels-title">Choose a level</h2>
+    <p class="levels-sub">Finish a level to unlock the next. Stars: finish, half the coins, 80% of the coins. <b class="levels-total"><i></i><span id="levels-total">0 / 60</span></b></p>
+    <div class="level-grid" id="level-grid"></div>
+    <button class="modal-x" type="button" data-action="close-modal" aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+    </button>
   </div>
 </div>
 
@@ -344,6 +363,7 @@
   <div class="modal-panel finish-panel">
     <p class="badge-record" data-finish-badge hidden>New record!</p>
     <h2 id="finish-title">Finish!</h2>
+    <div class="finish-stars" data-finish-stars aria-label="Stars"></div>
     <p class="finish-ride" data-finish-ride></p>
     <dl class="finish-stats">
       <div><dt>Time</dt><dd class="mono" data-finish-time></dd></div>
@@ -351,19 +371,20 @@
       <div><dt>Best</dt><dd class="mono" data-finish-best></dd></div>
     </dl>
     <div class="modal-actions">
-      <button class="btn-play" type="button" data-action="restart" data-autofocus>
-        <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span>Race again
+      <button class="btn-play" type="button" data-action="next-level" data-finish-next data-autofocus>
+        <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span>Next level
       </button>
-      <button class="btn-ghost" type="button" data-action="garage">Change ride</button>
+      <button class="btn-ghost" type="button" data-action="restart">Race again</button>
+      <button class="btn-ghost" type="button" data-action="levels">Levels</button>
       <button class="btn-ghost" type="button" data-action="exit">Back to hub</button>
     </div>
   </div>
 </div>
 
 <script src="assets/js/vendor/matter.min.js"></script>
-<script src="assets/js/physics.js?v=20261002r"></script>
-<script src="assets/js/games.js?v=20261002r"></script>
-<script src="assets/js/game.js?v=20261002r"></script>
-<script src="assets/js/hub.js?v=20261002r"></script>
+<script src="assets/js/physics.js?v=20261003g"></script>
+<script src="assets/js/games.js?v=20261003g"></script>
+<script src="assets/js/game.js?v=20261003g"></script>
+<script src="assets/js/hub.js?v=20261003g"></script>
 </body>
 </html>

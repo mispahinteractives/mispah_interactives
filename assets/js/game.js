@@ -14,7 +14,7 @@
   const GAMES = window.GV_GAMES || [];
   const VEHICLES = P.VEHICLES;
   const ASSET = 'assets/img/assets/';
-  const SPRITES = ['truckbody', 'truckwheel', 'carbody', 'carbody2', 'wheel', 'wheel2', 'red_car', 'Wheels', 'black_car', 'black_tire', 'strut',
+  const SPRITES = ['truckbody', 'truckwheel', 'carbody', 'carbody2', 'wheel', 'wheel2', 'red_car', 'Wheels', 'black_car', 'black_tire', 'green_car', 'green_tire.pnge', 'char', 'strut',
     'rampleft', 'crate', 'box', 'suitcase', 'oilcan', 'beercan', 'sodacan', 'cloud', 'tree', 'bat',
     'wrong_house_1', 'wrong_house_2', 'wrong_house_3', 'wrong_house_4',
     'ghost_1', 'ghost_2', 'ghost_3', 'ghost_4', 'ghost_5', 'background_house1',
@@ -152,8 +152,26 @@
   })();
 
   /* ---------------------------------------------------------------- state */
-  const W = P.createWorld();
-  const car = W.car;
+  let W = P.createWorld({ level: 1 });
+  let car = W.car;
+  const MAIN_STREET = W.buildings.map((b) => ({ id: b.id, x: b.x }));   // game doors (level 1)
+
+  /* Levels: 20 courses (physics.js). Progress is saved: the highest level
+     unlocked, the best stars (1-3) and best time for each level. A level is
+     unlocked by finishing the one before it. */
+  const LEVELS = P.LEVELS;
+  const progress = (() => {
+    const p = store.get('levels', null) || {};
+    return { unlocked: clamp(p.unlocked | 0 || 1, 1, LEVELS), stars: p.stars || {}, best: p.best || {} };
+  })();
+  const saveProgress = () => store.set('levels', progress);
+  function loadLevel(n) {
+    n = clamp(n | 0 || 1, 1, LEVELS);
+    if (W.level !== n) { W = P.createWorld({ level: n }); car = W.car; arcLen = null; }
+    state.level = n;
+    document.querySelectorAll('[data-level-label]').forEach((el) => { el.textContent = 'LV ' + n; });
+  }
+  const starsFor = (coins, total) => 1 + (coins >= total * 0.5 ? 1 : 0) + (coins >= total * 0.8 ? 1 : 0);
   const gameById = {};
   GAMES.forEach((g) => { gameById[g.id] = g; });
 
@@ -162,6 +180,7 @@
     paused: false,            // a modal is open
     active: true,             // stage on screen
     vehicle: VEHICLES[store.get('vehicle', 'truck')] ? store.get('vehicle', 'truck') : 'truck',
+    level: 1,
     // theme: 'morning' | 'night' | 'rain' (Night is the default). `night`
     // means the lights are on (night and rain); `theme` picks sky and weather.
     theme: ['morning', 'night', 'rain'].includes(store.get('time', 'night')) ? store.get('time', 'night') : 'night',
@@ -731,7 +750,8 @@
     const rev = 0.35 + 0.35 * Math.abs(Math.sin(state.t / 140));
     car.throttle = rev;
     if (after !== before) {
-      if (after > 0) { countdownToast(String(after)); Sound.beep(false); }
+      if (after > 3) { /* level banner still showing */ }
+      else if (after > 0) { countdownToast(String(after)); Sound.beep(false); }
       else { countdownToast('GO!'); Sound.beep(true); state.shake = 6; cam.punch = 0.06; car.throttle = 0.9; state.wasGas = true; }
     }
   }
@@ -1737,6 +1757,26 @@
     ctx.globalAlpha = 1;
   }
 
+  /* The character (char.png) sits in the driver's window of every car, drawn
+     behind the body so the door, roof and (tinted) glass frame him. Seat =
+     where his head goes, in the car image's pixels as drawn (mirrored cars
+     use mirrored coordinates, like their wheels), and his head height in
+     those pixels. His hands land on the steering wheel. */
+  const CHAR_SEAT = {
+    truck: [650, 115, 52], beetle: [318, 88, 40], sedan: [560, 70, 48],
+    classic: [430, 40, 52], skull: [66, 14, 15], sport: [410, 62, 46]
+  };
+  function drawCharacter() {
+    const seat = CHAR_SEAT[car.key], ch = img.char;
+    if (!seat || !ready(ch)) return;
+    const s = car.v.scale, H = (seat[2] / 0.407) * s, Wc = H * ch.naturalWidth / ch.naturalHeight;
+    const head = spriteLocal(seat[0], seat[1]);
+    const left = head.x - 0.187 * Wc, top = head.y - 0.207 * H;
+    ctx.save(); ctx.translate(left + Wc, top); ctx.scale(-1, 1);        // the art faces left
+    ctx.drawImage(hq(ch, Wc, H), 0, 0, Wc, H);
+    ctx.restore();
+  }
+
   function drawCar() {
     const c = car.chassis, v = car.v, s = v.scale;
     if (!c) return;
@@ -1767,6 +1807,7 @@
     // body
     const body = img[v.body];
     ctx.save(); ctx.translate(c.position.x, c.position.y); ctx.rotate(c.angle);
+    drawCharacter();                       // behind the body: the window frames him
     if (ready(body)) {
       const bw = v.bodySize[0] * s, bh = v.bodySize[1] * s;
       if (v.flip) {                        // art that faces left is mirrored to drive right
@@ -1923,6 +1964,29 @@
     setTimeout(() => { if (state.mode === 'play' && state.failed) openModal(m); }, 1500);
   }
 
+  function openLevels() {
+    const grid = $('#level-grid');
+    let total = 0;
+    grid.innerHTML = '';
+    for (let n = 1; n <= LEVELS; n++) {
+      const st = progress.stars[n] || 0, locked = n > progress.unlocked;
+      total += st;
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'level-tile' + (locked ? ' locked' : '') + (n === state.level ? ' current' : '');
+      b.dataset.action = 'pick-level'; b.dataset.level = n;
+      b.disabled = locked;
+      b.setAttribute('aria-label', locked ? `Level ${n}, locked` : `Level ${n}, ${st} of 3 stars`);
+      b.innerHTML = `<b>${n}</b>` + (locked
+        ? '<svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2.5"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>'
+        : `<span class="stars">${[1, 2, 3].map((i) => `<i class="${i <= st ? 'on' : ''}"></i>`).join('')}</span>`)
+        + (n === 1 ? '<small>Main St</small>' : '');
+      b.style.setProperty('--i', n);
+      grid.appendChild(b);
+    }
+    $('#levels-total').textContent = total + ' / ' + LEVELS * 3;
+    openModal(ui.modalLevels);
+  }
+
   function finish() {
     state.finished = true;
     Sound.finish();
@@ -1932,23 +1996,38 @@
         (Math.random() - 0.5) * 6, -Math.random() * 4, 9 + Math.random() * 7, 2200 + Math.random() * 1200,
         ['#ffc83d', '#ff4f8b', '#37e2a0', '#5b8cff', '#ffffff'][i % 5], 'confetti');
     }
-    const bestKey = 'best:' + state.vehicle;
-    const prev = store.get(bestKey, 0);
-    const isBest = !prev || state.time < prev;
-    if (isBest) store.set(bestKey, state.time);
+    // per-vehicle best on Main Street (shown on the intro)
+    if (state.level === 1) {
+      const bestKey = 'best:' + state.vehicle, prevV = store.get(bestKey, 0);
+      if (!prevV || state.time < prevV) store.set(bestKey, state.time);
+    }
+    // level progress: stars, best time, unlock the next level
+    const L = state.level, stars = starsFor(state.coins, W.coins.length);
+    const prev = progress.best[L] || 0, isBest = !prev || state.time < prev;
+    if (isBest) progress.best[L] = state.time;
+    progress.stars[L] = Math.max(progress.stars[L] || 0, stars);
+    const unlockedNew = L < LEVELS && progress.unlocked <= L;
+    if (unlockedNew) progress.unlocked = L + 1;
+    saveProgress();
     const m = ui.modalFinish;
+    $('#finish-title', m).textContent = 'Level ' + L + ' complete!';
+    $('[data-finish-stars]', m).innerHTML = [1, 2, 3].map((i) => `<i class="${i <= stars ? 'on' : ''}" style="--d:${i * 0.18}s"></i>`).join('');
     $('[data-finish-time]', m).textContent = fmtTime(state.time);
     $('[data-finish-coins]', m).textContent = state.coins + '/' + W.coins.length;
     $('[data-finish-best]', m).textContent = fmtTime(isBest ? state.time : prev);
     $('[data-finish-badge]', m).hidden = !isBest;
-    $('[data-finish-ride]', m).textContent = VEHICLES[state.vehicle].name;
-    emit('best', { vehicle: state.vehicle, time: isBest ? state.time : prev });
+    $('[data-finish-ride]', m).textContent = VEHICLES[state.vehicle].name + (unlockedNew ? ' · Level ' + (L + 1) + ' unlocked!' : '');
+    $('[data-finish-next]', m).hidden = L >= LEVELS;
+    emit('best', { vehicle: state.vehicle, time: state.time });
     setTimeout(() => { if (state.mode === 'play') openModal(m); }, 1400);
   }
 
   /* ----------------------------------------------------------- mode flow */
   function start(opts) {
     opts = opts || {};
+    // an explicit spot (`at`, e.g. a game door) is on Main Street = level 1
+    loadLevel(opts.level || (opts.at ? 1 : clamp(store.get('level', 1), 1, progress.unlocked)));
+    store.set('level', state.level);
     Sound.ensure();
     Sound.rain(state.theme === 'rain' && !Sound.muted);
     closeAllModals();
@@ -1960,9 +2039,9 @@
     canvas.focus({ preventScroll: true });
     window.scrollTo({ top: 0 });
     emit('mode', { mode: 'play' });
-    state.countdown = 1800; state.wasGas = false;
+    state.countdown = 2500; state.wasGas = false;     // "LEVEL n" banner, then 3-2-1-GO
     cam.punch = 0.12;                                  // camera punch with the warp burst
-    countdownToast('3'); Sound.beep(false);
+    toast('LEVEL ' + state.level);
   }
 
   function exit() {
@@ -2001,6 +2080,7 @@
       else if (e.code === 'Digit3') setVehicle('sedan');
       else if (e.code === 'Digit4') setVehicle('classic');
       else if (e.code === 'Digit5') setVehicle('skull');
+      else if (e.code === 'Digit6') setVehicle('sport');
     });
     window.addEventListener('keyup', (e) => keys.delete(e.code));
     window.addEventListener('blur', () => { keys.clear(); touch.gas = touch.brake = touch.jump = false; });
@@ -2050,7 +2130,7 @@
       if (a === 'play') { e.preventDefault(); start({ at: el.dataset.at ? Number(el.dataset.at) : undefined }); }
       else if (a === 'drive-to') {
         e.preventDefault();
-        const b = W.buildings.find((x) => x.id === el.dataset.game);
+        const b = MAIN_STREET.find((x) => x.id === el.dataset.game);
         start({ at: b ? b.x - 420 : undefined });
       }
       else if (a === 'exit') exit();
@@ -2058,7 +2138,10 @@
       else if (a === 'enter-door') enterDoor();
       else if (a === 'mute') { Sound.ensure(); setMuteUi(Sound.toggle()); }
       else if (a === 'close-modal') closeModal(el.closest('.modal'));
-      else if (a === 'restart') { closeAllModals(); start(); }
+      else if (a === 'restart') { closeAllModals(); start({ level: state.level }); }
+      else if (a === 'next-level') { closeAllModals(); start({ level: Math.min(LEVELS, state.level + 1) }); }
+      else if (a === 'levels') { e.preventDefault(); openLevels(); }
+      else if (a === 'pick-level') { const n = Number(el.dataset.level); if (n <= progress.unlocked) { closeAllModals(); start({ level: n }); } }
       else if (a === 'respawn') spawnAt(state.checkpoint, true);
       else if (a === 'toggle-time') setTime(nextTheme());
     });
@@ -2136,7 +2219,7 @@
       speed: $('#hud-speed'), progress: $('#hud-progress'), toast: $('#toast'),
       prompt: $('#door-prompt'), promptName: $('#door-prompt-name'),
       modalDoor: $('#modal-door'), modalGarage: $('#modal-garage'), modalFinish: $('#modal-finish'),
-      modalFail: $('#modal-fail'), spook: $('#spook')
+      modalFail: $('#modal-fail'), spook: $('#spook'), modalLevels: $('#modal-levels')
     });
     settleUntil = performance.now() + 2500;
     resize();
@@ -2153,7 +2236,8 @@
   }
 
   window.GVGame = {
-    init, start, exit, setVehicle, setTime, vehiclePreview,
+    init, start, exit, setVehicle, setTime, vehiclePreview, openLevels,
+    get level() { return state.level; }, progress: () => JSON.parse(JSON.stringify(progress)),
     setActive(on) { state.active = on; if (!on) Sound.engine(0, 0, false); },
     // read-only: what a haunted house's ghost is doing ('in' | 'tell' | 'out')
     ghostPhase(id) { const b = W.buildings.find((x) => x.id === id); return b && b.gs ? b.gs.phase : 'in'; },
