@@ -32,17 +32,9 @@ Edit `assets/js/games.js`. Each entry becomes a card in "Select your game" and a
 
 ## Controls
 
-| Input | Gas | Brake | Jump | Lean | Enter door |
-|---|---|---|---|---|---|
-| Keyboard | → / D | ← / A | Space / J | ↑ ↓ | E / Enter |
-| Touch | Gas button | Brake button | Jump button | (Gas/Brake in air) | gold button |
-| Gamepad | RT | LT / B | A | left stick | Y |
+The car is driven with the on-screen buttons on every device: **Brake** (bottom-left), **Gas** and **Jump** (bottom-right). Tap them on a phone or tablet, or click them with the mouse on a PC. On a PC the keyboard works too: → / D gas, ← / A brake, Space / ↑ / W jump, ↓ lean, E enter a door. At a door, press the gold **Enter** button.
 
-Brake slows the car and then holds it still (on slopes too); it never reverses. If you're stuck, jump or press R to go back to the last checkpoint.
-
-The touch buttons show on touch screens and on any screen narrower than 900px while playing. Jump hops once per press, only with a wheel on the ground; its strength per vehicle is `jump` in `VEHICLES`.
-
-Other keys: `1` `2` `3` switch ride · `R` checkpoint · `N` Morning/Night/Rain · `B` horn · `M` mute · `Esc` exit.
+A hop carries the car a little way forward (`JUMP_FORWARD` in `physics.js`). Brake slows the car and then holds it still (on slopes too); it never reverses. The top bar has reset, ride, theme, sound and exit buttons.
 
 ## Tuning headless
 
@@ -66,6 +58,7 @@ Main Street alternates game houses and haunted houses (the `STREET` list in `ass
 
 - **Game houses:** `correct_house_1`–`4.png`, one per game by door number. `correct_house_5.png` is the Garage. Each has the game's lit sign on a rooftop billboard.
 - **Haunted houses:** `wrong_house_1`–`6.png`. Bats (`bat.png`) loop round the roof, and ghosts (`ghost_1`–`5.png`) float in the doorway and an upper window. The door prompt only says "Enter ???". Entering one fails the run: the ghosts burst out at the screen, then the "Spooked!" panel offers Try again or Back to hub.
+- **House ghosts:** every haunted house has one or two ghosts hovering over its roof (`ROOF_GHOST_BOTTOM` 212 above the road, above any car driving past but within reach of a jump). Every 6–10 seconds another ghost stands at the door for about 2.5 seconds. **Any ghost that touches the car fails the run.** Collision is pixel-accurate: each ghost image is turned into a mask of its solid pixels (`ghostMask`), which is tested against the car's physics hull polygons and wheel circles (`ghostTouchesCar`). The door ghost counts once it's more than half faded in.
 - **Scale 1:** houses are always drawn at scale 1: one image pixel is one unit of the game world, and they're never enlarged or shrunk. To make a house bigger or smaller, change the image itself. `GAME_DOOR` / `HAUNT_DOOR` in `game.js` record where the door is in each picture, so the door lines up with the door spot. If you replace a house image, update its door position there.
 - **Ghosts:** also always at scale 1, in the game, the jump scare and the fail card. They only move and fade; they're never resized or tilted.
 
@@ -78,3 +71,7 @@ Every sprite is resized once, with high quality, to the size it covers on screen
 The game starts in Night by default. Players pick a theme on the title card (Morning | Night | Rain), with the sun/moon button in the in-game top bar, or with `N`. The choice is remembered. At night the sky turns navy with stars and a moon (reflected on the water), and the world is tinted to moonlight in one pass (`drawNight()` in `game.js`). Light sources are then added on top: street lamps, headlights, game signs, coins, house windows, and the haunted houses and ghosts. Anything that should glow at night registers itself with `addLight()`.
 
 Rain uses the same lights-on pipeline as Night, with an overcast sky, slanted rain in two depths, splashes and tyre spray, a wet sheen on the road, and random lightning with thunder (`drawRain()` / `rainTick()` in `game.js`).
+
+## Crows
+
+Two crows (`crow_1.png` wings up, `crow_2.png` wings down) fly across the top of the screen at scale 1, alternating frames to flap. crow_1 faces left in the art, so it's drawn mirrored.

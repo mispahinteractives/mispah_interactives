@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Rubik:wght@400;500;700;800&display=swap">
-<link rel="stylesheet" href="assets/css/hub.css?v=20260930v">
+<link rel="stylesheet" href="assets/css/hub.css?v=20261001p">
 </head>
 <body>
 <a class="skip" href="#games">Skip to the game list</a>
@@ -127,7 +127,6 @@
     </div>
   </div>
 
-  <p class="key-hints" aria-hidden="true"><kbd>→</kbd> gas <kbd>←</kbd> brake <kbd>Space</kbd> jump <kbd>↑</kbd><kbd>↓</kbd> lean <kbd>E</kbd> enter door <kbd>R</kbd> reset <kbd>N</kbd> theme <kbd>B</kbd> horn</p>
 
   <button id="door-prompt" class="door-prompt" type="button" data-action="enter-door" hidden>
     <kbd>E</kbd><span class="dp-verb">Enter</span><b id="door-prompt-name"></b>
@@ -190,7 +189,7 @@
       <h3 id="feature-title">Monster Hills</h3>
       <p>A physics truck game with working suspension. The body squats, pitches and bounces over every bump. Collect 12 coins, clear two jumps, and knock down the can pyramid on your way to the flag.</p>
       <ul class="chips">
-        <li>Matter.js physics</li><li>3 rides</li><li>Keyboard · Touch · Gamepad</li>
+        <li>Matter.js physics</li><li>3 rides</li><li>Buttons · Keyboard</li>
       </ul>
       <div class="feature-actions">
         <button class="btn-play" type="button" data-action="play">
@@ -212,26 +211,14 @@
     <p class="eyebrow">Tutorial</p>
     <h2>How to drive</h2>
   </header>
-  <div class="howto">
+  <div class="howto two">
     <div class="howto-card reveal">
-      <h3>Keyboard</h3>
-      <ul class="keys">
-        <li><span><kbd>→</kbd><kbd>D</kbd></span>Gas</li>
-        <li><span><kbd>←</kbd><kbd>A</kbd></span>Brake</li>
-        <li><span><kbd>Space</kbd><kbd>J</kbd></span>Jump</li>
-        <li><span><kbd>↑</kbd><kbd>↓</kbd></span>Lean in the air</li>
-        <li><span><kbd>E</kbd><kbd>Enter</kbd></span>Enter a door</li>
-        <li><span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd></span>Switch ride</li>
-        <li><span><kbd>R</kbd></span>Back to checkpoint</li>
-        <li><span><kbd>N</kbd></span>Morning / Night / Rain</li>
-      </ul>
-    </div>
-    <div class="howto-card reveal">
-      <h3>Touch</h3>
+      <h3>Controls</h3>
       <div class="touch-demo" aria-hidden="true">
         <span class="td-pedal l">Brake</span><span class="td-phone"></span><span class="td-stack"><span class="td-pedal j">Jump</span><span class="td-pedal r">Gas</span></span>
       </div>
-      <p>Hold <b>Gas</b> and <b>Brake</b> in the bottom corners, and tap <b>Jump</b> to hop. At a door, tap the gold <b>Enter</b> button.</p>
+      <p>Hold <b>Gas</b> and <b>Brake</b> in the bottom corners, and press <b>Jump</b> to hop. Tap them on a phone or click them with the mouse on a PC. At a door, press the gold <b>Enter</b> button.</p>
+      <ul class="keys"><li><span><kbd>→</kbd><kbd>D</kbd></span>Gas</li><li><span><kbd>←</kbd><kbd>A</kbd></span>Brake</li><li><span><kbd>Space</kbd><kbd>↑</kbd></span>Jump</li><li><span><kbd>E</kbd></span>Enter a door</li></ul>
     </div>
     <div class="howto-card reveal">
       <h3>Pro tips</h3>
@@ -239,9 +226,9 @@
         <li><b>Airborne?</b> Gas lifts the nose and brake drops it, so you can line up your landing.</li>
         <li><b>Steep climb?</b> Ease off the gas so the front wheels stay down.</li>
         <li><b>Haunted houses:</b> bats and ghosts mean a wrong door. Enter one and you're spooked, and the run is over.</li>
+        <li><b>Ghosts:</b> ghosts float over every haunted house, and now and then one stands at the door. If any ghost touches your car, you're spooked and the run is over, so don't jump into the roof ghosts, and wait while a ghost is at the door.</li>
         <li><b>Hop it:</b> jump over crates and cans, or to clear a bump at speed.</li>
-        <li><b>Gamepad:</b> RT is gas, LT is brake and A jumps. The stick leans the car.</li>
-      </ul>
+              </ul>
     </div>
   </div>
 </section>
@@ -322,7 +309,7 @@
   <div class="modal-panel finish-panel fail-panel">
     <img class="fail-ghost" data-fail-ghost alt="">
     <h2 id="fail-title">Spooked!</h2>
-    <p class="finish-ride">That was a haunted house. Only doors with a game sign lead to a game. Watch for the bats!</p>
+    <p class="finish-ride" data-fail-reason>That was a haunted house. Only doors with a game sign lead to a game. Watch for the bats!</p>
     <dl class="finish-stats two">
       <div><dt>Time</dt><dd class="mono" data-fail-time></dd></div>
       <div><dt>Coins</dt><dd class="mono" data-fail-coins></dd></div>
@@ -357,9 +344,9 @@
 </div>
 
 <script src="assets/js/vendor/matter.min.js"></script>
-<script src="assets/js/physics.js?v=20260930v"></script>
-<script src="assets/js/games.js?v=20260930v"></script>
-<script src="assets/js/game.js?v=20260930v"></script>
-<script src="assets/js/hub.js?v=20260930v"></script>
+<script src="assets/js/physics.js?v=20261001p"></script>
+<script src="assets/js/games.js?v=20261001p"></script>
+<script src="assets/js/game.js?v=20261001p"></script>
+<script src="assets/js/hub.js?v=20261001p"></script>
 </body>
 </html>

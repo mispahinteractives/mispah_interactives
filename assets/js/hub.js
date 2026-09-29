@@ -44,7 +44,6 @@
     card.innerHTML = `
       <div class="gcard-media">
         <img class="gcard-cover" src="${g.cover}" alt="" loading="lazy">
-        ${g.video ? '<video class="gcard-video" muted loop playsinline preload="none" aria-hidden="true"></video>' : ''}
         <span class="gcard-door">Door ${g.door}</span>
         <span class="gcard-shine" aria-hidden="true"></span>
       </div>
@@ -61,24 +60,9 @@
       </div>`;
     row.appendChild(card);
 
-    const video = $('.gcard-video', card);
-    const media = $('.gcard-media', card);
-    let loaded = false;
-    const playPreview = () => {
-      if (reduceMotion || !g.video) return;
-      if (!loaded) {
-        video.innerHTML = (g.videoWebm ? `<source src="${g.videoWebm}" type="video/webm">` : '') + `<source src="${g.video}" type="video/mp4">`;
-        video.load(); loaded = true;
-      }
-      const p = video.play(); if (p && p.catch) p.catch(() => {});
-      card.classList.add('previewing');
-    };
-    const stopPreview = () => { if (video) video.pause(); card.classList.remove('previewing'); };
-
+    // hover: the card tilts toward the pointer (cover image only, no video)
     if (canHover) {
-      card.addEventListener('pointerenter', playPreview);
       card.addEventListener('pointerleave', () => {
-        stopPreview();
         card.style.setProperty('--rx', '0deg'); card.style.setProperty('--ry', '0deg');
       });
       card.addEventListener('pointermove', (e) => {
@@ -89,11 +73,6 @@
         card.style.setProperty('--ry', (px * 10).toFixed(2) + 'deg');
         card.style.setProperty('--mx', ((px + 0.5) * 100).toFixed(1) + '%');
       });
-      card.addEventListener('focusin', playPreview);
-      card.addEventListener('focusout', (e) => { if (!card.contains(e.relatedTarget)) stopPreview(); });
-    } else {
-      // touch: a tap on the artwork toggles the gameplay preview
-      if (video) media.addEventListener('click', () => (video.paused ? playPreview() : stopPreview()));
     }
   });
 
@@ -138,6 +117,34 @@
     const t = e.target;
     if (t && t !== document.body && t.id !== 'game-canvas') return;
     if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); G.start(); }
+  });
+
+  /* ----------------------------------------------------------- motion fx */
+  // stagger reveals inside the same parent so rows of cards arrive in order
+  $$('.reveal').forEach((el) => {
+    if (el.style.getPropertyValue('--delay')) return;
+    const sibs = [...el.parentElement.children].filter((c) => c.classList.contains('reveal'));
+    el.style.setProperty('--delay', (sibs.indexOf(el) * 90) + 'ms');
+  });
+  // scroll speed bar
+  const meter = document.createElement('div'); meter.className = 'scroll-meter'; document.body.appendChild(meter);
+  const onMeter = () => {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    meter.style.setProperty('--scroll', max > 0 ? (scrollY / max).toFixed(4) : 0);
+  };
+  window.addEventListener('scroll', onMeter, { passive: true }); onMeter();
+  // warp burst on starting a run, light wipe on changing theme
+  const fx = (cls) => { const d = document.createElement('div'); d.className = cls; stage.appendChild(d); return d; };
+  const warp = fx('warp-fx'), wipe = fx('theme-wipe');
+  const replay = (el) => { el.classList.remove('go'); void el.offsetWidth; el.classList.add('go'); };
+  window.addEventListener('gv:mode', (e) => { if (e.detail.mode === 'play' && !reduceMotion) replay(warp); });
+  let themeReady = false;
+  window.addEventListener('gv:time', () => { if (themeReady && !reduceMotion) replay(wipe); });
+  setTimeout(() => { themeReady = true; }, 500);
+  // picking a ride makes it rev
+  window.addEventListener('gv:vehicle', (e) => {
+    if (reduceMotion) return;
+    $$(`[data-ride="${e.detail.key}"] .ride`).forEach((r) => { r.classList.remove('rev'); void r.offsetWidth; r.classList.add('rev'); });
   });
 
   /* ------------------------------------------------------ scroll reveals */

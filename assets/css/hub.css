@@ -288,15 +288,7 @@ kbd {
   background: conic-gradient(#fff 0 25%, var(--outline) 0 50%, #fff 0 75%, var(--outline) 0) 0 0 / 10px 10px;
 }
 
-.key-hints {
-  position: absolute; left: 50%; bottom: 18px; z-index: 4; margin: 0; transform: translateX(-50%);
-  display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; white-space: nowrap;
-  padding: 8px 14px; border-radius: 14px; background: rgba(20, 14, 50, 0.62); color: #e8e4ff;
-  font: 500 13px/1 var(--body); opacity: 0; pointer-events: none; transition: opacity 0.4s;
-}
-.key-hints kbd { font-size: 11px; height: 1.8em; min-width: 1.8em; }
-.key-hints kbd + kbd { margin-left: -2px; }
-.is-playing .key-hints { opacity: 1; animation: fadeout 0.6s 7s forwards; }
+
 @keyframes fadeout { to { opacity: 0; } }
 
 .door-prompt {
@@ -364,9 +356,10 @@ kbd {
   justify-content: space-between; align-items: flex-end;
   padding: 0 max(18px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
 }
-@media (hover: none) and (pointer: coarse) { .is-playing .pedals { display: flex; } .is-playing .key-hints { display: none; } }
-@media (max-width: 900px) { .is-playing .pedals { display: flex; } }
-html.touch .is-playing .pedals { display: flex; }
+/* the Brake / Gas / Jump buttons drive the car on every device: tapped on
+   phones and tablets, clicked with the mouse on a PC */
+.is-playing .pedals { display: flex; }
+.pedal { cursor: pointer; }
 .pedal-group { display: flex; align-items: flex-end; gap: 14px; }
 .pedal {
   --c: #26c488; --c-down: #1a9a69;
@@ -511,9 +504,7 @@ html.touch .is-playing .pedals { display: flex; }
 .gcard.reveal:not(.in) { transform: translateY(34px); }
 .gcard:hover, .gcard:focus-within { box-shadow: 0 8px 0 #070514, 0 0 0 4px var(--accent), 0 30px 60px rgba(0, 0, 0, 0.45); }
 .gcard-media { position: relative; aspect-ratio: 4 / 3.6; overflow: hidden; background: #000; cursor: pointer; }
-.gcard-cover, .gcard-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; transition: transform 0.6s, opacity 0.4s; }
-.gcard-video { opacity: 0; object-position: 50% 50%; }
-.gcard.previewing .gcard-video { opacity: 1; }
+.gcard-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; transition: transform 0.6s, opacity 0.4s; }
 .gcard:hover .gcard-cover { transform: scale(1.06); }
 .gcard-door {
   position: absolute; left: 14px; top: 14px; padding: 7px 11px; border-radius: 10px; border: 2px solid var(--outline);
@@ -660,7 +651,6 @@ html.touch .is-playing .pedals { display: flex; }
   .gcard { scroll-snap-align: start; }
   .howto { grid-template-columns: 1fr 1fr; }
   .howto-card:last-child { grid-column: 1 / -1; }
-  .key-hints { display: none; }
 }
 @media (max-width: 900px) {
   .feature { grid-template-columns: 1fr; }
@@ -976,4 +966,146 @@ html.touch .is-playing .pedals { display: flex; }
 .toast.count { text-shadow: 0 4px 0 rgba(10, 6, 30, 0.9), 0 0 36px rgba(255, 200, 61, 0.55) !important; }
 @media (max-width: 760px) {
   .title span, .title span.t1, .title span.t2 { text-shadow: 0 2px 0 rgba(10, 6, 30, 0.9), 0 6px 16px rgba(0, 0, 0, 0.45) !important; }
+}
+
+/* How to drive: Controls + Pro tips */
+.howto.two { grid-template-columns: 1fr 1.4fr; }
+@media (max-width: 760px) { .howto.two { grid-template-columns: 1fr; } }
+
+/* PC (mouse): all three controls together on the right: Brake, Jump, Gas */
+@media (hover: hover) and (pointer: fine) {
+  .is-playing .pedals { justify-content: flex-end; gap: 16px; }
+}
+
+/* ==========================================================================
+   MOTION: fast, springy, car-flavoured tweens. Transforms and opacity only,
+   so they stay light; all of it switches off under prefers-reduced-motion.
+   ========================================================================== */
+:root {
+  --zoom: cubic-bezier(.16, 1.2, .3, 1);      /* quick launch, small overshoot */
+  --snap: cubic-bezier(.2, 1.5, .35, 1);      /* springy snap */
+}
+
+/* scroll reveals: things drive in from the left, skewed and blurred, then snap */
+.reveal {
+  opacity: 0; transform: translateX(-70px) skewX(-10deg); filter: blur(6px);
+  transition: opacity 0.45s ease-out var(--delay, 0ms), transform 0.6s var(--zoom) var(--delay, 0ms), filter 0.45s ease-out var(--delay, 0ms);
+}
+.reveal.in { opacity: 1; transform: none; filter: none; }
+.gcard.reveal:not(.in) { transform: translateX(-70px) skewX(-10deg); }
+
+/* section titles: a speed streak zips in underneath */
+.section-head h2::after, .contact-intro h2::after {
+  content: ""; display: block; width: 110px; height: 5px; margin-top: 14px; border-radius: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--pink) 70%, transparent);
+  transform: scaleX(0); transform-origin: left; transition: transform 0.7s var(--zoom) 0.25s;
+}
+.section-head.in h2::after, .contact-card.in h2::after { transform: scaleX(1); }
+
+/* scroll speed bar at the very top */
+.scroll-meter {
+  position: fixed; left: 0; top: 0; z-index: 70; height: 3px; width: 100%; pointer-events: none;
+  background: linear-gradient(90deg, var(--pink), var(--gold)); box-shadow: 0 0 10px rgba(255, 200, 61, 0.7);
+  transform: scaleX(var(--scroll, 0)); transform-origin: left;
+}
+.is-playing .scroll-meter { opacity: 0; }
+
+/* Play buttons: a light streak shoots across on hover, the arrow pushes forward */
+.btn-play {
+  background:
+    linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.75) 50%, transparent 62%) -160% 0 / 250% 100% no-repeat,
+    linear-gradient(180deg, #ffe07a, var(--gold) 55%);
+  transition: transform 0.18s var(--snap), box-shadow 0.18s, filter 0.2s, background-position 0s;
+}
+.btn-play:hover { background-position: 160% 0, 0 0; transition: transform 0.18s var(--snap), box-shadow 0.18s, filter 0.2s, background-position 0.55s ease-out; transform: translateY(-3px) skewX(-4deg); }
+.btn-play:active { transform: translateY(5px) scale(0.97); }
+.btn-play-icon svg { transition: transform 0.25s var(--snap); }
+.btn-play:hover .btn-play-icon svg { transform: translateX(4px) scale(1.12); }
+.btn-play:hover .btn-play-icon { animation: rev 0.35s linear 2; }
+@keyframes rev { 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+.btn-ghost { position: relative; overflow: hidden; }
+.btn-ghost::after {
+  content: ""; position: absolute; left: 12%; right: 12%; bottom: 6px; height: 2px; border-radius: 2px;
+  background: var(--gold); transform: scaleX(0); transform-origin: left; transition: transform 0.3s var(--zoom);
+}
+.btn-ghost:hover::after { transform: scaleX(1); }
+
+/* menu links: zip underline */
+.menu-chip { position: relative; }
+.menu-chip:not(.is-hot)::after {
+  content: ""; position: absolute; left: 16px; right: 16px; bottom: 5px; height: 2px; border-radius: 2px;
+  background: var(--gold); transform: scaleX(0); transform-origin: left; transition: transform 0.28s var(--zoom);
+}
+.menu-chip:not(.is-hot):hover::after { transform: scaleX(1); }
+
+/* game cards: lunge forward on hover */
+.gcard { transform: rotateX(var(--rx)) rotateY(var(--ry)) translateY(var(--lift, 0px)) scale(var(--sc, 1)); transition: transform 0.3s var(--zoom), box-shadow 0.3s, opacity 0.45s ease-out var(--delay, 0ms), filter 0.45s ease-out var(--delay, 0ms); }
+.gcard.in:hover, .gcard.in:focus-within { --lift: -10px; --sc: 1.025; }
+.gcard .btn-play.sm .btn-play-icon { transition: transform 0.3s var(--snap); }
+.gcard:hover .btn-play.sm .btn-play-icon { transform: scale(1.12) rotate(-6deg); }
+.feature { transition: transform 0.35s var(--zoom), box-shadow 0.35s, opacity 0.45s ease-out, filter 0.45s ease-out; }
+.feature.in:hover { transform: translateY(-6px); }
+.door-chip:hover img { animation: rev 0.3s linear 2; }
+
+/* picking a ride: it revs (hop + spinning wheels) */
+.ride.rev .ride-body { animation: ride-hop 0.55s var(--snap); }
+.ride.rev .ride-wheel { animation: wheel-spin 0.55s cubic-bezier(.3, 0, .2, 1); }
+@keyframes ride-hop { 30% { transform: translateY(-14%) rotate(-5deg); } 60% { transform: translateY(2%) rotate(1deg); } }
+@keyframes wheel-spin { to { transform: rotate(720deg); } }
+.ride-picker button[aria-pressed="true"], .garage-card[aria-pressed="true"] { animation: picked 0.35s var(--snap); }
+@keyframes picked { 40% { transform: scale(1.07); } }
+
+/* starting a run: warp speed burst */
+.warp-fx {
+  position: absolute; inset: -30%; z-index: 9; pointer-events: none; opacity: 0;
+  background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255, 255, 255, 0.6) 0deg 0.8deg, transparent 0.8deg 7deg);
+  -webkit-mask: radial-gradient(circle, transparent 16%, #000 55%); mask: radial-gradient(circle, transparent 16%, #000 55%);
+}
+.warp-fx.go { animation: warp 0.6s cubic-bezier(.2, .7, .3, 1); }
+@keyframes warp { 0% { opacity: 0; transform: scale(0.55) rotate(0deg); } 25% { opacity: 1; } 100% { opacity: 0; transform: scale(1.7) rotate(8deg); } }
+.is-playing .hero { transition: opacity 0.25s, transform 0.35s cubic-bezier(.5, 0, .9, .4), visibility 0s 0.35s; transform: translateX(-90px) scale(1.06); filter: blur(4px); }
+
+/* HUD drops in, pedals slide up */
+.is-playing .hud-left > *, .is-playing .hud-right > *, .is-playing .hud-progress { animation: hud-drop 0.5s var(--snap) backwards; }
+.is-playing .hud-left > :nth-child(2) { animation-delay: 60ms; } .is-playing .hud-left > :nth-child(3) { animation-delay: 120ms; }
+.is-playing .hud-progress { animation-delay: 150ms; }
+.is-playing .hud-right > :nth-child(1) { animation-delay: 180ms; } .is-playing .hud-right > :nth-child(2) { animation-delay: 220ms; }
+.is-playing .hud-right > :nth-child(3) { animation-delay: 260ms; } .is-playing .hud-right > :nth-child(4) { animation-delay: 300ms; }
+.is-playing .hud-right > :nth-child(5) { animation-delay: 340ms; }
+@keyframes hud-drop { from { opacity: 0; transform: translateY(-40px) scale(0.8); } }
+.is-playing .pedal-group > * { animation: pedal-up 0.5s var(--snap) backwards 0.25s; }
+.is-playing .pedal-group > :nth-child(2) { animation-delay: 0.33s; }
+@keyframes pedal-up { from { opacity: 0; transform: translateY(80px); } }
+
+/* speedometer redline near top speed */
+.hud-speed { transition: color 0.2s, box-shadow 0.2s, border-color 0.2s; }
+.hud-speed.redline { color: #ff6b8b; border-color: rgba(255, 79, 139, 0.8); box-shadow: 0 0 16px rgba(255, 79, 139, 0.5); }
+
+/* theme switch: a light wipe sweeps across the scene */
+.theme-wipe {
+  position: absolute; inset: 0; z-index: 9; pointer-events: none; opacity: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.55) 48%, rgba(255, 255, 255, 0.85) 50%, transparent 70%);
+  transform: translateX(-110%);
+}
+.theme-wipe.go { animation: wipe 0.55s cubic-bezier(.5, 0, .3, 1); }
+@keyframes wipe { 0% { opacity: 1; transform: translateX(-110%); } 100% { opacity: 1; transform: translateX(110%); } }
+
+/* popups slam in with a spring; finish stats pop in one by one */
+.modal-panel { transform: translateY(50px) scale(0.86) rotate(-2deg); transition: transform 0.45s var(--snap); }
+.modal.open .modal-panel { transform: none; }
+.modal.open .finish-stats > div { animation: stat-pop 0.45s var(--snap) backwards; }
+.modal.open .finish-stats > div:nth-child(1) { animation-delay: 0.15s; }
+.modal.open .finish-stats > div:nth-child(2) { animation-delay: 0.25s; }
+.modal.open .finish-stats > div:nth-child(3) { animation-delay: 0.35s; }
+@keyframes stat-pop { from { opacity: 0; transform: translateY(20px) scale(0.7); } }
+
+/* intro: title words drive in from opposite sides */
+.title .t1 { animation: drive-l 0.7s var(--zoom) 0.15s backwards; }
+.title .t2 { animation: drive-r 0.7s var(--zoom) 0.28s backwards; }
+@keyframes drive-l { from { opacity: 0; transform: translateX(-120px) skewX(-14deg); filter: blur(8px); } }
+@keyframes drive-r { from { opacity: 0; transform: translateX(120px) skewX(14deg); filter: blur(8px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { transform: none; filter: none; }
+  .warp-fx, .theme-wipe, .scroll-meter { display: none; }
 }

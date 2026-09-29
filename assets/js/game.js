@@ -19,7 +19,7 @@
     'wrong_house_1', 'wrong_house_2', 'wrong_house_3', 'wrong_house_4',
     'ghost_1', 'ghost_2', 'ghost_3', 'ghost_4', 'ghost_5', 'background_house1',
     'wrong_house_5', 'wrong_house_6', 'correct_house_1', 'correct_house_2', 'correct_house_3', 'correct_house_4', 'correct_house_5',
-    'mountain_1', 'mountain_2', 'mountain_3', 'mountain_4', 'grass_1'];
+    'mountain_1', 'mountain_2', 'mountain_3', 'mountain_4', 'grass_1', 'crow_1', 'crow_2'];
   const FONT = '"Lilita One", "Rubik", system-ui, sans-serif';
   const TAU = Math.PI * 2;
 
@@ -119,6 +119,9 @@
       thunder: (d) => { setTimeout(() => noise(1.8, 0.55, 160), d); setTimeout(() => noise(0.5, 0.3, 500), d + 60); },
       coin: () => tone([988, 1319], 0.07, 'square', 0.09),
       land: (s) => { noise(0.3, 0.25 + 0.4 * s, 380); if (s > 0.35) tone([70, 50], 0.12, 'sine', 0.3 * s); },
+      caw: () => { tone([540, 430], 0.07, 'sawtooth', 0.025); noise(0.12, 0.05, 1800); },
+      creak: () => tone([160, 120], 0.12, 'sawtooth', 0.05),
+      whoosh: () => { noise(0.45, 0.25, 900); tone([620, 300], 0.12, 'sine', 0.06); },
       backfire: () => { noise(0.07, 0.4, 3200); tone([95], 0.05, 'square', 0.12); },
       beep: (go) => tone(go ? [880, 1320] : [520], go ? 0.1 : 0.12, 'square', 0.09),
       hit: () => noise(0.12, 0.18, 1200),
@@ -227,6 +230,7 @@
     W.resetProps();
     W.coins.forEach((c) => { c.taken = false; });
     state.coins = 0; state.time = 0; state.started = false; state.finished = false; state.failed = false;
+    W.buildings.forEach((b) => { b.gs = null; });
     W.buildings.forEach((b) => { b.appear = 0; });
     if (ui.spook) ui.spook.classList.remove('show');
     state.checkpoint = W.SPAWN_X;
@@ -239,10 +243,12 @@
     if (state.mode === 'attract') return autopilot();
     if (state.countdown > 0) { input.gas = input.brake = input.jump = false; input.lean = 0; return input; }
     if (state.finished) { input.gas = false; input.brake = true; input.lean = 0; input.jump = false; return input; }
-    let gas = touch.gas || keys.has('ArrowRight') || keys.has('KeyD') || keys.has('KeyX');
-    let brake = touch.brake || keys.has('ArrowLeft') || keys.has('KeyA') || keys.has('KeyZ');
-    let jump = touch.jump || keys.has('Space') || keys.has('KeyJ');
-    let lean = (keys.has('ArrowDown') || keys.has('KeyS') ? 1 : 0) - (keys.has('ArrowUp') || keys.has('KeyW') ? 1 : 0);
+    // on-screen Brake / Gas / Jump buttons (touch or mouse), and on a PC the
+    // keyboard as well: → / D gas, ← / A brake, Space / ↑ / W jump, ↓ lean
+    let gas = touch.gas || keys.has('ArrowRight') || keys.has('KeyD');
+    let brake = touch.brake || keys.has('ArrowLeft') || keys.has('KeyA');
+    let jump = touch.jump || keys.has('Space') || keys.has('ArrowUp') || keys.has('KeyW');
+    let lean = keys.has('ArrowDown') || keys.has('KeyS') ? 1 : 0;
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     for (const p of pads) {
       if (!p) continue;
@@ -374,6 +380,7 @@
   function update(dt) {
     state.t += dt;
     const inp = readInput();
+    updateHouseGhosts(dt);
     state.lastInput = inp;
     if (state.countdown > 0) tickCountdown(dt);
     W.step(inp, dt);
@@ -557,6 +564,76 @@
     }
   }
 
+  /* Crows (Morning only): a few crows far off in the sky, between the
+     clouds and the mountains. They are drawn small and a little faded, as if
+     at a distance, glide on a slow wavy path, and cross in both directions:
+     some left to right, some right to left. The crow_1 / crow_2 art gives
+     the wings-up / wings-down frames of a slow flap. */
+  const CROWS = [
+    { dir: 1, speed: 38, scale: 0.36, y: 0.24, phase: 0.1, alpha: 0.9 },
+    { dir: -1, speed: 30, scale: 0.3, y: 0.31, phase: 0.55, alpha: 0.82 },
+    { dir: 1, speed: 24, scale: 0.24, y: 0.19, phase: 0.8, alpha: 0.72 }
+  ];
+  function drawCrows() {
+    if (state.theme !== 'morning') return;
+    const f1 = img.crow_1, f2 = img.crow_2;
+    if (!ready(f1) || !ready(f2)) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const t = state.t / 1000, k = clamp(Math.min(Wd, Ht) / 900, 0.65, 1.1);
+    for (const c of CROWS) {
+      const lap = Wd + 240;
+      const d = (t * c.speed * k + c.phase * lap) % lap;
+      const x = c.dir > 0 ? d - 120 : Wd + 120 - d;
+      const y = Ht * c.y + Math.sin(t * 0.5 + c.phase * 9) * 14 * k;
+      // slow flap with long glides, like a crow cruising far away
+      const glide = Math.sin(t * 0.35 + c.phase * 6) > 0.3;
+      const up = !glide && Math.sin(t * 5 + c.phase * 4) > 0;
+      const fr = up ? f1 : f2;
+      const w = fr.naturalWidth * c.scale * k, h = fr.naturalHeight * c.scale * k;
+      // both frames face right once crow_1 is mirrored; flip again to fly left
+      const face = (up ? -1 : 1) * c.dir;
+      ctx.save(); ctx.globalAlpha = c.alpha; ctx.translate(x, y);
+      if (face < 0) ctx.scale(-1, 1);
+      ctx.drawImage(hq(fr, w, h, true), -w / 2, -h / 2, w, h);
+      ctx.restore();
+    }
+  }
+  function drawCrow(x, y, s, flap, alpha) {
+    const night = state.theme === 'night';
+    const body = night ? '#39406a' : '#1c1e2b', wing = night ? '#4a5388' : '#2b2e45', far = night ? '#2c3257' : '#141620';
+    ctx.save(); ctx.translate(x, y); ctx.globalAlpha = alpha;
+    if (night) { ctx.shadowColor = 'rgba(190,205,255,0.55)'; ctx.shadowBlur = 6; }
+    // a broad feathered wing hinged at the shoulder; f > 0 raised, f < 0 lowered
+    const wingShape = (f, span, shift) => {
+      const tipX = -0.5 * s + shift, tipY = -span * f * s;
+      ctx.beginPath();
+      ctx.moveTo(0.28 * s + shift, -0.06 * s);
+      ctx.quadraticCurveTo(0.05 * s + shift, tipY * 0.7, tipX, tipY);
+      // three feather notches back along the trailing edge
+      ctx.lineTo(tipX + 0.06 * s, tipY * 0.82 + 0.05 * s);
+      ctx.lineTo(tipX - 0.02 * s, tipY * 0.7 + 0.04 * s);
+      ctx.lineTo(tipX + 0.05 * s, tipY * 0.55 + 0.06 * s);
+      ctx.lineTo(tipX - 0.02 * s, tipY * 0.42 + 0.05 * s);
+      ctx.quadraticCurveTo(-0.3 * s + shift, tipY * 0.15, -0.32 * s + shift, -0.04 * s);
+      ctx.closePath(); ctx.fill();
+    };
+    // far wing, behind the body, slightly out of phase
+    ctx.fillStyle = far; wingShape(flap * 0.85 + 0.1, 0.85, 0.12 * s);
+    // tail, body, head
+    ctx.fillStyle = body;
+    ctx.beginPath(); ctx.moveTo(-0.5 * s, -0.05 * s); ctx.lineTo(-1.1 * s, -0.2 * s); ctx.lineTo(-1.02 * s, 0.05 * s); ctx.lineTo(-1.12 * s, 0.2 * s); ctx.lineTo(-0.5 * s, 0.12 * s); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, 0.02 * s, 0.7 * s, 0.3 * s, -0.06, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(0.7 * s, -0.12 * s, 0.25 * s, 0, TAU); ctx.fill();
+    ctx.shadowBlur = 0;
+    // beak and eye
+    ctx.fillStyle = night ? '#b8b3a6' : '#8e8a82';
+    ctx.beginPath(); ctx.moveTo(0.88 * s, -0.2 * s); ctx.lineTo(1.26 * s, -0.08 * s); ctx.lineTo(0.88 * s, -0.01 * s); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#f2f2f2'; ctx.beginPath(); ctx.arc(0.77 * s, -0.17 * s, 0.05 * s, 0, TAU); ctx.fill();
+    // near wing, in front of the body
+    ctx.fillStyle = wing; wingShape(flap, 1.0, 0);
+    ctx.restore();
+  }
+
   /* Rain: slanted streaks in two depths, splashes on the road, and now and
      then a lightning flash with a bolt and a roll of thunder. */
   const DROPS = Array.from({ length: 220 }, (_, i) => ({
@@ -568,12 +645,12 @@
     // they read as rain rather than a few long scratches.
     const t = state.t / 1000, small = Math.min(Wd, Ht);
     const sc = clamp(small / 800, 0.5, 1);
-    const n = Math.round(DROPS.length * clamp(Wd * Ht / (1440 * 900), 0.7, 1));
+    const n = Math.round(DROPS.length * 0.45 * clamp(Wd * Ht / (1440 * 900), 0.7, 1));   // light rain
     const slant = 0.2, drift = (cam.x * cam.z * 0.6) % Wd;
     ctx.lineCap = 'round';
     for (const far of [true, false]) {
-      ctx.strokeStyle = far ? 'rgba(200,214,232,0.3)' : 'rgba(222,233,248,0.55)';
-      ctx.lineWidth = (far ? 0.9 : 1.4) * (0.75 + 0.25 * sc);
+      ctx.strokeStyle = far ? 'rgba(200,214,232,0.18)' : 'rgba(222,233,248,0.38)';
+      ctx.lineWidth = (far ? 0.8 : 1.2) * (0.75 + 0.25 * sc);
       ctx.beginPath();
       for (let i = 0; i < n; i++) {
         const d = DROPS[i];
@@ -608,7 +685,7 @@
       Sound.thunder(300 + Math.random() * 700);
     }
     // splashes on the road around the camera
-    const k = Math.min(6, Math.round(dt / 5));
+    const k = Math.random() < 0.6 ? 1 : 0;
     for (let i = 0; i < k; i++) {
       if (particles.length > 380) break;
       const sx = x0 + Math.random() * (x1 - x0);
@@ -1135,19 +1212,19 @@
     blit(house, left, gy - hh, hw, hh);
 
     const t = state.t / 1000;
-    // window ghost: faint, drifting side to side
-    drawGhostSprite(img.ghost_5, left + hw * 0.5 + Math.sin(t * 0.7 + b.variant) * hw * 0.18,
-      gy - hh * 0.68 + Math.sin(t * 1.6) * 6,
-      0.2 + 0.15 * (0.5 + 0.5 * Math.sin(t * 2.3 + b.variant)), Math.cos(t * 0.7 + b.variant) < 0);
-    // door ghost: flickers in the doorway, floats out and up when the car
-    // pulls up. Only its position and opacity change, never its size.
-    const g = img['ghost_' + (((b.variant - 1) % 4) + 1)];
-    const gh = ready(g) ? g.naturalHeight : 60;
-    const flicker = 0.75 + 0.25 * Math.sin(t * 9 + b.variant * 2);
-    const a = b.appear;
-    drawGhostSprite(g, b.x + Math.sin(t * 1.3) * (6 + 18 * a),
-      gy - gh / 2 - 14 - a * 70 + Math.sin(t * 2.1) * 6, (0.3 + 0.65 * a) * flicker, false);
-    addLight(b.x, gy - gh / 2 - 14 - a * 70, 60 + 30 * a, '185,210,255', (0.12 + 0.22 * a) * flicker);
+    // door ghost: now and then steps out, stands at the entrance, goes back in
+    const dg = b.door;
+    if (dg) {
+      drawGlow(dg.x, dg.y, 60, '190,210,255', 0.4 * dg.alpha, 0.05);
+      addLight(dg.x, dg.y, 70, '185,210,255', 0.35 * dg.alpha);
+      drawGhostSprite(dg.g, dg.x, dg.y, 0.95 * dg.alpha, false);
+    }
+    // roof ghosts: always there, hovering over the roof
+    for (const r of (b.roof || roofGhosts(b))) {
+      drawGlow(r.x, r.y, 70, '190,210,255', 0.35, 0.05);
+      addLight(r.x, r.y, 80, '185,210,255', 0.35);
+      drawGhostSprite(r.g, r.x, r.y, 0.95, r.flip);
+    }
     // bats: figure-of-eight loops round the roof, flapping
     const bat = img.bat;
     if (ready(bat)) {
@@ -1168,6 +1245,104 @@
 
   // Ghosts are drawn at scale 1 (one image pixel = one world unit), like the
   // houses. They fade and float; their size never changes.
+  /* House ghosts.
+     - Roof ghosts: every haunted house has one or two ghosts hovering over its
+       roof, always visible. They float high enough that a car driving past
+       never touches them (the tallest car's roof reaches ~175 above the road),
+       but low enough that a jump can (every car's jump reaches 285+). Jumping
+       into one fails the run.
+     - Door ghost: every 6-10 seconds a ghost steps out of the door, stands at
+       the entrance for a moment and goes back in. It stays at the house and
+       is harmless.
+     All ghosts are drawn at scale 1. */
+  const GHOST_SHOW = 2600, ROOF_GHOST_BOTTOM = 212;
+  const houseGhost = (b) => img['ghost_' + (((b.variant - 1) % 4) + 1)];
+  function roofGhosts(b) {
+    // houses 1, 3 and 5 have two roof ghosts, the others one
+    const n = b.variant % 2 ? 2 : 1, t = state.t / 1000, list = [];
+    for (let k = 0; k < n; k++) {
+      const g = k === 0 ? img.ghost_5 : houseGhost(b);
+      const gw = ready(g) ? g.naturalWidth : 60, gh = ready(g) ? g.naturalHeight : 58;
+      const spread = n === 2 ? (k === 0 ? -70 : 70) : 0;
+      const x = b.x + spread + Math.sin(t * 0.6 + b.variant + k * 2.1) * 55;
+      const y = W.heightAt(x) - ROOF_GHOST_BOTTOM - gh / 2 - 6 - Math.sin(t * 1.7 + k * 1.3) * 6;
+      list.push({ g, x, y, gw, gh, flip: Math.cos(t * 0.6 + b.variant + k * 2.1) < 0 });
+    }
+    return list;
+  }
+  function updateHouseGhosts(dt) {
+    const t = state.t / 1000;
+    for (const b of W.buildings) {
+      if (b.kind !== 'wrong') continue;
+      // door ghost timer
+      if (!b.gs) b.gs = { phase: 'in', t: 2000 + rnd(b.variant * 3.3) * 4000 };
+      const gs = b.gs;
+      gs.t -= dt;
+      if (gs.t <= 0) {
+        if (gs.phase === 'in') {
+          gs.phase = 'show'; gs.t = GHOST_SHOW;
+          if (state.mode === 'play' && Math.abs(b.x - cam.x) < Wd / cam.z) Sound.creak();
+        } else { gs.phase = 'in'; gs.t = 6000 + Math.random() * 4000; }
+      }
+      // door ghost position (steps out of the door, stands at the entrance)
+      b.door = null;
+      if (gs.phase === 'show') {
+        const g = houseGhost(b), gh = ready(g) ? g.naturalHeight : 60;
+        const u = 1 - gs.t / GHOST_SHOW, out = Math.min(1, Math.min(u, 1 - u) * 5);
+        b.door = { g, x: b.x, y: vergeAt(b.x) + 4 - gh / 2 - 6 + (1 - out) * 10 + Math.sin(t * 2.4) * 3, alpha: out, flip: false };
+      }
+      b.roof = roofGhosts(b);
+      // any ghost that touches the car ends the run (door ghost once it is out)
+      if (state.mode !== 'play' || state.finished || !car.chassis) continue;
+      const ghosts = b.door && b.door.alpha > 0.5 ? [...b.roof, b.door] : b.roof;
+      for (const gh of ghosts) if (ghostTouchesCar(gh)) { caughtByGhost(b); break; }
+    }
+  }
+
+  /* Precise ghost collision: each ghost image is turned once into a grid of
+     its solid (non-transparent) pixels, and those points are tested against
+     the car's real physics shape: the body's hull polygons and the round
+     wheels. Transparent corners of the image never count as a hit. */
+  const maskCache = new Map();
+  function ghostMask(g) {
+    if (!ready(g)) return null;
+    let m = maskCache.get(g);
+    if (m) return m;
+    const w = g.naturalWidth, h = g.naturalHeight, c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const cx = c.getContext('2d'); cx.drawImage(g, 0, 0);
+    const d = cx.getImageData(0, 0, w, h).data, pts = [];
+    for (let y = 1; y < h; y += 3) for (let x = 1; x < w; x += 3) if (d[(y * w + x) * 4 + 3] > 140) pts.push(x - w / 2, y - h / 2);
+    m = { pts, hw: w / 2, hh: h / 2 };
+    maskCache.set(g, m);
+    return m;
+  }
+  function ghostTouchesCar(gh) {
+    const m = ghostMask(gh.g);
+    if (!m) return false;
+    const parts = car.chassis.parts.length > 1 ? car.chassis.parts.slice(1) : [car.chassis];
+    // quick reject: bounding boxes don't meet
+    let minX = car.chassis.bounds.min.x, maxX = car.chassis.bounds.max.x, minY = car.chassis.bounds.min.y, maxY = car.chassis.bounds.max.y;
+    for (const w of car.wheels) { minX = Math.min(minX, w.bounds.min.x); maxX = Math.max(maxX, w.bounds.max.x); minY = Math.min(minY, w.bounds.min.y); maxY = Math.max(maxY, w.bounds.max.y); }
+    if (gh.x + m.hw < minX || gh.x - m.hw > maxX || gh.y + m.hh < minY || gh.y - m.hh > maxY) return false;
+    const V = window.Matter.Vertices, P = { x: 0, y: 0 };
+    for (let i = 0; i < m.pts.length; i += 2) {
+      P.x = gh.x + (gh.flip ? -m.pts[i] : m.pts[i]); P.y = gh.y + m.pts[i + 1];
+      if (P.x < minX || P.x > maxX || P.y < minY || P.y > maxY) continue;
+      for (const w of car.wheels) {
+        const dx = P.x - w.position.x, dy = P.y - w.position.y;
+        if (dx * dx + dy * dy < car.rWheel * car.rWheel) return true;
+      }
+      for (const part of parts) if (V.contains(part.vertices, P)) return true;
+    }
+    return false;
+  }
+
+  function caughtByGhost(b) {
+    spooked(b);
+    $('[data-fail-reason]', ui.modalFail).textContent = 'A ghost got you! Keep clear of the ghosts at the haunted houses: don\'t jump into the roof ghosts, and wait while a ghost stands at the door.';
+  }
+
   function drawGhostSprite(g, x, y, alpha, flip) {
     if (!ready(g) || alpha <= 0.01) return;
     const w = g.naturalWidth, h = g.naturalHeight;
@@ -1597,6 +1772,7 @@
     ui.coinsVal.textContent = state.coins + '/' + W.coins.length;
     ui.time.textContent = fmtTime(state.time);
     ui.speed.textContent = Math.round(speed);
+    ui.speed.parentElement.classList.toggle('redline', W.forwardSpeed() > car.v.maxSpeed * 0.78);
     ui.progress.style.setProperty('--p', frac);
   }
 
@@ -1684,6 +1860,7 @@
 
   // Wrong house: the ghost bursts out at the screen and the run is over.
   function spooked(b) {
+    $('[data-fail-reason]', ui.modalFail).textContent = 'That was a haunted house. Only doors with a game sign lead to a game. Watch for the bats!';
     state.finished = true; state.failed = true;
     state.door = null; ui.prompt.hidden = true;
     Sound.spooky();
@@ -1740,6 +1917,7 @@
     window.scrollTo({ top: 0 });
     emit('mode', { mode: 'play' });
     state.countdown = 1800; state.wasGas = false;
+    cam.punch = 0.12;                                  // camera punch with the warp burst
     countdownToast('3'); Sound.beep(false);
   }
 
@@ -1922,6 +2100,9 @@
   window.GVGame = {
     init, start, exit, setVehicle, setTime, vehiclePreview,
     setActive(on) { state.active = on; if (!on) Sound.engine(0, 0, false); },
+    // read-only: what a haunted house's ghost is doing ('in' | 'tell' | 'out')
+    ghostPhase(id) { const b = W.buildings.find((x) => x.id === id); return b && b.gs ? b.gs.phase : 'in'; },
+    ghostInfo(id) { const b = W.buildings.find((x) => x.id === id); return b ? { door: b.gs ? b.gs.phase : 'in', roof: (b.roof || []).map((r) => ({ x: Math.round(r.x), above: Math.round(W.heightAt(r.x) - r.y - r.gh / 2) })) } : null; },
     get mode() { return state.mode; },
     get vehicle() { return state.vehicle; },
     vehicles: VEHICLES, games: GAMES, coinsTotal: W.coins.length,

@@ -249,7 +249,7 @@
       x, y: heightAt(x) - (air || 105), taken: false
     }));
 
-    const checkpoints = [SPAWN_X, ...BUILDINGS.slice(1).map((b) => b.x - 200),
+    const checkpoints = [SPAWN_X, ...BUILDINGS.slice(1).filter((b) => b.kind !== 'wrong').map((b) => b.x - 200),
       hill(300), hill(1000), hill(3000), hill(5300), hill(7800), hill(10500)];
 
     /* ---------------------------------------------------------------- the car */
@@ -497,6 +497,7 @@
        rather than straight up, and every part gets the same push so the
        suspension stays settled mid-air. */
     const JUMP_COOLDOWN = 450;
+    const JUMP_FORWARD = 2.4;                 // forward push on a hop (px/frame)
     function tryJump(input) {
       const held = !!input.jump;
       const pressed = held && !car.jumpHeld;
@@ -508,9 +509,12 @@
       car.lastJump = now;
       const c = car.chassis, j = car.v.jump;
       const up = { x: Math.sin(c.angle) * 0.6, y: -Math.cos(c.angle) };
+      // plus a small push forward (to the right), so the hop carries the car
+      // a little way along the road instead of straight up
+      const fwd = { x: Math.cos(c.angle), y: Math.sin(c.angle) }, push = JUMP_FORWARD;
       for (const b of car.parts) {
         const v = Body.getVelocity(b);
-        Body.setVelocity(b, { x: v.x + up.x * j, y: Math.min(v.y, 0) + up.y * j });
+        Body.setVelocity(b, { x: v.x + up.x * j + fwd.x * push, y: Math.min(v.y, 0) + up.y * j + fwd.y * push });
       }
       car.wheels.forEach((w) => { w.lastContact = -1e9; });
       car.grounded = false;
