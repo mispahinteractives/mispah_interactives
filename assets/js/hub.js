@@ -147,6 +147,12 @@
     $$(`[data-ride="${e.detail.key}"] .ride`).forEach((r) => { r.classList.remove('rev'); void r.offsetWidth; r.classList.add('rev'); });
   });
 
+  // pause the endless CSS animations of whatever is off screen
+  const pauser = new IntersectionObserver((entries) => {
+    entries.forEach((en) => en.target.classList.toggle('anim-paused', !en.isIntersecting));
+  }, { rootMargin: '100px' });
+  ['.hero', '.ticker', '#games', '#controls', '#contact', '.foot'].forEach((sel) => { const el = $(sel); if (el) pauser.observe(el); });
+
   /* ------------------------------------------------------ scroll reveals */
   if ('IntersectionObserver' in window && !reduceMotion) {
     const io = new IntersectionObserver((entries) => {

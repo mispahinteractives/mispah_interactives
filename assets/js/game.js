@@ -174,6 +174,8 @@
   const cam = { x: W.SPAWN_X, y: -120, z: 1, fx: 0.62, fy: 0.62, look: 0 };
   const input = { gas: false, brake: false, lean: 0, jump: false };
   const keys = new Set();
+  let padConnected = false;
+  window.addEventListener('gamepadconnected', () => { padConnected = true; });
   const touch = { gas: false, brake: false, jump: false };
   let particles = [];
   let canvas, ctx, dpr = 1, Wd = 0, Ht = 0;
@@ -249,7 +251,9 @@
     let brake = touch.brake || keys.has('ArrowLeft') || keys.has('KeyA');
     let jump = touch.jump || keys.has('Space') || keys.has('ArrowUp') || keys.has('KeyW');
     let lean = keys.has('ArrowDown') || keys.has('KeyS') ? 1 : 0;
-    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    // polling getGamepads() every frame keeps macOS's game-controller service
+    // busy, so only poll once a gamepad has actually been connected
+    const pads = padConnected && navigator.getGamepads ? navigator.getGamepads() : [];
     for (const p of pads) {
       if (!p) continue;
       if (p.buttons[7] && p.buttons[7].value > 0.2) gas = true;
@@ -801,11 +805,12 @@
     if (!src.__hq) src.__hq = ++hqId;
     const key = src.__hq + ':' + bucket + ':' + aspect;
     let c = hqCache.get(key);
-    if (!c) {
+    if (c) { hqCache.delete(key); hqCache.set(key, c); }       // mark as recently used
+    else {
       const W2 = Math.max(1, Math.round(Math.pow(1.12, bucket)));
       c = resample(src, W2, Math.max(1, Math.round(W2 * h / w)));
       hqCache.set(key, c);
-      if (hqCache.size > 400) hqCache.delete(hqCache.keys().next().value);
+      while (hqCache.size > 120) hqCache.delete(hqCache.keys().next().value);   // drop least recently used
     }
     return c;
   }
@@ -2038,12 +2043,20 @@
 
   /* --------------------------------------------------------------- loop */
   let last = 0;
+  let lastDraw = 0;
   function frame(now) {
     requestAnimationFrame(frame);
+    // the intro demo doesn't need 60 fps: 25 while you look at it, 10 while
+    // the browser window is in the background. Actual play runs every frame.
+    if (state.mode !== 'play') {
+      const minGap = document.hasFocus() ? 38 : 95;
+      if (now - lastDraw < minGap) return;
+      lastDraw = now;
+    }
     const gap = last ? now - last : 16.67;
     const dt = Math.min(50, gap);
     last = now;
-    if (state.active && !document.hidden) watchFrameRate(gap, now); else settleUntil = now + 1500;
+    if (state.active && !document.hidden && state.mode === 'play') watchFrameRate(gap, now); else settleUntil = now + 1500;
     if (!state.active || document.hidden) return;
     if (!state.paused) update(dt);
     else updateParticles(dt);

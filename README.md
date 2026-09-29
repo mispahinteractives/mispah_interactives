@@ -16,7 +16,7 @@ The contact email lives in two places: the Contact section of `index.html` and `
     └── hub.js            cards, ride previews, stats, reveals
 ```
 
-The art lives in `assets/`: the truck and car sprites in `assets/img/assets/`, plus the game logos, covers and gameplay videos in `assets/img/games/` and `assets/video/`.
+The art lives in `assets/`: the truck and car sprites in `assets/img/assets/`, plus the game logos and cover images in `assets/img/games/`.
 
 ## How the car works
 
