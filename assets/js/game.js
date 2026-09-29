@@ -104,7 +104,9 @@
     return {
       ensure, engine,
       coin: () => tone([988, 1319], 0.07, 'square', 0.09),
-      land: (s) => noise(0.3, 0.25 + 0.4 * s, 380),
+      land: (s) => { noise(0.3, 0.25 + 0.4 * s, 380); if (s > 0.35) tone([70, 50], 0.12, 'sine', 0.3 * s); },
+      backfire: () => { noise(0.07, 0.4, 3200); tone([95], 0.05, 'square', 0.12); },
+      beep: (go) => tone(go ? [880, 1320] : [520], go ? 0.1 : 0.12, 'square', 0.09),
       hit: () => noise(0.12, 0.18, 1200),
       door: () => tone([523, 659, 784, 1047], 0.07, 'triangle', 0.16),
       spooky: () => {
@@ -218,6 +220,7 @@
   /* ---------------------------------------------------------------- input */
   function readInput() {
     if (state.mode === 'attract') return autopilot();
+    if (state.countdown > 0) { input.gas = input.brake = input.jump = false; input.lean = 0; return input; }
     if (state.finished) { input.gas = false; input.brake = true; input.lean = 0; input.jump = false; return input; }
     let gas = touch.gas || keys.has('ArrowRight') || keys.has('KeyD') || keys.has('KeyX');
     let brake = touch.brake || keys.has('ArrowLeft') || keys.has('KeyA') || keys.has('KeyZ');
@@ -290,6 +293,22 @@
       puff(p.x, p.y, dir.x * 1.6 + vel.x * 0.6 - 0.6, dir.y * 1.6 + vel.y * 0.6 - 0.3,
         7 + car.throttle * 8, 900 + Math.random() * 500, `rgb(${shade},${shade},${shade + 8})`);
     }
+    // exhaust flames under heavy throttle, and a backfire when you lift off
+    const inp = state.lastInput || {};
+    const dirX = car.key === 'truck' ? Math.sin(c.angle) : -Math.cos(c.angle);
+    const dirY = car.key === 'truck' ? -Math.cos(c.angle) : -Math.sin(c.angle);
+    const fire = (n, force, big) => {
+      for (let i = 0; i < n; i++) {
+        const sp = force * (0.6 + Math.random() * 0.8);
+        puff(p.x, p.y, dirX * sp + vel.x + (Math.random() - 0.5) * 1.2, dirY * sp + vel.y + (Math.random() - 0.5) * 1.2,
+          (big ? 9 : 5) + Math.random() * 5, 140 + Math.random() * 160, ['#fff3b0', '#ffc83d', '#ff7b1c'][i % 3], 'flame');
+      }
+    };
+    if (inp.gas && car.throttle > 0.55 && Math.random() < car.throttle * 0.9 * dt / 16) fire(2, 2.4, false);
+    if (car.throttle > 0.7 && !inp.gas && state.wasGas) {
+      fire(10, 4.5, true); Sound.backfire(); state.shake = Math.max(state.shake, 3);
+    }
+    state.wasGas = !!inp.gas;
     // dust off the tyres
     const now = W.engine.timing.timestamp;
     const speed = Math.hypot(vel.x, vel.y);
@@ -303,6 +322,12 @@
           6 + Math.random() * 7, 600 + Math.random() * 400, '#b89a74', 'dust');
       }
     });
+  }
+
+  // an expanding shockwave ring on the ground
+  function ring(x, y, power) {
+    if (particles.length > 440) return;
+    particles.push({ x, y, vx: 0, vy: 0, size: 10, life: 420, max: 420, color: '#fff', kind: 'ring', rot: 0, vr: 9 * power + 4 });
   }
 
   function burst(x, y, n, color, kind, force) {
@@ -321,6 +346,8 @@
       if (p.kind === 'smoke') { p.vx *= 0.97; p.vy = p.vy * 0.97 - 0.02 * k; p.size += 0.35 * k; }
       else if (p.kind === 'dust') { p.vx *= 0.94; p.vy += 0.05 * k; p.size += 0.25 * k; }
       else if (p.kind === 'confetti') { p.vx *= 0.99; p.vy += 0.12 * k; }
+      else if (p.kind === 'flame') { p.vx *= 0.9; p.vy = p.vy * 0.9 - 0.08 * k; p.size *= Math.pow(0.93, k); }
+      else if (p.kind === 'ring') { p.size += p.vr * k; p.vr *= Math.pow(0.9, k); }
       else { p.vx *= 0.95; p.vy += 0.06 * k; }
     }
     particles = particles.filter((p) => p.life > 0);
@@ -330,21 +357,32 @@
   function update(dt) {
     state.t += dt;
     const inp = readInput();
+    state.lastInput = inp;
+    if (state.countdown > 0) tickCountdown(dt);
     W.step(inp, dt);
+    state.flash = (state.flash || 0) * Math.pow(0.85, dt / 16.67);
     const c = car.chassis;
     const x = c.position.x;
 
     for (const e of W.events) {
       if (e.type === 'land') {
         const s = clamp((e.air - 400) / 900, 0, 1);
-        state.shake = Math.max(state.shake, 4 + s * 10);
-        car.wheels.forEach((w) => burst(w.position.x, w.position.y + car.rWheel * 0.8, 6 + s * 8, '#b89a74', 'dust', 2.5));
+        state.shake = Math.max(state.shake, 5 + s * 16);
+        state.flash = Math.max(state.flash || 0, s * 0.35);
+        cam.punch = Math.max(cam.punch || 0, 0.03 + s * 0.05);
+        car.wheels.forEach((w) => {
+          const gx = w.position.x, gy = w.position.y + car.rWheel * 0.85;
+          burst(gx, gy, 8 + s * 12, ['#b89a74', '#d8c2a0'], 'dust', 2.5 + s * 3);
+          ring(gx, gy, 0.6 + s);
+          if (s > 0.3) burst(gx, gy, 6 + s * 12, ['#fff3b0', '#ffc83d', '#ff9a2e'], 'spark', 3 + s * 5);
+        });
         if (state.mode === 'play') {
           Sound.land(s);
           if (e.air > 900) toast('BIG AIR ' + (e.air / 1000).toFixed(1) + 's');
         }
       } else if (e.type === 'jump') {
-        car.wheels.forEach((w) => burst(w.position.x, w.position.y + car.rWheel * 0.8, 7, '#b89a74', 'dust', 2.2));
+        car.wheels.forEach((w) => { burst(w.position.x, w.position.y + car.rWheel * 0.8, 9, '#b89a74', 'dust', 2.6); ring(w.position.x, w.position.y + car.rWheel * 0.85, 0.5); });
+        state.shake = Math.max(state.shake, 3);
         if (state.mode === 'play') Sound.jump();
       } else if (e.type === 'hit' && state.mode === 'play') {
         Sound.hit(); state.shake = Math.max(state.shake, 2);
@@ -398,7 +436,8 @@
     updateParticles(dt);
 
     const rpm = clamp(Math.abs(car.wheels[1].angularVelocity * car.rWheel) / car.v.maxSpeed, 0, 1.2);
-    Sound.engine(rpm, car.throttle, state.mode === 'play' && !state.paused);
+    if (state.countdown > 0) Sound.engine(car.throttle, car.throttle, !state.paused);
+    else Sound.engine(rpm, car.throttle, state.mode === 'play' && !state.paused);
     updateCamera(dt);
     if (state.mode === 'play') updateHud();
   }
@@ -415,6 +454,7 @@
     const target = baseZoom() * (1 - clamp(speed / 26, 0, 1) * 0.14);
     cam.z = lerp(cam.z || target, target, 0.03 * k);
     state.shake *= Math.pow(0.88, k);
+    cam.punch = (cam.punch || 0) * Math.pow(0.86, k);
   }
 
   /* -------------------------------------------------------------- render */
@@ -447,8 +487,9 @@
       ctx.globalCompositeOperation = 'source-over';
     }
     const sx = (Math.random() - 0.5) * state.shake, sy = (Math.random() - 0.5) * state.shake;
-    const z = cam.z * dpr;
-    ctx.setTransform(z, 0, 0, z, (cam.fx * Wd - cam.x * cam.z + sx) * dpr, (cam.fy * Ht - cam.y * cam.z + sy) * dpr);
+    const cz = cam.z * (1 + (cam.punch || 0));
+    const z = cz * dpr;
+    ctx.setTransform(z, 0, 0, z, (cam.fx * Wd - cam.x * cz + sx) * dpr, (cam.fy * Ht - cam.y * cz + sy) * dpr);
     const x0 = cam.x - (cam.fx * Wd) / cam.z - 200, x1 = cam.x + ((1 - cam.fx) * Wd) / cam.z + 200;
     drawScenery(x0, x1);
     drawBuildings(x0, x1);
@@ -461,7 +502,54 @@
     drawParticles('front');
     drawForeground(x0, x1);
     if (state.night) drawNight();
+    drawSpeedFx();
     drawSky();
+  }
+
+  /* Speed lines and a vignette that build up near top speed, plus the white
+     flash of a hard landing. Screen space, drawn over the world. */
+  let vignette = null;
+  function drawSpeedFx() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const flash = state.flash || 0;
+    if (flash > 0.01) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fillRect(0, 0, Wd, Ht); }
+    if (state.mode !== 'play' || !car.chassis) return;
+    const f = clamp((W.forwardSpeed() / car.v.maxSpeed - 0.5) / 0.45, 0, 1);
+    if (f <= 0) return;
+    if (!vignette || vignette.w !== Wd || vignette.h !== Ht) {
+      const g = ctx.createRadialGradient(Wd / 2, Ht / 2, Math.min(Wd, Ht) * 0.35, Wd / 2, Ht / 2, Math.hypot(Wd, Ht) * 0.6);
+      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(8,4,24,0.55)');
+      vignette = { w: Wd, h: Ht, g };
+    }
+    ctx.globalAlpha = f; ctx.fillStyle = vignette.g; ctx.fillRect(0, 0, Wd, Ht); ctx.globalAlpha = 1;
+    const t = state.t / 1000, n = 26;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < n; i++) {
+      const y = rnd(i * 7.1 + 3) * Ht;
+      if (Math.abs(y - Ht * cam.fy) < Ht * 0.12) continue;          // keep the car's lane clear
+      const len = (80 + rnd(i + 5) * 180) * (0.5 + f);
+      const x = Wd - ((t * (1400 + rnd(i + 9) * 900) + rnd(i + 2) * Wd * 2) % (Wd * 2 + len));
+      ctx.strokeStyle = `rgba(255,255,255,${(0.12 + rnd(i + 4) * 0.2) * f})`;
+      ctx.lineWidth = 1 + rnd(i + 8) * 2;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y); ctx.stroke();
+    }
+  }
+
+  /* 3-2-1-GO start: the truck revs and pops, controls unlock on GO. */
+  function tickCountdown(dt) {
+    const before = Math.ceil(state.countdown / 600);
+    state.countdown -= dt;
+    const after = Math.ceil(state.countdown / 600);
+    const rev = 0.35 + 0.35 * Math.abs(Math.sin(state.t / 140));
+    car.throttle = rev;
+    if (after !== before) {
+      if (after > 0) { countdownToast(String(after)); Sound.beep(false); }
+      else { countdownToast('GO!'); Sound.beep(true); state.shake = 6; cam.punch = 0.06; car.throttle = 0.9; state.wasGas = true; }
+    }
+  }
+  function countdownToast(text) {
+    ui.toast.classList.add('count');
+    toast(text);
   }
 
   function drawNight() {
@@ -518,6 +606,11 @@
     ctx.lineTo(p.x + Math.cos(c.angle + spread * 0.6) * len, p.y + Math.sin(c.angle + spread * 0.6) * len);
     ctx.lineTo(p.x, p.y + 4); ctx.closePath(); ctx.fill();
     drawGlow(p.x, p.y, 40, '255,244,210', 0.8, 0.05);
+    // exhaust glow when the flames are going
+    if (car.throttle > 0.55) {
+      const ex = spriteLocal(v.exhaust[0], v.exhaust[1]), e = localToWorld(ex.x, ex.y);
+      drawGlow(e.x, e.y, 90, '255,140,50', (car.throttle - 0.5) * 1.2, 0.05);
+    }
   }
 
   /* Image quality. The browser's per-frame resizing is fast but rough: big
@@ -1314,13 +1407,24 @@
 
   function drawParticles(layer) {
     for (const p of particles) {
-      const front = p.kind === 'spark' || p.kind === 'confetti';
+      const front = p.kind === 'spark' || p.kind === 'confetti' || p.kind === 'flame' || p.kind === 'ring';
       if ((layer === 'front') !== front) continue;
       const a = clamp(p.life / p.max, 0, 1);
       if (p.kind === 'confetti') {
         ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
         ctx.globalAlpha = Math.min(1, a * 2); ctx.fillStyle = p.color; ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
         ctx.restore(); continue;
+      }
+      if (p.kind === 'ring') {
+        ctx.globalAlpha = a * 0.7; ctx.strokeStyle = p.color; ctx.lineWidth = 4 * a + 1;
+        ctx.beginPath(); ctx.ellipse(p.x, p.y, p.size, p.size * 0.28, 0, 0, TAU); ctx.stroke();
+        continue;
+      }
+      if (p.kind === 'flame') {
+        ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = a;
+        ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, TAU); ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+        continue;
       }
       ctx.globalAlpha = p.kind === 'smoke' ? a * 0.55 : p.kind === 'dust' ? a * 0.6 : a;
       ctx.fillStyle = p.color;
@@ -1384,6 +1488,7 @@
   /* ------------------------------------------------------------------ HUD */
   let toastTimer = 0;
   function toast(text) {
+    if (!/^(\d|GO!)$/.test(text)) ui.toast.classList.remove('count');
     ui.toast.textContent = text;
     ui.toast.classList.remove('show'); void ui.toast.offsetWidth; ui.toast.classList.add('show');
     clearTimeout(toastTimer);
@@ -1533,14 +1638,15 @@
     canvas.focus({ preventScroll: true });
     window.scrollTo({ top: 0 });
     emit('mode', { mode: 'play' });
-    if (opts.at && opts.at > W.SPAWN_X) toast('GO!');
-    else toast('READY? HOLD GAS!');
+    state.countdown = 1800; state.wasGas = false;
+    countdownToast('3'); Sound.beep(false);
   }
 
   function exit() {
     closeAllModals();
     state.mode = 'attract';
     state.paused = false;
+    state.countdown = 0;
     document.body.classList.remove('is-playing');
     ui.prompt.hidden = true; state.door = null;
     Sound.engine(0, 0, false);
