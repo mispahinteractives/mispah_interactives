@@ -77,7 +77,7 @@
   const DOOR_SPACING = 1250;
   // A haunted house follows each game building. Entering one of those
   // (`kind: 'wrong'`) fails the run; `variant` picks its house and ghost art.
-  const STREET = ['garage', 'animal-cafe', 'wrong-1', 'cinemoji', 'wrong-2', 'uno-clash', 'wrong-3', 'baggage-out', 'wrong-4'];
+  const STREET = ['garage', 'animal-cafe', 'wrong-1', 'wrong-2', 'cinemoji', 'wrong-3', 'uno-clash', 'wrong-4', 'wrong-5', 'baggage-out', 'wrong-6'];
   const BUILDINGS = STREET.map((id, i) => ({
     id, x: FIRST_DOOR + i * DOOR_SPACING,
     kind: id === 'garage' ? 'garage' : id.startsWith('wrong-') ? 'wrong' : 'game',
@@ -241,7 +241,7 @@
     // one over every other speed bump, the rest out in the hills; `air` lifts a
     // coin high enough that only a jump off the ramp before it reaches it
     const coinSpots = [
-      ...SPEED_BUMPS.filter((_, i) => i % 2 === 0).map((x) => ({ x })),
+      ...SPEED_BUMPS.filter((_, i) => i % 2 === 0).slice(0, 4).map((x) => ({ x })),
       { x: hill(550) }, { x: hill(1680), air: 250 }, { x: hill(2400) }, { x: hill(4000) },
       { x: hill(4850) }, { x: hill(5950), air: 330 }, { x: hill(7300) }, { x: hill(9300) }
     ];

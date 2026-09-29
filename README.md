@@ -60,6 +60,15 @@ console.log(W.car.chassis.position.x > W.FINISH_X ? 'finished' : 'stuck');
 
 `index.html` loads the stylesheet and scripts with a version tag (`hub.css?v=20260929`). After changing any CSS or JS, bump that number in `index.html` so browsers and GitHub Pages fetch the new files instead of a cached copy.
 
-## Haunted houses
+## Houses, haunted houses and ghosts
 
-A haunted house (`wrong_house_1`–`4.png`) follows each game building on Main Street, in the `STREET` list in `assets/js/physics.js`. Bats (`bat.png`) loop round the roof and ghosts (`ghost_1`–`5.png`) float in the doorway and an upper window. The door prompt only says "Enter ???". Entering a haunted house fails the run: the ghost jumps at the screen and the "Spooked!" panel offers Try again or Back to hub.
+Main Street alternates game houses and haunted houses (the `STREET` list in `assets/js/physics.js`):
+
+- **Game houses:** `correct_house_1`–`4.png`, one per game by door number. `correct_house_5.png` is the Garage. Each has the game's lit sign on a rooftop billboard.
+- **Haunted houses:** `wrong_house_1`–`6.png`. Bats (`bat.png`) loop round the roof, and ghosts (`ghost_1`–`5.png`) float in the doorway and an upper window. The door prompt only says "Enter ???". Entering one fails the run: the ghosts burst out at the screen, then the "Spooked!" panel offers Try again or Back to hub.
+- **Scaling:** houses are drawn at a fixed scale of their image size (`GAME_K`, `HAUNT_K` in `game.js`). `GAME_DOOR` / `HAUNT_DOOR` record where the door is in each picture, so the door lines up with the door spot. If you replace a house image, update its door position there.
+- **Ghosts:** always drawn at their natural size (one image pixel per screen pixel), in the game, the jump scare and the fail card. They only move and fade.
+
+## Image quality
+
+Every sprite is resized once, with high quality, to the size it covers on screen, and that copy is drawn 1:1 (`hq()` in `game.js`). Bigger source images simply come out sharper; there's nothing else to change.

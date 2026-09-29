@@ -17,7 +17,8 @@
   const SPRITES = ['truckbody', 'truckwheel', 'carbody', 'carbody2', 'wheel', 'wheel2', 'strut',
     'rampleft', 'crate', 'box', 'suitcase', 'oilcan', 'beercan', 'sodacan', 'cloud', 'tree', 'bat',
     'wrong_house_1', 'wrong_house_2', 'wrong_house_3', 'wrong_house_4',
-    'ghost_1', 'ghost_2', 'ghost_3', 'ghost_4', 'ghost_5', 'correct_house_1', 'background_house1'];
+    'ghost_1', 'ghost_2', 'ghost_3', 'ghost_4', 'ghost_5', 'background_house1',
+    'wrong_house_5', 'wrong_house_6', 'correct_house_1', 'correct_house_2', 'correct_house_3', 'correct_house_4', 'correct_house_5'];
   const FONT = '"Lilita One", "Rubik", system-ui, sans-serif';
   const TAU = Math.PI * 2;
 
@@ -438,6 +439,48 @@
     drawForeground(x0, x1);
   }
 
+  /* Image quality. The browser's per-frame resizing is fast but rough: big
+     sprites shrunk 3-4x (the truck, wheels, crates) come out jagged and small
+     ones stretched (clouds, houses) come out blocky. So each sprite is
+     resized once, with high quality and in gentle 2x steps, to the size it
+     actually covers on screen (in ~12% size buckets), and that copy is drawn
+     at practically 1:1. Copies are kept, so there is no per-frame cost. */
+  const hqCache = new Map();
+  let hqId = 0;
+  function resample(src, W2, H2) {
+    let cur = src, cw = src.naturalWidth || src.width, ch = src.naturalHeight || src.height;
+    const step = (nw, nh) => {
+      const c = document.createElement('canvas'); c.width = nw; c.height = nh;
+      const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+      g.drawImage(cur, 0, 0, nw, nh); cur = c; cw = nw; ch = nh;
+    };
+    while (cw / 2 >= W2 && ch / 2 >= H2) step(Math.round(cw / 2), Math.round(ch / 2));
+    while (cw * 2 <= W2 && ch * 2 <= H2) step(cw * 2, ch * 2);
+    if (cw !== W2 || ch !== H2) step(W2, H2);
+    return cur;
+  }
+  function hq(src, w, h, screen) {
+    const scale = (screen ? 1 : cam.z) * dpr;
+    const tw = w * scale;
+    if (!(tw >= 2)) return src;
+    const bucket = Math.round(Math.log(tw) / Math.log(1.12));
+    const aspect = Math.round((h / w) * 40);
+    if (!src.__hq) src.__hq = ++hqId;
+    const key = src.__hq + ':' + bucket + ':' + aspect;
+    let c = hqCache.get(key);
+    if (!c) {
+      const W2 = Math.max(1, Math.round(Math.pow(1.12, bucket)));
+      c = resample(src, W2, Math.max(1, Math.round(W2 * h / w)));
+      hqCache.set(key, c);
+      if (hqCache.size > 400) hqCache.delete(hqCache.keys().next().value);
+    }
+    return c;
+  }
+  const usable = (src) => src && (src instanceof HTMLCanvasElement || ready(src));
+  function blit(src, x, y, w, h, screen) {
+    if (usable(src)) ctx.drawImage(hq(src, w, h, screen), x, y, w, h);
+  }
+
   /* Glows (sun, coins, doors, haunted houses) are soft radial gradients.
      Building a big gradient and filling it every frame was one of the most
      expensive things on screen, so each colour is rendered once into a small
@@ -499,7 +542,7 @@
           const cx = layerX(i * L.span + rnd(k) * L.span * 0.5 + drift, L.f);
           const cy = Ht * (L.band[0] + rnd(k + 7) * (L.band[1] - L.band[0]));
           if (cx + w < 0 || cx - w > Wd) continue;
-          ctx.drawImage(cloud, cx, cy, w, w * ratio);
+          blit(cloud, cx, cy, w, w * ratio, true);
         }
       });
       ctx.globalAlpha = 1;
@@ -522,8 +565,9 @@
         const bx = i * step + rnd(i + 40) * 30;
         const sx = layerX(bx, tf), w = tw * z, h = th * z;
         ctx.save();
-        if (i % 2) { ctx.translate(sx + w, 0); ctx.scale(-1, 1); ctx.drawImage(sky, 0, base - h, w, h); }
-        else ctx.drawImage(sky, sx, base - h, w, h);
+        const tile = hq(sky, w, h, true);
+        if (i % 2) { ctx.translate(sx + w, 0); ctx.scale(-1, 1); ctx.drawImage(tile, 0, base - h, w, h); }
+        else ctx.drawImage(tile, sx, base - h, w, h);
         ctx.restore();
         ctx.fillStyle = '#b8b3c9';                   // under the skyline, for when the camera rises
         ctx.fillRect(sx, base - 2 * z, w + 1, Ht);
@@ -643,7 +687,7 @@
     ctx.save();
     ctx.translate(x, gy + 6 * s);            // sink the trunk a touch so it never floats on a slope
     if (flip) ctx.scale(-1, 1);
-    ctx.drawImage(t, -w * TREE_BASE_X, -h, w, h);
+    ctx.drawImage(hq(t, w, h), -w * TREE_BASE_X, -h, w, h);
     ctx.restore();
   }
 
@@ -708,78 +752,64 @@
   }
 
   /* Haunted houses: the wrong doors. Each has a purple glow, its own house
-     art, a ghost hanging in the doorway that drifts out as you pull up, a
-     second ghost at an upper window, and bats looping round the roof. */
-  const HAUNT_W = 430;
-  // The house art is only 200px wide but is drawn ~430 world units wide
-  // (up to ~5x on a phone). Stretching it every frame with the browser's
-  // default resampling looks pixelated, so each house is enlarged once, in
-  // gentle 2x steps with high-quality smoothing, and that copy is drawn.
-  const smoothCache = {};
-  function smoothed(key) {
-    if (smoothCache[key]) return smoothCache[key];
-    const src = img[key];
-    if (!ready(src)) return null;
-    let cur = src, w = src.naturalWidth, h = src.naturalHeight;
-    for (let step = 0; step < 2; step++) {
-      const c = document.createElement('canvas');
-      c.width = w * 2; c.height = h * 2;
-      const g = c.getContext('2d');
-      g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
-      g.drawImage(cur, 0, 0, c.width, c.height);
-      cur = c; w = c.width; h = c.height;
-    }
-    smoothCache[key] = cur;
-    return cur;
-  }
-  const HAUNT_DOOR = { 1: 0.46, 2: 0.64, 3: 0.44, 4: 0.375 };   // door position across each house image
+     art, a ghost in the doorway that drifts out as you pull up, a second
+     ghost at an upper window, and bats looping round the roof. Houses are
+     scaled uniformly (so their relative sizes match the art) and placed so
+     the door in the picture sits on the door spot. */
+  const HAUNT_K = 1.3;
+  const HAUNT_DOOR = { 1: 0.49, 2: 0.49, 3: 0.75, 4: 0.40, 5: 0.43, 6: 0.50 };   // door across each image
   function drawHaunted(b) {
-    const house = smoothed('wrong_house_' + b.variant);
+    const house = img['wrong_house_' + b.variant];
+    if (!ready(house)) return;
     const gy = W.heightAt(b.x) + 4;
-    const hh = house ? HAUNT_W * house.height / house.width : 380;
+    const hw = house.naturalWidth * HAUNT_K, hh = house.naturalHeight * HAUNT_K;
+    const doorF = HAUNT_DOOR[b.variant] || 0.5;
+    const left = b.x - hw * doorF;
     const active = state.door === b;
     b.appear = lerp(b.appear || 0, active ? 1 : 0, 0.05);
 
-    drawGlow(b.x, gy - hh * 0.55, hh * 0.95, '96,36,150', 0.3 + 0.15 * b.appear, 0.08);
-    // the pre-smoothed copy is drawn with normal (fast) resampling: asking for
-    // high-quality resampling every frame was a major cause of lag
-    if (house) ctx.drawImage(house, b.x - HAUNT_W / 2, gy - hh, HAUNT_W, hh);
+    drawGlow(left + hw / 2, gy - hh * 0.55, Math.max(hw, hh) * 0.75, '96,36,150', 0.3 + 0.15 * b.appear, 0.08);
+    blit(house, left, gy - hh, hw, hh);
 
     const t = state.t / 1000;
     // window ghost: faint, drifting side to side
-    drawGhostSprite(img.ghost_5, b.x + Math.sin(t * 0.7 + b.variant) * 60, gy - hh * 0.72 + Math.sin(t * 1.6) * 6,
-      70, 0.18 + 0.14 * (0.5 + 0.5 * Math.sin(t * 2.3 + b.variant)), Math.cos(t * 0.7 + b.variant) < 0);
-    // door ghost: flickers in the doorway, floats out when the car pulls up
-    const doorX = b.x - HAUNT_W / 2 + HAUNT_W * (HAUNT_DOOR[b.variant] || 0.5);
-    const a = b.appear;
+    drawGhostSprite(img.ghost_5, left + hw * 0.5 + Math.sin(t * 0.7 + b.variant) * hw * 0.18,
+      gy - hh * 0.68 + Math.sin(t * 1.6) * 6,
+      0.2 + 0.15 * (0.5 + 0.5 * Math.sin(t * 2.3 + b.variant)), Math.cos(t * 0.7 + b.variant) < 0);
+    // door ghost: flickers in the doorway, floats out and up when the car
+    // pulls up. Only its position and opacity change, never its size.
+    const g = img['ghost_' + (((b.variant - 1) % 4) + 1)];
+    const gh = ready(g) ? g.naturalHeight / cam.z : 60;
     const flicker = 0.75 + 0.25 * Math.sin(t * 9 + b.variant * 2);
-    drawGhostSprite(img['ghost_' + b.variant],
-      doorX + Math.sin(t * 1.3) * (8 + 26 * a), gy - 70 - a * 90 + Math.sin(t * 2.1) * 8,
-      110 + 50 * a, (0.28 + 0.62 * a) * flicker, false);
-    // bats: figure-of-eight loops round the roof, flapping. Drawn from a
-    // pre-smoothed copy too, so the tiny sprite doesn't look blocky.
-    const bat = smoothed('bat');
-    if (bat) {
+    const a = b.appear;
+    drawGhostSprite(g, b.x + Math.sin(t * 1.3) * (6 + 18 * a),
+      gy - gh / 2 - 14 - a * 70 + Math.sin(t * 2.1) * 6, (0.3 + 0.65 * a) * flicker, false);
+    // bats: figure-of-eight loops round the roof, flapping
+    const bat = img.bat;
+    if (ready(bat)) {
+      const bw = 19 * 2.6, bh = 13 * 2.6, cx = left + hw / 2;
       for (let k = 0; k < 3; k++) {
         const u = t * (0.9 + k * 0.22) + k * 2.1 + b.variant;
-        const bx = b.x + Math.sin(u) * (190 + 40 * k) * (k % 2 ? -1 : 1);
-        const by = gy - hh * (0.8 + 0.08 * k) + Math.sin(2 * u) * (55 + 15 * k);
+        const bx = cx + Math.sin(u) * (hw * 0.45 + 30 * k) * (k % 2 ? -1 : 1);
+        const by = gy - hh * (0.82 + 0.08 * k) + Math.sin(2 * u) * (50 + 15 * k);
         const flap = 0.3 + 0.7 * Math.abs(Math.sin(state.t / 55 + k * 1.7));
         const dir = Math.cos(u) * (k % 2 ? -1 : 1) >= 0 ? 1 : -1;
-        const w = 19 * 2.8, h = 13 * 2.8;
+        const sprite = hq(bat, bw, bh);
         ctx.save(); ctx.translate(bx, by); ctx.scale(dir, flap);
-        ctx.drawImage(bat, -w / 2, -h / 2, w, h);
+        ctx.drawImage(sprite, -bw / 2, -bh / 2, bw, bh);
         ctx.restore();
       }
     }
   }
 
-  function drawGhostSprite(g, x, y, height, alpha, flip) {
+  // Ghosts are always drawn at their natural size: one image pixel per screen
+  // (CSS) pixel, whatever the camera zoom. They fade and float, never grow.
+  function drawGhostSprite(g, x, y, alpha, flip) {
     if (!ready(g) || alpha <= 0.01) return;
-    const h = height, w = h * g.naturalWidth / g.naturalHeight;
+    const w = g.naturalWidth / cam.z, h = g.naturalHeight / cam.z;
     ctx.save(); ctx.globalAlpha = clamp(alpha, 0, 1); ctx.translate(x, y);
     if (flip) ctx.scale(-1, 1);
-    ctx.drawImage(g, -w / 2, -h / 2, w, h);
+    ctx.drawImage(hq(g, w, h), -w / 2, -h / 2, w, h);
     ctx.restore();
   }
 
@@ -803,7 +833,7 @@
       const pad = 12, bw2 = sw - pad * 2, bh2 = sh - pad * 2;
       const s = Math.min(bw2 / logo.naturalWidth, bh2 / logo.naturalHeight);
       const lw = logo.naturalWidth * s, lh = logo.naturalHeight * s;
-      ctx.drawImage(logo, cx - lw / 2, sy + sh / 2 - lh / 2, lw, lh);
+      blit(logo, cx - lw / 2, sy + sh / 2 - lh / 2, lw, lh);
     } else {
       ctx.fillStyle = '#ffc83d'; ctx.font = '46px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(g ? g.name.toUpperCase() : 'GARAGE', cx, sy + sh / 2 + 2);
@@ -816,19 +846,32 @@
     ctx.fillText(text, cx, cy + 1);
   }
 
-  /* Game buildings: correct_house_1.png, placed so its front door sits on
-     the door spot, with the game's lit sign on a rooftop billboard. The
-     door fractions below are where the door is in the image. */
-  const GAME_HOUSE_W = 460;
-  const GAME_DOOR = { x: 0.54, top: 0.69, bottom: 0.895, w: 0.1 };
-  function drawGameHouse(b, g) {
-    const house = smoothed('correct_house_1');
+  /* Game buildings: each game has its own house (correct_house_1-4, by door
+     number) and the Garage has correct_house_5. Houses are scaled uniformly
+     and placed so the door in the picture sits on the door spot; the
+     game's lit sign stands on a billboard above the roof. The fractions
+     say where the door is in each image. */
+  const GAME_K = 1.4;
+  const GAME_DOOR = {
+    1: { x: 0.546, top: 0.60, bottom: 0.955, w: 0.066 },
+    2: { x: 0.444, top: 0.70, bottom: 0.96, w: 0.092 },
+    3: { x: 0.504, top: 0.67, bottom: 0.965, w: 0.092 },
+    4: { x: 0.30, top: 0.735, bottom: 0.96, w: 0.05 },
+    5: { x: 0.384, top: 0.69, bottom: 0.927, w: 0.129 }
+  };
+  function houseFor(b) {
+    const n = b.kind === 'garage' ? 5 : (gameById[b.id] ? gameById[b.id].door : 0);
+    const house = img['correct_house_' + n];
+    return n && ready(house) ? { n, house } : null;
+  }
+  function drawGameHouse(b, g, pick) {
+    const { n, house } = pick;
+    const d = GAME_DOOR[n];
     const gy = W.heightAt(b.x) + 3;
-    const hw = GAME_HOUSE_W, hh = hw * house.height / house.width;
-    const left = b.x - hw * GAME_DOOR.x, top = gy - hh;
+    const hw = house.naturalWidth * GAME_K, hh = house.naturalHeight * GAME_K;
+    const left = b.x - hw * d.x, top = gy - hh;
     const active = state.door === b;
-    const doorTop = top + hh * GAME_DOOR.top, doorBottom = top + hh * GAME_DOOR.bottom;
-    const doorW = hw * GAME_DOOR.w;
+    const doorTop = top + hh * d.top, doorBottom = top + hh * d.bottom, doorW = hw * d.w;
     if (active) {
       const pulse = 0.55 + 0.45 * Math.sin(state.t / 180);
       drawGlow(b.x, (doorTop + doorBottom) / 2, 200, '255,214,90', 0.6 * pulse, 0.05);
@@ -837,9 +880,9 @@
     const bbTop = top - 122;
     outline(4); ctx.fillStyle = '#3b3f58';
     for (const px of [b.x - 80, b.x + 70]) {
-      ctx.fillRect(px - 6, bbTop + 90, 12, 130); ctx.strokeRect(px - 6, bbTop + 90, 12, 130);
+      ctx.fillRect(px - 6, bbTop + 90, 12, 130 + hh * 0.3); ctx.strokeRect(px - 6, bbTop + 90, 12, 130 + hh * 0.3);
     }
-    ctx.drawImage(house, left, top, hw, hh);
+    blit(house, left, top, hw, hh);
     if (active) {
       // the doorway lights up warm when you pull up
       const pulse = 0.5 + 0.5 * Math.sin(state.t / 160);
@@ -847,14 +890,15 @@
       ctx.fillRect(b.x - doorW / 2, doorTop, doorW, doorBottom - doorTop);
     }
     drawSignBoard(b.x - 5, bbTop, g);
-    drawDoorPlate(b.x, doorTop - 26, 'DOOR ' + g.door);
+    drawDoorPlate(b.x, doorTop - 26, g ? 'DOOR ' + g.door : 'RIDES');
   }
 
   function drawBuildings(x0, x1) {
     for (const b of W.buildings) {
       if (b.x + 320 < x0 || b.x - 320 > x1) continue;
       if (b.kind === 'wrong') { drawHaunted(b); continue; }
-      if (b.kind === 'game' && gameById[b.id] && smoothed('correct_house_1')) { drawGameHouse(b, gameById[b.id]); continue; }
+      const pick = b.kind !== 'wrong' && houseFor(b);
+      if (pick) { drawGameHouse(b, gameById[b.id], pick); continue; }
       const g = gameById[b.id];
       const gy = W.heightAt(b.x) + 2;
       const w = 420, h = 300, left = b.x - w / 2, top = gy - h;
@@ -930,7 +974,7 @@
   function drawRamps(x0, x1) {
     for (const r of W.ramps) {
       if (r.x + r.w < x0 || r.x > x1) continue;
-      if (ready(img.rampleft)) ctx.drawImage(img.rampleft, r.x, r.y - r.h, r.w, r.h + 4);
+      blit(img.rampleft, r.x, r.y - r.h, r.w, r.h + 4);
     }
   }
 
@@ -941,7 +985,7 @@
       const i = img[p.type];
       if (!ready(i)) continue;
       ctx.save(); ctx.translate(b.position.x, b.position.y); ctx.rotate(b.angle);
-      ctx.drawImage(i, -p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.drawImage(hq(i, p.w, p.h), -p.w / 2, -p.h / 2, p.w, p.h);
       ctx.restore();
     }
   }
@@ -1012,14 +1056,14 @@
     ctx.save(); ctx.translate(c.position.x, c.position.y); ctx.rotate(c.angle);
     if (ready(body)) {
       const bw = v.bodySize[0] * s, bh = v.bodySize[1] * s;
-      ctx.drawImage(body, car.spriteOffset.x - bw / 2, car.spriteOffset.y - bh / 2, bw, bh);
+      ctx.drawImage(hq(body, bw, bh), car.spriteOffset.x - bw / 2, car.spriteOffset.y - bh / 2, bw, bh);
     }
     ctx.restore();
     // wheels
     const wimg = img[v.wheel];
     for (const w of car.wheels) {
       ctx.save(); ctx.translate(w.position.x, w.position.y); ctx.rotate(w.angle);
-      if (ready(wimg)) ctx.drawImage(wimg, -car.rWheel, -car.rWheel, car.rWheel * 2, car.rWheel * 2);
+      if (ready(wimg)) ctx.drawImage(hq(wimg, car.rWheel * 2, car.rWheel * 2), -car.rWheel, -car.rWheel, car.rWheel * 2, car.rWheel * 2);
       ctx.restore();
     }
   }
@@ -1122,8 +1166,7 @@
     state.door = null; ui.prompt.hidden = true;
     Sound.spooky();
     state.shake = 14;
-    const ghost = img['ghost_' + b.variant];
-    ui.spookImg.src = ghost ? ghost.src : '';
+    const ghost = img['ghost_' + (((b.variant - 1) % 4) + 1)];
     ui.spook.classList.remove('show'); void ui.spook.offsetWidth; ui.spook.classList.add('show');
     for (let i = 0; i < 40; i++) {
       puff(b.x + (Math.random() - 0.5) * 200, W.heightAt(b.x) - 80 - Math.random() * 120,
@@ -1333,7 +1376,7 @@
       speed: $('#hud-speed'), progress: $('#hud-progress'), toast: $('#toast'),
       prompt: $('#door-prompt'), promptName: $('#door-prompt-name'),
       modalDoor: $('#modal-door'), modalGarage: $('#modal-garage'), modalFinish: $('#modal-finish'),
-      modalFail: $('#modal-fail'), spook: $('#spook'), spookImg: $('#spook img')
+      modalFail: $('#modal-fail'), spook: $('#spook')
     });
     settleUntil = performance.now() + 2500;
     resize();
