@@ -762,7 +762,7 @@ html.touch .is-playing .pedals { display: flex; }
   padding: 104px var(--gutter) 34px;
 }
 /* the hero overlay lets clicks through to the game; its panels take them back */
-.hero-main { width: min(560px, 100%); pointer-events: auto; }
+.hero-main { width: min(480px, 100%); pointer-events: auto; }
 .hero-main > *, .hero-doors { animation: intro-rise 0.8s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 90ms + 120ms); }
 @keyframes intro-rise { from { opacity: 0; transform: translateY(22px); } }
 
@@ -772,7 +772,7 @@ html.touch .is-playing .pedals { display: flex; }
 }
 .presents span { width: 34px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, var(--gold), transparent); }
 
-.title { position: relative; margin: 14px 0 14px; font-size: clamp(60px, 7.2vw, 112px); line-height: 0.84; width: max-content; max-width: 100%; }
+.title { position: relative; margin: 12px 0 12px; font-size: clamp(52px, 6vw, 92px); line-height: 0.84; width: max-content; max-width: 100%; }
 .title span.t1, .title span.t2 { -webkit-text-stroke: 3px var(--outline); text-shadow: 0 7px 0 var(--outline), 0 22px 40px rgba(0, 0, 0, 0.45); }
 .title .t2 { color: var(--gold); background: none; -webkit-text-fill-color: currentColor; }
 .title .title-badge {
@@ -785,11 +785,11 @@ html.touch .is-playing .pedals { display: flex; }
 }
 @keyframes badge-wiggle { 0%, 88%, 100% { transform: rotate(-7deg); } 92% { transform: rotate(-2deg) scale(1.06); } 96% { transform: rotate(-10deg); } }
 
-.lede { margin: 0 0 24px; max-width: 40ch; color: #e6e0ff; font-size: clamp(15px, 1.3vw, 17.5px); line-height: 1.55; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); }
+.lede { margin: 0 0 20px; max-width: 38ch; color: #e6e0ff; font-size: clamp(14px, 1.15vw, 16px); line-height: 1.5; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); }
 
 .hero-actions { gap: 16px; }
-.btn-play.xl { padding: 16px 30px 16px 16px; font-size: clamp(22px, 2.2vw, 28px); }
-.btn-play.xl .btn-play-icon { width: 48px; height: 48px; }
+.btn-play.xl { padding: 13px 26px 13px 13px; font-size: clamp(20px, 1.9vw, 24px); }
+.btn-play.xl .btn-play-icon { width: 42px; height: 42px; }
 .btn-play.xl::after {
   content: ""; position: absolute; inset: -3px; border-radius: 20px; pointer-events: none;
   box-shadow: 0 0 0 0 rgba(255, 200, 61, 0.55); animation: play-pulse 2.4s ease-out infinite;
@@ -799,7 +799,7 @@ html.touch .is-playing .pedals { display: flex; }
 
 /* ride + time-of-day panel */
 .hero-setup {
-  margin-top: 28px; padding: 14px; border-radius: 22px;
+  margin-top: 22px; padding: 12px; border-radius: 20px;
   background: linear-gradient(160deg, rgba(34, 24, 84, 0.72), rgba(14, 10, 40, 0.78));
   border: 1px solid rgba(255, 255, 255, 0.14); box-shadow: 0 20px 50px rgba(5, 3, 20, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
@@ -814,7 +814,7 @@ html.touch .is-playing .pedals { display: flex; }
   transition: transform 0.2s cubic-bezier(.2, .8, .3, 1), border-color 0.2s, background 0.2s, box-shadow 0.2s;
 }
 .hero-setup .ride-picker button::before {                     /* a little spotlight under the car */
-  content: ""; position: absolute; left: 18%; right: 18%; top: 44px; height: 10px; border-radius: 50%;
+  content: ""; position: absolute; left: 18%; right: 18%; top: 38px; height: 10px; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(0, 0, 0, 0.45), transparent); pointer-events: none;
 }
 .hero-setup .ride-picker button:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.09); }
@@ -822,7 +822,7 @@ html.touch .is-playing .pedals { display: flex; }
   border-color: var(--gold); background: linear-gradient(180deg, rgba(255, 200, 61, 0.2), rgba(255, 200, 61, 0.06));
   box-shadow: 0 0 0 4px rgba(255, 200, 61, 0.12), 0 10px 24px rgba(0, 0, 0, 0.35);
 }
-.hero-setup .ride-slot { height: 46px; position: relative; z-index: 1; }
+.hero-setup .ride-slot { height: 40px; position: relative; z-index: 1; }
 .ride-name { font: 400 14px/1.1 var(--display); letter-spacing: 0.02em; color: #fff; }
 .ride-tag { font: 700 10px/1 var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: #a79fd6; }
 .ride-picker button[aria-pressed="true"] .ride-tag { color: var(--gold); }
@@ -873,8 +873,8 @@ html.touch .is-playing .pedals { display: flex; }
 
 /* phones and portrait tablets: compact bottom sheet, truck visible above */
 @media (max-width: 760px), (orientation: portrait) and (max-width: 1100px) {
-  .stage-scrim { background: linear-gradient(0deg, rgba(8, 6, 26, 0.97) 0%, rgba(8, 6, 26, 0.9) 38%, rgba(8, 6, 26, 0.35) 56%, transparent 68%); }
-  .hero { grid-template-rows: 1fr auto; justify-content: stretch; align-items: end; padding: 80px var(--gutter) 22px; gap: 16px; }
+  .stage-scrim { background: linear-gradient(0deg, rgba(8, 6, 26, 0.97) 0%, rgba(8, 6, 26, 0.88) 26%, rgba(8, 6, 26, 0.3) 40%, transparent 50%); }
+  .hero { grid-template-rows: 1fr auto; justify-content: stretch; align-items: end; padding: 80px var(--gutter) 18px; gap: 14px; }
   .hero-main { width: min(620px, 100%); }
   .hero .scroll-cue { display: none; }
 }
@@ -884,24 +884,26 @@ html.touch .is-playing .pedals { display: flex; }
   .door-chip { flex: 1; width: auto; }
 }
 @media (max-width: 760px) {
-  .presents { font-size: 10px; letter-spacing: 0.24em; }
-  .presents span { width: 22px; }
-  .title { flex-direction: row; flex-wrap: wrap; gap: 0 0.22em; font-size: clamp(44px, 13vw, 62px); margin: 10px 0 10px; width: auto; }
+  .presents { display: none; }
+  .title { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0 0.22em; font-size: clamp(34px, 10vw, 46px); margin: 0 0 10px; width: auto; }
   .title span.t1, .title span.t2 { -webkit-text-stroke: 2px var(--outline); text-shadow: 0 5px 0 var(--outline); }
   .title .title-badge { position: relative; right: auto; bottom: auto; align-self: center; margin-left: 4px; font-size: 11px; padding: 5px 8px 4px; border-width: 2px; box-shadow: 0 3px 0 var(--outline); }
-  .lede { font-size: 14px; margin-bottom: 16px; }
+  .lede { display: none; }
   .hero-actions { flex-wrap: nowrap; gap: 10px; }
-  .btn-play.xl { flex: 1; justify-content: center; padding: 12px 18px 12px 12px; font-size: 21px; }
-  .btn-play.xl .btn-play-icon { width: 38px; height: 38px; }
-  .hero-actions .btn-ghost { padding: 12px 14px; font-size: 13px; }
-  .hero-setup { margin-top: 16px; padding: 10px; border-radius: 18px; }
+  .btn-play.xl { flex: 1; justify-content: center; padding: 9px 16px 9px 9px; font-size: 18px; border-radius: 15px; box-shadow: 0 5px 0 var(--outline); }
+  .btn-play.xl .btn-play-icon { width: 32px; height: 32px; border-radius: 10px; }
+  .btn-play.xl .btn-play-icon svg { width: 16px; height: 16px; }
+  .hero-actions .btn-ghost { padding: 10px 12px; font-size: 12.5px; border-radius: 13px; }
+  .hero-setup { margin-top: 12px; padding: 8px; border-radius: 16px; }
   .setup-head { margin-bottom: 8px; }
   .setup-label { font-size: 10px; letter-spacing: 0.14em; }
   .hero-setup .ride-picker { gap: 7px; }
-  .hero-setup .ride-picker button { padding: 8px 4px 7px; border-radius: 13px; }
-  .hero-setup .ride-picker button::before { top: 34px; }
-  .hero-setup .ride-slot { height: 34px; }
-  .ride-name { font-size: 12px; }
+  .hero-setup .ride-picker button { padding: 6px 4px 5px; border-radius: 12px; }
+  .hero-setup .ride-picker button::before { top: 26px; height: 8px; }
+  .hero-setup .ride-slot { height: 26px; }
+  .ride-name { font-size: 11px; }
+  .hero-setup .time-toggle button { padding: 6px 9px; font-size: 11px; }
+  .hero-setup .time-toggle button svg { width: 13px; height: 13px; }
   .ride-tag { display: none; }
   .hero-doors { display: none; }
 }

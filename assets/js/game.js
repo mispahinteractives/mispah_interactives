@@ -184,7 +184,7 @@
   function focusPoint() {
     const portrait = Ht > Wd;
     if (state.mode === 'attract') {
-      if (portrait && Wd <= 1100) return { fx: 0.5, fy: 0.34 };
+      if (portrait && Wd <= 1100) return { fx: 0.5, fy: Wd < 760 ? 0.4 : 0.36 };   // truck above the intro sheet
       return Wd < 760 ? { fx: 0.5, fy: 0.5 } : { fx: 0.68, fy: 0.64 };
     }
     return { fx: portrait ? 0.32 : 0.36, fy: portrait ? 0.56 : 0.6 };
@@ -192,7 +192,8 @@
 
   function baseZoom() {
     const portrait = Ht > Wd;
-    const wide = portrait ? (state.mode === 'play' ? 820 : 1000) : 1500;
+    // the intro frames the truck a little closer on portrait screens
+    const wide = portrait ? (state.mode === 'play' ? 820 : 760) : 1500;
     return clamp(Math.min(Wd / wide, Ht / 760), 0.3, 1.25);
   }
 
