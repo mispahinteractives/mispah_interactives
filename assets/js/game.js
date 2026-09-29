@@ -18,7 +18,8 @@
     'rampleft', 'crate', 'box', 'suitcase', 'oilcan', 'beercan', 'sodacan', 'cloud', 'tree', 'bat',
     'wrong_house_1', 'wrong_house_2', 'wrong_house_3', 'wrong_house_4',
     'ghost_1', 'ghost_2', 'ghost_3', 'ghost_4', 'ghost_5', 'background_house1',
-    'wrong_house_5', 'wrong_house_6', 'correct_house_1', 'correct_house_2', 'correct_house_3', 'correct_house_4', 'correct_house_5'];
+    'wrong_house_5', 'wrong_house_6', 'correct_house_1', 'correct_house_2', 'correct_house_3', 'correct_house_4', 'correct_house_5',
+    'mountain_1', 'mountain_2', 'mountain_3', 'mountain_4'];
   const FONT = '"Lilita One", "Rubik", system-ui, sans-serif';
   const TAU = Math.PI * 2;
 
@@ -548,8 +549,12 @@
       ctx.globalAlpha = 1;
     }
     // two mountain ranges
-    drawRange(0.14, 560, 260, 520, '#b3c2d8', '#dde6f2', 180, 1);
-    drawRange(0.3, 430, 170, 330, '#94a6c2', null, 120, 2);
+    // two mountain ranges from the mountain art; the drawn triangles are only
+    // a fallback while the images load
+    if (!drawMountains(0.14, ['mountain_2', 'mountain_3'], 560, -40, 0.4, '169,195,216', 1))
+      drawRange(0.14, 560, 260, 520, '#b3c2d8', '#dde6f2', 180, 1);
+    if (!drawMountains(0.3, ['mountain_1', 'mountain_4'], 470, 50, 0.14, '150,168,166', 2))
+      drawRange(0.3, 430, 170, 330, '#94a6c2', null, 120, 2);
     // Town skyline behind Main Street: background_house1.png, hazed toward
     // the sky colour so it reads as distant, tiled (every other copy
     // mirrored) and scrolling slower than the road.
@@ -589,6 +594,53 @@
     g.fillRect(0, 0, c.width, c.height);
     skylineCache = c;
     return c;
+  }
+
+  /* Mountains (mountain_1-4.png) at scale 1: the camera zoom is the only
+     thing that changes their size. Each range scrolls at its own parallax
+     factor `f` and alternates its two images, some mirrored, at uneven
+     spacing. The far range is hazed toward the sky so it reads as distant;
+     a matching haze colour fills in below the range for when the camera
+     climbs above it. */
+  const hazeCache = {};
+  function hazed(key, haze) {
+    const id = key + '|' + haze;
+    if (hazeCache[id]) return hazeCache[id];
+    const src = img[key];
+    if (!ready(src)) return null;
+    const c = document.createElement('canvas');
+    c.width = src.naturalWidth; c.height = src.naturalHeight;
+    const g = c.getContext('2d');
+    g.drawImage(src, 0, 0);
+    g.globalCompositeOperation = 'source-atop';
+    g.fillStyle = `rgba(185,212,236,${haze})`;
+    g.fillRect(0, 0, c.width, c.height);
+    return (hazeCache[id] = c);
+  }
+  function drawMountains(f, keys, spacing, baseOff, haze, fill, seed) {
+    const pics = keys.map((k) => hazed(k, haze));
+    if (pics.some((p) => !p)) return false;
+    const z = cam.z, base = layerY(baseOff, f);
+    // misty valley under the range: the mountain colour fading into haze
+    const mist = ctx.createLinearGradient(0, base - 2, 0, base + 160 * z);
+    mist.addColorStop(0, `rgba(${fill},1)`); mist.addColorStop(1, 'rgba(200,226,244,1)');
+    ctx.fillStyle = mist;
+    ctx.fillRect(0, base - 2, Wd, Ht - base + 2);
+    const i0 = Math.floor((cam.x * f - cam.fx * Wd / z) / spacing) - 2;
+    const i1 = i0 + Math.ceil(Wd / z / spacing) + 4;
+    for (let i = i0; i <= i1; i++) {
+      const pic = pics[((i % 2) + 2) % 2];
+      const w = pic.width, h = pic.height;
+      const px = i * spacing + (rnd(i * seed + 5) - 0.5) * spacing * 0.35;
+      const sx = layerX(px - w / 2, f);
+      if (sx > Wd || sx + w * z < 0) continue;
+      const tile = hq(pic, w * z, h * z, true);
+      ctx.save();
+      if (rnd(i * seed + 13) > 0.5) { ctx.translate(sx + w * z, 0); ctx.scale(-1, 1); ctx.drawImage(tile, 0, base - h * z, w * z, h * z); }
+      else ctx.drawImage(tile, sx, base - h * z, w * z, h * z);
+      ctx.restore();
+    }
+    return true;
   }
 
   function drawRange(f, spacing, hMin, hMax, color, snow, baseOff, seed) {
