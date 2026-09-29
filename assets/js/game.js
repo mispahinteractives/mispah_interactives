@@ -143,7 +143,7 @@
     paused: false,            // a modal is open
     active: true,             // stage on screen
     vehicle: VEHICLES[store.get('vehicle', 'truck')] ? store.get('vehicle', 'truck') : 'truck',
-    night: store.get('time', 'morning') === 'night',
+    night: store.get('time', 'night') === 'night',          // Night is the default
     time: 0, started: false, finished: false,
     coins: 0, checkpoint: W.SPAWN_X,
     door: null, auto: { stall: 0, reverse: 0 },

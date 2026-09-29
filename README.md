@@ -75,4 +75,4 @@ Every sprite is resized once, with high quality, to the size it covers on screen
 
 ## Morning and Night
 
-Players pick the time of day on the title card (Morning | Night), with the sun/moon button in the in-game top bar, or with `N`. The choice is remembered. At night the sky turns navy with stars and a moon (reflected on the water), and the world is tinted to moonlight in one pass (`drawNight()` in `game.js`). Light sources are then added on top: street lamps, headlights, game signs, coins, house windows, and the haunted houses and ghosts. Anything that should glow at night registers itself with `addLight()`.
+The game starts in Night by default. Players pick the time of day on the title card (Morning | Night), with the sun/moon button in the in-game top bar, or with `N`. The choice is remembered. At night the sky turns navy with stars and a moon (reflected on the water), and the world is tinted to moonlight in one pass (`drawNight()` in `game.js`). Light sources are then added on top: street lamps, headlights, game signs, coins, house windows, and the haunted houses and ghosts. Anything that should glow at night registers itself with `addLight()`.
