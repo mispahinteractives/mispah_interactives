@@ -193,7 +193,7 @@
   function baseZoom() {
     const portrait = Ht > Wd;
     // the intro frames the truck a little closer on portrait screens
-    const wide = portrait ? (state.mode === 'play' ? 820 : 760) : 1500;
+    const wide = portrait ? (state.mode === 'play' ? 820 : 760) : (state.mode === 'play' ? 1500 : 1200);
     return clamp(Math.min(Wd / wide, Ht / 760), 0.3, 1.25);
   }
 

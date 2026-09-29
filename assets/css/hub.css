@@ -762,7 +762,7 @@ html.touch .is-playing .pedals { display: flex; }
   padding: 104px var(--gutter) 34px;
 }
 /* the hero overlay lets clicks through to the game; its panels take them back */
-.hero-main { width: min(480px, 100%); pointer-events: auto; }
+.hero-main { width: min(420px, 100%); pointer-events: auto; }
 .hero-main > *, .hero-doors { animation: intro-rise 0.8s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 90ms + 120ms); }
 @keyframes intro-rise { from { opacity: 0; transform: translateY(22px); } }
 
@@ -772,7 +772,7 @@ html.touch .is-playing .pedals { display: flex; }
 }
 .presents span { width: 34px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, var(--gold), transparent); }
 
-.title { position: relative; margin: 12px 0 12px; font-size: clamp(52px, 6vw, 92px); line-height: 0.84; width: max-content; max-width: 100%; }
+.title { position: relative; margin: 10px 0 18px; font-size: clamp(46px, 4.8vw, 74px); line-height: 0.84; width: max-content; max-width: 100%; }
 .title span.t1, .title span.t2 { -webkit-text-stroke: 3px var(--outline); text-shadow: 0 7px 0 var(--outline), 0 22px 40px rgba(0, 0, 0, 0.45); }
 .title .t2 { color: var(--gold); background: none; -webkit-text-fill-color: currentColor; }
 .title .title-badge {
@@ -785,11 +785,13 @@ html.touch .is-playing .pedals { display: flex; }
 }
 @keyframes badge-wiggle { 0%, 88%, 100% { transform: rotate(-7deg); } 92% { transform: rotate(-2deg) scale(1.06); } 96% { transform: rotate(-10deg); } }
 
+/* desktop keeps just the title: the tagline is dropped so the truck gets the space */
+.hero .lede { display: none; }
 .lede { margin: 0 0 20px; max-width: 38ch; color: #e6e0ff; font-size: clamp(14px, 1.15vw, 16px); line-height: 1.5; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); }
 
 .hero-actions { gap: 16px; }
-.btn-play.xl { padding: 13px 26px 13px 13px; font-size: clamp(20px, 1.9vw, 24px); }
-.btn-play.xl .btn-play-icon { width: 42px; height: 42px; }
+.btn-play.xl { padding: 11px 22px 11px 11px; font-size: clamp(18px, 1.6vw, 22px); }
+.btn-play.xl .btn-play-icon { width: 38px; height: 38px; }
 .btn-play.xl::after {
   content: ""; position: absolute; inset: -3px; border-radius: 20px; pointer-events: none;
   box-shadow: 0 0 0 0 rgba(255, 200, 61, 0.55); animation: play-pulse 2.4s ease-out infinite;
@@ -799,7 +801,7 @@ html.touch .is-playing .pedals { display: flex; }
 
 /* ride + time-of-day panel */
 .hero-setup {
-  margin-top: 22px; padding: 12px; border-radius: 20px;
+  margin-top: 18px; padding: 10px; border-radius: 18px;
   background: linear-gradient(160deg, rgba(34, 24, 84, 0.72), rgba(14, 10, 40, 0.78));
   border: 1px solid rgba(255, 255, 255, 0.14); box-shadow: 0 20px 50px rgba(5, 3, 20, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
@@ -814,7 +816,7 @@ html.touch .is-playing .pedals { display: flex; }
   transition: transform 0.2s cubic-bezier(.2, .8, .3, 1), border-color 0.2s, background 0.2s, box-shadow 0.2s;
 }
 .hero-setup .ride-picker button::before {                     /* a little spotlight under the car */
-  content: ""; position: absolute; left: 18%; right: 18%; top: 38px; height: 10px; border-radius: 50%;
+  content: ""; position: absolute; left: 18%; right: 18%; top: 32px; height: 10px; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(0, 0, 0, 0.45), transparent); pointer-events: none;
 }
 .hero-setup .ride-picker button:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.09); }
@@ -822,7 +824,7 @@ html.touch .is-playing .pedals { display: flex; }
   border-color: var(--gold); background: linear-gradient(180deg, rgba(255, 200, 61, 0.2), rgba(255, 200, 61, 0.06));
   box-shadow: 0 0 0 4px rgba(255, 200, 61, 0.12), 0 10px 24px rgba(0, 0, 0, 0.35);
 }
-.hero-setup .ride-slot { height: 40px; position: relative; z-index: 1; }
+.hero-setup .ride-slot { height: 34px; position: relative; z-index: 1; }
 .ride-name { font: 400 14px/1.1 var(--display); letter-spacing: 0.02em; color: #fff; }
 .ride-tag { font: 700 10px/1 var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: #a79fd6; }
 .ride-picker button[aria-pressed="true"] .ride-tag { color: var(--gold); }
@@ -836,11 +838,11 @@ html.touch .is-playing .pedals { display: flex; }
 }
 .doors-label { display: flex; flex-direction: column; gap: 4px; margin: 0; white-space: nowrap; }
 .doors-label b { font: 400 18px/1 var(--display); letter-spacing: 0.02em; color: #fff; }
-.doors-label span { font: 600 11px/1.2 var(--body); color: #a79fd6; }
+.doors-label span { display: none; }
 .door-chips { display: flex; gap: 8px; }
 .door-chip {
   --accent: var(--gold);
-  position: relative; display: grid; place-items: center; width: 92px; height: 54px; padding: 6px 8px;
+  position: relative; display: grid; place-items: center; width: 80px; height: 46px; padding: 6px 8px;
   border-radius: 14px; border: 2px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.05);
   transition: transform 0.2s cubic-bezier(.2, .8, .3, 1), border-color 0.2s, background 0.2s;
 }
@@ -921,4 +923,14 @@ html.touch .is-playing .pedals { display: flex; }
 }
 @media (prefers-reduced-motion: reduce) {
   .hero-main > *, .hero-doors, .title-badge, .btn-play.xl::after { animation: none !important; }
+}
+
+/* desktop compact intro: sticker sits under the title, actions stay on one row */
+@media (min-width: 761px) {
+  .title { display: flex; flex-direction: column; }
+  .title .title-badge { position: relative; right: auto; bottom: auto; align-self: flex-start; margin: 14px 0 0 4px; }
+  .hero-actions { flex-wrap: nowrap; gap: 12px; }
+  .hero-actions .btn-ghost { padding: 11px 16px; font-size: 14px; white-space: nowrap; }
+  .btn-play.xl { white-space: nowrap; }
+  .btn-play.xl .hint-kbd { display: none; }
 }
