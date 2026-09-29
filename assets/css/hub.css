@@ -239,8 +239,15 @@ kbd {
 .time-toggle button:hover { background: rgba(255, 255, 255, 0.08); }
 .time-toggle button[aria-pressed="true"][data-time="morning"] { background: var(--gold); color: var(--outline); }
 .time-toggle button[aria-pressed="true"][data-time="night"] { background: #3b4fd8; color: #fff; }
-.time-btn .ico-moon, .is-night .time-btn .ico-sun { display: none; }
-.is-night .time-btn .ico-moon { display: block; }
+.time-toggle button[aria-pressed="true"][data-time="rain"] { background: #4d6f8f; color: #fff; }
+.time-btn .ico-moon, .time-btn .ico-rain, .is-night .time-btn .ico-sun, .is-rain .time-btn .ico-sun { display: none; }
+.is-night .time-btn .ico-moon, .is-rain .time-btn .ico-rain { display: block; }
+.is-rain .stage { background: #6b7688; }
+.is-rain .feature-scene { background: linear-gradient(180deg, #3c4658, #98a3b3); }
+.is-rain .fs-sun { opacity: 0.15; }
+.is-rain .fs-cloud { filter: brightness(0.6); }
+.is-rain .fs-hills .h1 { fill: #6c7a8e; }
+.is-rain .fs-road, .is-rain .fs-hills .h2, .is-rain .fs-ride { filter: brightness(0.8) saturate(0.85); }
 .is-night .stage { background: #0b1640; }
 /* the featured card's little scene follows the time of day */
 .is-night .feature-scene { background: linear-gradient(180deg, #060d2b, #2a3d7a); }
@@ -943,4 +950,12 @@ html.touch .is-playing .pedals { display: flex; }
   25% { opacity: 1; transform: translate(-50%, 0) scale(1); }
   75% { opacity: 1; transform: translate(-50%, 0) scale(1); }
   100% { opacity: 0; transform: translate(-50%, 0) scale(0.8); }
+}
+
+/* three theme buttons: on small phones they take the whole header row */
+.setup-label { white-space: nowrap; }
+@media (max-width: 480px) {
+  .setup-label { display: none; }
+  .hero-setup .time-toggle { flex: 1; display: flex; }
+  .hero-setup .time-toggle button { flex: 1; justify-content: center; }
 }

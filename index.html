@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Rubik:wght@400;500;700;800&display=swap">
-<link rel="stylesheet" href="assets/css/hub.css?v=20260930r">
+<link rel="stylesheet" href="assets/css/hub.css?v=20260930u">
 </head>
 <body>
 <a class="skip" href="#games">Skip to the game list</a>
@@ -69,9 +69,10 @@
       <div class="hero-setup" style="--i:4">
         <div class="setup-head">
           <span class="setup-label">Pick your ride</span>
-          <div class="time-toggle" role="group" aria-label="Time of day">
+          <div class="time-toggle" role="group" aria-label="Theme">
         <button type="button" data-time="morning" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Morning</button>
         <button type="button" data-time="night" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>Night</button>
+        <button type="button" data-time="rain" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 15a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.8 7.5 3.8 3.8 0 0 1 17.5 15z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Rain</button>
       </div>
         </div>
         <div class="ride-picker" role="group" aria-label="Choose your ride">
@@ -108,9 +109,10 @@
       <button class="icon-btn" type="button" data-action="respawn" aria-label="Back to last checkpoint" title="Reset (R)">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2.1-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M4 3.5v5h5z"/></svg>
       </button>
-      <button class="icon-btn time-btn" type="button" data-action="toggle-time" aria-label="Switch to morning" title="Morning / Night (N)">
+      <button class="icon-btn time-btn" type="button" data-action="toggle-time" aria-label="Switch to morning" title="Morning / Night / Rain (N)">
         <svg class="ico-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <svg class="ico-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+        <svg class="ico-rain" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 15a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.8 7.5 3.8 3.8 0 0 1 17.5 15z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
       <button class="icon-btn" type="button" data-action="garage" aria-label="Change ride" title="Garage (1, 2, 3)">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 14l2-5h9l3 3h3a1 1 0 0 1 1 1v2H3z"/><circle cx="7.5" cy="16.5" r="2.5"/><circle cx="17" cy="16.5" r="2.5"/></svg>
@@ -125,7 +127,7 @@
     </div>
   </div>
 
-  <p class="key-hints" aria-hidden="true"><kbd>→</kbd> gas <kbd>←</kbd> brake <kbd>Space</kbd> jump <kbd>↑</kbd><kbd>↓</kbd> lean <kbd>E</kbd> enter door <kbd>R</kbd> reset <kbd>N</kbd> night <kbd>B</kbd> horn</p>
+  <p class="key-hints" aria-hidden="true"><kbd>→</kbd> gas <kbd>←</kbd> brake <kbd>Space</kbd> jump <kbd>↑</kbd><kbd>↓</kbd> lean <kbd>E</kbd> enter door <kbd>R</kbd> reset <kbd>N</kbd> theme <kbd>B</kbd> horn</p>
 
   <button id="door-prompt" class="door-prompt" type="button" data-action="enter-door" hidden>
     <kbd>E</kbd><span class="dp-verb">Enter</span><b id="door-prompt-name"></b>
@@ -221,7 +223,7 @@
         <li><span><kbd>E</kbd><kbd>Enter</kbd></span>Enter a door</li>
         <li><span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd></span>Switch ride</li>
         <li><span><kbd>R</kbd></span>Back to checkpoint</li>
-        <li><span><kbd>N</kbd></span>Morning / Night</li>
+        <li><span><kbd>N</kbd></span>Morning / Night / Rain</li>
       </ul>
     </div>
     <div class="howto-card reveal">
@@ -355,9 +357,9 @@
 </div>
 
 <script src="assets/js/vendor/matter.min.js"></script>
-<script src="assets/js/physics.js?v=20260930r"></script>
-<script src="assets/js/games.js?v=20260930r"></script>
-<script src="assets/js/game.js?v=20260930r"></script>
-<script src="assets/js/hub.js?v=20260930r"></script>
+<script src="assets/js/physics.js?v=20260930u"></script>
+<script src="assets/js/games.js?v=20260930u"></script>
+<script src="assets/js/game.js?v=20260930u"></script>
+<script src="assets/js/hub.js?v=20260930u"></script>
 </body>
 </html>

@@ -71,6 +71,19 @@
       osc1.connect(filt); osc2.connect(sub); sub.connect(filt); filt.connect(engGain); engGain.connect(master);
       osc1.start(); osc2.start();
     }
+    let rainGain = null;
+    function rain(on) {
+      if (!ctx) return;
+      if (!rainGain) {
+        const n = ctx.sampleRate * 2, buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
+        for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+        const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+        const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1400; f.Q.value = 0.6;
+        rainGain = ctx.createGain(); rainGain.gain.value = 0;
+        src.connect(f); f.connect(rainGain); rainGain.connect(master); src.start();
+      }
+      rainGain.gain.setTargetAtTime(on ? 0.06 : 0, ctx.currentTime, 0.4);
+    }
     function engine(rpm, throttle, on) {
       if (!ctx) return;
       const t = ctx.currentTime, f = 34 + rpm * 90 + throttle * 14;
@@ -102,7 +115,8 @@
       src.connect(f); f.connect(g); g.connect(master); src.start();
     }
     return {
-      ensure, engine,
+      ensure, engine, rain,
+      thunder: (d) => { setTimeout(() => noise(1.8, 0.55, 160), d); setTimeout(() => noise(0.5, 0.3, 500), d + 60); },
       coin: () => tone([988, 1319], 0.07, 'square', 0.09),
       land: (s) => { noise(0.3, 0.25 + 0.4 * s, 380); if (s > 0.35) tone([70, 50], 0.12, 'sine', 0.3 * s); },
       backfire: () => { noise(0.07, 0.4, 3200); tone([95], 0.05, 'square', 0.12); },
@@ -145,7 +159,10 @@
     paused: false,            // a modal is open
     active: true,             // stage on screen
     vehicle: VEHICLES[store.get('vehicle', 'truck')] ? store.get('vehicle', 'truck') : 'truck',
-    night: store.get('time', 'night') === 'night',          // Night is the default
+    // theme: 'morning' | 'night' | 'rain' (Night is the default). `night`
+    // means the lights are on (night and rain); `theme` picks sky and weather.
+    theme: ['morning', 'night', 'rain'].includes(store.get('time', 'night')) ? store.get('time', 'night') : 'night',
+    night: false,
     time: 0, started: false, finished: false,
     coins: 0, checkpoint: W.SPAWN_X,
     door: null, auto: { stall: 0, reverse: 0 },
@@ -315,11 +332,11 @@
     car.wheels.forEach((w) => {
       if (now - w.lastContact > 60) return;
       const spin = Math.abs(w.angularVelocity * car.rWheel - W.forwardSpeed());
-      const k = (speed > 7 ? 0.12 : 0) + (spin > 4 ? 0.5 : 0);
+      const k = (speed > 7 ? (state.theme === 'rain' ? 0.5 : 0.12) : 0) + (spin > 4 ? 0.5 : 0);
       if (Math.random() < k * dt / 16) {
         puff(w.position.x - Math.sign(vel.x || 1) * car.rWheel * 0.4, w.position.y + car.rWheel * 0.8,
           -vel.x * 0.15 + (Math.random() - 0.5) * 1.5, -1 - Math.random() * 1.5,
-          6 + Math.random() * 7, 600 + Math.random() * 400, '#b89a74', 'dust');
+          6 + Math.random() * 7, 600 + Math.random() * 400, state.theme === 'rain' ? 'rgba(210,222,238,0.9)' : '#b89a74', 'dust');
       }
     });
   }
@@ -433,6 +450,10 @@
     }
 
     if (car.chassis) emitCarParticles(dt);
+    if (state.theme === 'rain') {
+      const half = Wd / cam.z;
+      rainTick(dt, cam.x - half * cam.fx, cam.x + half * (1 - cam.fx));
+    }
     updateParticles(dt);
 
     const rpm = clamp(Math.abs(car.wheels[1].angularVelocity * car.rWheel) / car.v.maxSpeed, 0, 1.2);
@@ -482,7 +503,7 @@
     // only gets a light moonlight tint later, so it stays clearly visible.
     if (state.night) {
       ctx.globalCompositeOperation = 'source-atop';
-      ctx.fillStyle = 'rgba(12,18,56,0.52)';
+      ctx.fillStyle = state.theme === 'rain' ? 'rgba(52,62,82,0.5)' : 'rgba(12,18,56,0.52)';
       ctx.fillRect(0, 0, Wd, Ht);
       ctx.globalCompositeOperation = 'source-over';
     }
@@ -502,6 +523,7 @@
     drawParticles('front');
     drawForeground(x0, x1);
     if (state.night) drawNight();
+    if (state.theme === 'rain') drawRain();
     drawSpeedFx();
     drawSky();
   }
@@ -514,7 +536,7 @@
     const flash = state.flash || 0;
     if (flash > 0.01) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fillRect(0, 0, Wd, Ht); }
     if (state.mode !== 'play' || !car.chassis) return;
-    const f = clamp((W.forwardSpeed() / car.v.maxSpeed - 0.5) / 0.45, 0, 1);
+    const f = clamp((W.forwardSpeed() / car.v.maxSpeed - 0.45) / 0.4, 0, 1);
     if (f <= 0) return;
     if (!vignette || vignette.w !== Wd || vignette.h !== Ht) {
       const g = ctx.createRadialGradient(Wd / 2, Ht / 2, Math.min(Wd, Ht) * 0.35, Wd / 2, Ht / 2, Math.hypot(Wd, Ht) * 0.6);
@@ -529,9 +551,65 @@
       if (Math.abs(y - Ht * cam.fy) < Ht * 0.12) continue;          // keep the car's lane clear
       const len = (80 + rnd(i + 5) * 180) * (0.5 + f);
       const x = Wd - ((t * (1400 + rnd(i + 9) * 900) + rnd(i + 2) * Wd * 2) % (Wd * 2 + len));
-      ctx.strokeStyle = `rgba(255,255,255,${(0.12 + rnd(i + 4) * 0.2) * f})`;
-      ctx.lineWidth = 1 + rnd(i + 8) * 2;
+      ctx.strokeStyle = `rgba(255,255,255,${(0.25 + rnd(i + 4) * 0.35) * f})`;
+      ctx.lineWidth = 1.5 + rnd(i + 8) * 2.5;
       ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y); ctx.stroke();
+    }
+  }
+
+  /* Rain: slanted streaks in two depths, splashes on the road, and now and
+     then a lightning flash with a bolt and a roll of thunder. */
+  const DROPS = Array.from({ length: 220 }, (_, i) => ({
+    x: rnd(i * 2.3 + 1), y: rnd(i * 4.1 + 2), s: 0.6 + rnd(i * 1.7 + 3) * 0.8, far: i % 3 === 0
+  }));
+  function drawRain() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const t = state.t / 1000, n = Math.round(DROPS.length * clamp(Wd * Ht / (1440 * 900), 0.35, 1));
+    const slant = 0.22, drift = (cam.x * cam.z * 0.6) % Wd;
+    ctx.lineCap = 'round';
+    for (const far of [true, false]) {
+      ctx.strokeStyle = far ? 'rgba(190,205,225,0.28)' : 'rgba(215,228,245,0.5)';
+      ctx.lineWidth = far ? 1 : 1.6;
+      ctx.beginPath();
+      for (let i = 0; i < n; i++) {
+        const d = DROPS[i];
+        if (d.far !== far) continue;
+        const sp = (far ? 900 : 1500) * d.s, len = (far ? 14 : 26) * d.s;
+        const y = ((d.y * (Ht + 60) + t * sp) % (Ht + 60)) - 30;
+        const x = (((d.x * (Wd + 200) - drift - y * slant) % (Wd + 200)) + Wd + 200) % (Wd + 200) - 100;
+        ctx.moveTo(x, y); ctx.lineTo(x - len * slant, y + len);
+      }
+      ctx.stroke();
+    }
+    // lightning
+    const L = state.lightning || 0;
+    if (L > 0.01) {
+      ctx.fillStyle = `rgba(230,238,255,${0.45 * L})`; ctx.fillRect(0, 0, Wd, Ht);
+      if (L > 0.55 && state.bolt) {
+        ctx.strokeStyle = `rgba(255,255,255,${L})`; ctx.lineWidth = 3; ctx.shadowColor = '#cfe0ff'; ctx.shadowBlur = 18;
+        ctx.beginPath(); state.bolt.forEach(([bx, by], i) => ctx[i ? 'lineTo' : 'moveTo'](bx * Wd, by * Ht)); ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+    }
+  }
+  function rainTick(dt, x0, x1) {
+    state.lightning = (state.lightning || 0) * Math.pow(0.9, dt / 16.67);
+    state.nextBolt = (state.nextBolt || 4000) - dt;
+    if (state.nextBolt <= 0) {
+      state.nextBolt = 6000 + Math.random() * 9000;
+      state.lightning = 1;
+      let bx = 0.2 + Math.random() * 0.6, by = 0; const pts = [[bx, by]];
+      while (by < 0.45) { by += 0.05 + Math.random() * 0.06; bx += (Math.random() - 0.5) * 0.08; pts.push([bx, by]); }
+      state.bolt = pts;
+      Sound.thunder(300 + Math.random() * 700);
+    }
+    // splashes on the road around the camera
+    const k = Math.min(6, Math.round(dt / 5));
+    for (let i = 0; i < k; i++) {
+      if (particles.length > 380) break;
+      const sx = x0 + Math.random() * (x1 - x0);
+      particles.push({ x: sx, y: W.heightAt(sx) + 2 + Math.random() * 14, vx: 0, vy: 0, size: 1.5, life: 260, max: 260,
+        color: 'rgba(215,228,245,1)', kind: 'ring', rot: 0, vr: 1.1 + Math.random() * 0.8 });
     }
   }
 
@@ -557,13 +635,13 @@
     // houses keep close to their own brightness against the night sky
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.globalCompositeOperation = 'source-atop';
-    ctx.fillStyle = 'rgba(30,45,120,0.14)';
+    ctx.fillStyle = state.theme === 'rain' ? 'rgba(45,58,82,0.2)' : 'rgba(30,45,120,0.14)';
     ctx.fillRect(0, 0, Wd, Ht);
     ctx.globalCompositeOperation = 'lighter';
     // moon glitter on the water
     const t = state.t / 1000;
     const seaY = (SEA - cam.y) * cam.z + cam.fy * Ht, mx = Wd * 0.82;
-    if (seaY < Ht) {
+    if (seaY < Ht && state.theme === 'night') {
       for (let k = 0; k < 12; k++) {
         const y = seaY + 8 + k * 13 * Math.max(0.6, cam.z);
         if (y > Ht) break;
@@ -688,9 +766,13 @@
   function drawSky() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.globalCompositeOperation = 'destination-over';
-    const cx = Wd * (state.night ? 0.82 : 0.84), cy = Ht * (state.night ? 0.17 : 0.16);
-    const r = Math.min(Wd, Ht) * (state.night ? 0.055 : 0.07);
-    if (state.night) {
+    const theme = state.theme;
+    const cx = Wd * (theme === 'night' ? 0.82 : 0.84), cy = Ht * (theme === 'night' ? 0.17 : 0.16);
+    const r = Math.min(Wd, Ht) * (theme === 'night' ? 0.055 : 0.07);
+    if (theme === 'rain') {
+      // no sun: a dim glow behind the overcast
+      drawGlow(cx, cy, r * 4, '220,228,240', 0.25, 0.1);
+    } else if (theme === 'night') {
       ctx.fillStyle = 'rgba(120,120,100,0.22)';                  // moon craters
       for (const [dx, dy, cr] of [[-0.3, -0.2, 0.22], [0.25, 0.1, 0.16], [-0.05, 0.35, 0.12], [0.35, -0.35, 0.1]]) {
         ctx.beginPath(); ctx.arc(cx + dx * r, cy + dy * r, cr * r, 0, TAU); ctx.fill();
@@ -708,10 +790,11 @@
       ctx.fillStyle = '#fff6c9'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fill();
       drawGlow(cx, cy, r * 3.2, '255,248,200', 0.9, 0.12);
     }
-    const key = Ht + (state.night ? 'n' : 'd');
+    const key = Ht + theme;
     if (!skyCache || skyCache.key !== key) {
       const g = ctx.createLinearGradient(0, 0, 0, Ht);
-      if (state.night) { g.addColorStop(0, '#060d2b'); g.addColorStop(0.55, '#132256'); g.addColorStop(1, '#2a3d7a'); }
+      if (theme === 'rain') { g.addColorStop(0, '#3c4658'); g.addColorStop(0.55, '#6b7688'); g.addColorStop(1, '#98a3b3'); }
+      else if (theme === 'night') { g.addColorStop(0, '#060d2b'); g.addColorStop(0.55, '#132256'); g.addColorStop(1, '#2a3d7a'); }
       else { g.addColorStop(0, '#5bb8f0'); g.addColorStop(0.55, '#a9ddf8'); g.addColorStop(1, '#e3f5ff'); }
       skyCache = { key, g };
     }
@@ -1343,6 +1426,11 @@
     ctx.lineCap = 'butt';
     line(ROAD_FAR + ROAD_D * 0.36, '#f2c230', 4, [46, 42], roadArc()[i0]);
     ctx.lineCap = 'round';
+    // rain: a wet sheen along the asphalt
+    if (state.theme === 'rain') {
+      line(ROAD_FAR + ROAD_D * 0.62, 'rgba(190,210,240,0.16)', 12);
+      line(ROAD_FAR + ROAD_D * 0.62, 'rgba(230,240,255,0.18)', 2.5);
+    }
 
     // water at sea level: gentle waves, a foam line and drifting sparkles
     if (SEA < bottom) {
@@ -1561,17 +1649,25 @@
     openModal(ui.modalGarage);
   }
 
-  // Morning or Night. Remembered between visits; the page mirrors it with
-  // an \`is-night\` class so the toggles and the featured card can follow.
+  // Morning, Night or Rain. Remembered between visits; the page mirrors it
+  // with \`is-night\` / \`is-rain\` classes so the toggles and the featured
+  // card can follow.
+  const THEMES = ['morning', 'night', 'rain'];
   function setTime(mode) {
-    state.night = mode === 'night';
-    store.set('time', state.night ? 'night' : 'morning');
-    document.documentElement.classList.toggle('is-night', state.night);
-    document.querySelectorAll('[data-time]').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.time === 'night') === state.night)));
-    document.querySelectorAll('[data-action="toggle-time"]').forEach((b) => b.setAttribute('aria-label', state.night ? 'Switch to morning' : 'Switch to night'));
+    state.theme = THEMES.includes(mode) ? mode : 'night';
+    state.night = state.theme !== 'morning';          // lights on
+    store.set('time', state.theme);
+    const root = document.documentElement;
+    root.classList.toggle('is-night', state.theme === 'night');
+    root.classList.toggle('is-rain', state.theme === 'rain');
+    document.querySelectorAll('[data-time]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.time === state.theme)));
+    const next = nextTheme();
+    document.querySelectorAll('[data-action="toggle-time"]').forEach((b) => b.setAttribute('aria-label', 'Switch to ' + next));
     skyCache = null;
-    emit('time', { mode: state.night ? 'night' : 'morning' });
+    Sound.rain(state.theme === 'rain' && !Sound.muted);
+    emit('time', { mode: state.theme });
   }
+  const nextTheme = () => THEMES[(THEMES.indexOf(state.theme) + 1) % THEMES.length];
 
   function setVehicle(key) {
     if (!VEHICLES[key]) return;
@@ -1629,6 +1725,7 @@
   function start(opts) {
     opts = opts || {};
     Sound.ensure();
+    Sound.rain(state.theme === 'rain' && !Sound.muted);
     closeAllModals();
     state.mode = 'play';
     document.body.classList.add('is-playing');
@@ -1672,7 +1769,7 @@
       else if (e.code === 'KeyR') spawnAt(state.checkpoint, true);
       else if (e.code === 'KeyB' || e.code === 'KeyH') Sound.horn();
       else if (e.code === 'KeyM') setMuteUi(Sound.toggle());
-      else if (e.code === 'KeyN') setTime(state.night ? 'morning' : 'night');
+      else if (e.code === 'KeyN') setTime(nextTheme());
       else if (e.code === 'Digit1') setVehicle('truck');
       else if (e.code === 'Digit2') setVehicle('beetle');
       else if (e.code === 'Digit3') setVehicle('sedan');
@@ -1735,7 +1832,7 @@
       else if (a === 'close-modal') closeModal(el.closest('.modal'));
       else if (a === 'restart') { closeAllModals(); start(); }
       else if (a === 'respawn') spawnAt(state.checkpoint, true);
-      else if (a === 'toggle-time') setTime(state.night ? 'morning' : 'night');
+      else if (a === 'toggle-time') setTime(nextTheme());
     });
     document.querySelectorAll('[data-time]').forEach((b) => b.addEventListener('click', () => setTime(b.dataset.time)));
     document.querySelectorAll('[data-vehicle]').forEach((b) => {
@@ -1812,7 +1909,7 @@
     bindInput();
     bindActions();
     setMuteUi(Sound.muted);
-    setTime(state.night ? 'night' : 'morning');
+    setTime(state.theme);
     document.querySelectorAll('[data-vehicle]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.vehicle === state.vehicle)));
     loadImages();
     requestAnimationFrame(frame);
