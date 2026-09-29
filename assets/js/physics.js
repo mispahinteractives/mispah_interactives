@@ -63,6 +63,34 @@
       maxSpeed: 24, reverseSpeed: 8, accel: 0.07, brake: 0.84,
       spring: 0.011, springDamp: 0.06, travel: 18, arm: 0.9,
       density: 0.0017, wheelDensity: 0.0026, wheelie: 0.00025, airTorque: 0.0011, jump: 11
+    },
+    // red_car.png faces left, so it is drawn mirrored (flip) and every
+    // coordinate below is in the mirrored image (x' = 1000 - x)
+    classic: {
+      name: 'Red Classic',
+      tag: 'Low · Smooth',
+      body: 'red_car', bodySize: [1000, 253], scale: 0.3, flip: true,
+      wheel: 'Wheels', wheelRadius: 80,
+      wheels: [[208, 214], [808, 214]],
+      // body between the wheels, with the long nose and tail tapering up
+      hull: [[110, 82, 890, 218], [890, 90, 985, 172], [20, 90, 110, 180], [330, 45, 600, 82]],
+      exhaust: [16, 175],
+      maxSpeed: 24, reverseSpeed: 8, accel: 0.075, brake: 0.84,
+      spring: 0.011, springDamp: 0.06, travel: 18, arm: 0.9,
+      density: 0.0017, wheelDensity: 0.0026, wheelie: 0.00025, airTorque: 0.0012, jump: 11
+    },
+    // black_car.png is a small image (192x119), scaled up to monster-truck size
+    skull: {
+      name: 'Skull Crusher',
+      tag: 'Monster · Spooky',
+      body: 'black_car', bodySize: [192, 119], scale: 1.55,
+      wheel: 'black_tire', wheelRadius: 31,
+      wheels: [[48, 66], [150, 66]],
+      hull: [[3, 22, 189, 57], [42, 4, 132, 22]],
+      exhaust: [4, 38],
+      maxSpeed: 25, reverseSpeed: 9, accel: 0.075, brake: 0.86,
+      spring: 0.009, springDamp: 0.05, travel: 22, arm: 0.9,
+      density: 0.002, wheelDensity: 0.0024, wheelie: 0.0003, airTorque: 0.0011, jump: 12
     }
   };
 

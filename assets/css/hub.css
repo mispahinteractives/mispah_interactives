@@ -1260,3 +1260,50 @@ kbd {
 /* Russo One runs wider: keep ride names on one line */
 .ride-name { white-space: nowrap; font-size: 12.5px; letter-spacing: 0; }
 @media (max-width: 760px) { .ride-name { font-size: 11px; } }
+
+/* four rides */
+.ride-picker, .hero-setup .ride-picker { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ride-picker button { min-width: 0; }
+.ride-name { font-size: 11.5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.garage-grid { grid-template-columns: repeat(2, 1fr); }
+.hero-main { width: min(520px, 100%); }
+@media (max-width: 760px) { .garage-grid { grid-template-columns: 1fr; } }
+
+/* car previews fit their tile both ways: a long car (Red Classic) shrinks
+   to the tile's width instead of poking out */
+.ride-slot { container-type: size; }
+.ride-slot .ride, .ride-picker .ride, .garage-card .ride {
+  width: auto; max-width: none; height: min(100%, calc(100cqw / var(--ar, 2)));
+}
+@media (max-width: 760px) { .ride-name { font-size: 9px; letter-spacing: -0.02em; } .hero-setup .ride-picker button { padding-left: 2px; padding-right: 2px; } }
+
+/* five rides: five columns on desktop; on phones a swipeable row */
+.ride-picker, .hero-setup .ride-picker { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.hero-main { width: min(620px, 100%); }
+.hero-setup .ride-name { font-size: 11px; }
+.garage-grid .garage-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+@media (max-width: 760px) {
+  .ride-picker, .hero-setup .ride-picker {
+    grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 86px;
+    overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: 2px;
+  }
+  .hero-setup .ride-picker::-webkit-scrollbar { display: none; }
+  .hero-setup .ride-picker button { scroll-snap-align: start; }
+  .hero-setup .ride-name { font-size: 10px; letter-spacing: 0; }
+  .garage-grid .garage-card:last-child:nth-child(odd) { grid-column: auto; }
+}
+
+/* ride picker in two rows: three on top, two centred underneath
+   (a 6-column grid, each tile spans 2; the 4th starts at column 2) */
+.ride-picker, .hero-setup .ride-picker {
+  grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-flow: row; grid-auto-columns: auto;
+  overflow: visible; scroll-snap-type: none;
+}
+.ride-picker > button { grid-column: span 2; }
+.ride-picker > button:nth-child(4) { grid-column: 2 / span 2; }
+.hero-main { width: min(500px, 100%); }
+.hero-setup .ride-name { font-size: 12px; }
+@media (max-width: 760px) {
+  .ride-picker, .hero-setup .ride-picker { grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-flow: row; overflow: visible; }
+  .hero-setup .ride-name { font-size: 10.5px; }
+}

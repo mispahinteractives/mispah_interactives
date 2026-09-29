@@ -14,12 +14,12 @@
   const GAMES = window.GV_GAMES || [];
   const VEHICLES = P.VEHICLES;
   const ASSET = 'assets/img/assets/';
-  const SPRITES = ['truckbody', 'truckwheel', 'carbody', 'carbody2', 'wheel', 'wheel2', 'strut',
+  const SPRITES = ['truckbody', 'truckwheel', 'carbody', 'carbody2', 'wheel', 'wheel2', 'red_car', 'Wheels', 'black_car', 'black_tire', 'strut',
     'rampleft', 'crate', 'box', 'suitcase', 'oilcan', 'beercan', 'sodacan', 'cloud', 'tree', 'bat',
     'wrong_house_1', 'wrong_house_2', 'wrong_house_3', 'wrong_house_4',
     'ghost_1', 'ghost_2', 'ghost_3', 'ghost_4', 'ghost_5', 'background_house1',
     'wrong_house_5', 'wrong_house_6', 'correct_house_1', 'correct_house_2', 'correct_house_3', 'correct_house_4', 'correct_house_5',
-    'mountain_1', 'mountain_2', 'mountain_3', 'mountain_4', 'grass_1', 'crow_1', 'crow_2', 'tree_2'];
+    'mountain_1', 'mountain_2', 'mountain_3', 'mountain_4', 'grass_1', 'crow_1', 'tree_2'];
   const FONT = '"Russo One", "Exo 2", system-ui, sans-serif';
   const TAU = Math.PI * 2;
 
@@ -569,36 +569,61 @@
   }
 
   /* Crows (Morning only): a few crows far off in the sky, between the
-     clouds and the mountains. They are drawn small and a little faded, as if
-     at a distance, glide on a slow wavy path, and cross in both directions:
-     some left to right, some right to left. The crow_1 / crow_2 art gives
-     the wings-up / wings-down frames of a slow flap. */
+     clouds and the mountains, crossing in both directions. Each uses the
+     in-flight crow_1 pose only (swapping to the very different crow_2 pose
+     looked like the bird was tumbling) and is animated smoothly: a soft
+     wing-beat squash, long glides, a gentle rise and fall, and the body tilts
+     with its path. Small and slightly faded, so they read as distant. */
+  // Each crow lives in the distant sky (parallax factor CROW_DEPTH, like the
+  // far mountains), so as the camera moves the crow slides past like the
+  // scenery; on top of that it flies at its own speed. When it leaves the
+  // screen on either side, it comes back in from an edge after a short pause.
+  const CROW_DEPTH = 0.12;
   const CROWS = [
-    { dir: 1, speed: 38, scale: 0.36, y: 0.24, phase: 0.1, alpha: 0.9 },
-    { dir: -1, speed: 30, scale: 0.3, y: 0.31, phase: 0.55, alpha: 0.82 },
-    { dir: 1, speed: 24, scale: 0.24, y: 0.19, phase: 0.8, alpha: 0.72 }
+    { dir: 1, speed: 150, scale: 0.34, y: 0.22, alpha: 0.92, phase: 0.1, wait: 0 },
+    { dir: -1, speed: 85, scale: 0.28, y: 0.3, alpha: 0.85, phase: 0.55, wait: 2.5 },
+    { dir: 1, speed: 125, scale: 0.22, y: 0.17, alpha: 0.75, phase: 0.8, wait: 6 }
   ];
+  let crowClock = null, crowCamX = null;
   function drawCrows() {
-    if (state.theme !== 'morning') return;
-    const f1 = img.crow_1, f2 = img.crow_2;
-    if (!ready(f1) || !ready(f2)) return;
+    if (state.theme !== 'morning') { crowClock = null; return; }
+    const bird = img.crow_1;
+    if (!ready(bird)) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const t = state.t / 1000, k = clamp(Math.min(Wd, Ht) / 900, 0.65, 1.1);
+    const dt = crowClock === null ? 0 : Math.min(0.1, t - crowClock);
+    const camShift = crowCamX === null ? 0 : (cam.x - crowCamX) * CROW_DEPTH * cam.z;
+    crowClock = t; crowCamX = cam.x;
+    const margin = 90;
     for (const c of CROWS) {
-      const lap = Wd + 240;
-      const d = (t * c.speed * k + c.phase * lap) % lap;
-      const x = c.dir > 0 ? d - 120 : Wd + 120 - d;
-      const y = Ht * c.y + Math.sin(t * 0.5 + c.phase * 9) * 14 * k;
-      // slow flap with long glides, like a crow cruising far away
-      const glide = Math.sin(t * 0.35 + c.phase * 6) > 0.3;
-      const up = !glide && Math.sin(t * 5 + c.phase * 4) > 0;
-      const fr = up ? f1 : f2;
-      const w = fr.naturalWidth * c.scale * k, h = fr.naturalHeight * c.scale * k;
-      // both frames face right once crow_1 is mirrored; flip again to fly left
-      const face = (up ? -1 : 1) * c.dir;
-      ctx.save(); ctx.globalAlpha = c.alpha; ctx.translate(x, y);
-      if (face < 0) ctx.scale(-1, 1);
-      ctx.drawImage(hq(fr, w, h, true), -w / 2, -h / 2, w, h);
+      if (c.sx === undefined) c.sx = c.dir > 0 ? -margin + (Wd + 2 * margin) * c.phase : Wd + margin - (Wd + 2 * margin) * c.phase;
+      if (c.wait > 0) { c.wait -= dt; continue; }
+      c.sx += c.dir * c.speed * k * dt - camShift;     // own flight + the distant sky scrolling past
+      if (c.sx < -margin || c.sx > Wd + margin) {
+        // re-enter from whichever side it can now cross the screen from
+        const net = c.dir * c.speed * k - (dt > 0 ? camShift / dt : 0);
+        c.sx = net >= 0 ? -margin + 5 : Wd + margin - 5;
+        c.y = 0.15 + rnd(t * 7 + c.speed) * 0.17;
+        c.wait = 1.5 + rnd(t * 3 + c.scale) * 3;
+        continue;
+      }
+      const x = c.sx;
+      // gentle rise and fall, and the tilt that follows it
+      const wave = t * 0.55 + c.phase * 9;
+      const y = Ht * c.y + Math.sin(wave) * 16 * k;
+      const climb = Math.cos(wave) * 16 * k * 0.55;
+      const tilt = Math.atan2(-climb, c.speed * k) * 0.9;
+      // wing-beats in short bursts, then a glide
+      const glide = Math.sin(t * 0.3 + c.phase * 6) > 0.35;
+      const beat = glide ? 0 : Math.sin(t * 6.5 + c.phase * 4);
+      const sy = 1 - 0.16 * beat, lift = -2.2 * beat * k;
+      const w = bird.naturalWidth * c.scale * k, h = bird.naturalHeight * c.scale * k;
+      ctx.save(); ctx.globalAlpha = c.alpha;
+      ctx.translate(x, y + lift);
+      if (c.dir > 0) ctx.scale(-1, 1);                               // the art faces left
+      ctx.rotate(c.dir > 0 ? -tilt : tilt);
+      ctx.scale(1, sy);
+      ctx.drawImage(hq(bird, w, h, true), -w / 2, -h / 2, w, h);
       ctx.restore();
     }
   }
@@ -1744,7 +1769,11 @@
     ctx.save(); ctx.translate(c.position.x, c.position.y); ctx.rotate(c.angle);
     if (ready(body)) {
       const bw = v.bodySize[0] * s, bh = v.bodySize[1] * s;
-      ctx.drawImage(hq(body, bw, bh), car.spriteOffset.x - bw / 2, car.spriteOffset.y - bh / 2, bw, bh);
+      if (v.flip) {                        // art that faces left is mirrored to drive right
+        ctx.save(); ctx.translate(car.spriteOffset.x, car.spriteOffset.y); ctx.scale(-1, 1);
+        ctx.drawImage(hq(body, bw, bh), -bw / 2, -bh / 2, bw, bh);
+        ctx.restore();
+      } else ctx.drawImage(hq(body, bw, bh), car.spriteOffset.x - bw / 2, car.spriteOffset.y - bh / 2, bw, bh);
     }
     ctx.restore();
     // wheels
@@ -1970,6 +1999,8 @@
       else if (e.code === 'Digit1') setVehicle('truck');
       else if (e.code === 'Digit2') setVehicle('beetle');
       else if (e.code === 'Digit3') setVehicle('sedan');
+      else if (e.code === 'Digit4') setVehicle('classic');
+      else if (e.code === 'Digit5') setVehicle('skull');
     });
     window.addEventListener('keyup', (e) => keys.delete(e.code));
     window.addEventListener('blur', () => { keys.clear(); touch.gas = touch.brake = touch.jump = false; });
@@ -2079,9 +2110,11 @@
     const el = document.createElement('div');
     el.className = 'ride';
     el.style.aspectRatio = iw + ' / ' + H;
+    el.style.setProperty('--ar', (iw / H).toFixed(3));    // lets CSS fit wide cars into their tile
     const body = new Image();
     body.src = ASSET + v.body + '.png'; body.alt = ''; body.className = 'ride-body';
     body.style.width = '100%'; body.style.top = '0';
+    if (v.flip) body.style.transform = 'scaleX(-1)';
     el.appendChild(body);
     v.wheels.forEach(([wx, wy]) => {
       const w = new Image();
@@ -2125,6 +2158,8 @@
     // read-only: what a haunted house's ghost is doing ('in' | 'tell' | 'out')
     ghostPhase(id) { const b = W.buildings.find((x) => x.id === id); return b && b.gs ? b.gs.phase : 'in'; },
     ghostInfo(id) { const b = W.buildings.find((x) => x.id === id); return b ? { door: b.gs ? b.gs.phase : 'in', roof: (b.roof || []).map((r) => ({ x: Math.round(r.x), above: Math.round(W.heightAt(r.x) - r.y - r.gh / 2) })) } : null; },
+    // read-only: crow screen positions (for testing)
+    crows() { return CROWS.map((c) => ({ x: Math.round(c.sx), dir: c.dir, waiting: c.wait > 0 })); },
     get mode() { return state.mode; },
     get vehicle() { return state.vehicle; },
     vehicles: VEHICLES, games: GAMES, coinsTotal: W.coins.length,

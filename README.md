@@ -76,7 +76,7 @@ Rain uses the same lights-on pipeline as Night, with an overcast sky, slanted ra
 
 ## Crows
 
-In Morning only, three crows fly far off in the sky, between the clouds and the mountains. Some fly left to right and some right to left. They're drawn small and slightly faded to look distant, and flap slowly with long glides using `crow_1.png` (wings up, mirrored because the art faces left) and `crow_2.png` (wings down). See `CROWS` in `game.js`. Night and Rain have no crows.
+In Morning only, three crows fly far off in the sky, between the clouds and the mountains, crossing in both directions. They use only the in-flight pose `crow_1.png` (mirrored for right-flying crows), animated smoothly with a soft wing-beat squash, long glides, a gentle rise and fall, and a tilt that follows the path (`CROWS` / `drawCrows()` in `game.js`). `crow_2.png` isn't used: its pose is too different to animate between. Night and Rain have no crows.
 
 ## Performance
 
@@ -92,3 +92,12 @@ There are 44 coins: a pair over every speed bump on Main Street, rows of three a
 ## Fonts
 
 The site uses **Russo One** (headings, buttons and in-game text) and **Exo 2** (body text), both under the SIL Open Font License 1.1. They're served locally from `assets/fonts/` (Latin and Latin Extended subsets in woff2, about 83 KB in total) via `assets/css/fonts.css`, so nothing is loaded from Google Fonts. Exo 2 is a variable font, so one file covers weights 400–800.
+
+## Rides
+
+Five rides: Monster Truck, Blue Bubble, Green Cruiser, **Red Classic** (`red_car.png` with `Wheels.png`) and **Skull Crusher** (`black_car.png` with `black_tire.png`).
+
+- **Red Classic:** its art faces left, so it's drawn mirrored (`flip: true` in `VEHICLES` in `physics.js`), and its wheel, hull and exhaust coordinates are given in the mirrored image. Its collision hull tapers at the nose and tail so the long, low overhangs don't catch on ramps.
+- **Skull Crusher:** its art is small (192×119), so it's scaled up 1.55× to monster-truck size. Its collision hull covers only the body, not the X-frame underneath.
+
+On phones the ride picker becomes a swipeable row.

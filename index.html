@@ -12,8 +12,8 @@
 <meta property="og:image" content="assets/img/logo.png">
 <link rel="preload" href="assets/fonts/russo-one-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/exo-2-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/fonts.css?v=20261002e">
-<link rel="stylesheet" href="assets/css/hub.css?v=20261002e">
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261002r">
+<link rel="stylesheet" href="assets/css/hub.css?v=20261002r">
 </head>
 <body>
 <a class="skip" href="#games">Skip to the game list</a>
@@ -86,6 +86,8 @@
           <button type="button" data-vehicle="truck" aria-pressed="true"><span class="ride-slot" data-ride="truck"></span><span class="ride-name">Monster Truck</span><span class="ride-tag">Big air</span></button>
           <button type="button" data-vehicle="beetle" aria-pressed="false"><span class="ride-slot" data-ride="beetle"></span><span class="ride-name">Blue Bubble</span><span class="ride-tag">Nimble</span></button>
           <button type="button" data-vehicle="sedan" aria-pressed="false"><span class="ride-slot" data-ride="sedan"></span><span class="ride-name">Green Cruiser</span><span class="ride-tag">Steady</span></button>
+          <button type="button" data-vehicle="classic" aria-pressed="false"><span class="ride-slot" data-ride="classic"></span><span class="ride-name">Red Classic</span><span class="ride-tag">Smooth</span></button>
+          <button type="button" data-vehicle="skull" aria-pressed="false"><span class="ride-slot" data-ride="skull"></span><span class="ride-name">Skull Crusher</span><span class="ride-tag">Spooky</span></button>
         </div>
       </div>
     </div>
@@ -169,8 +171,8 @@
 <!-- ================================================================ ticker -->
 <div class="ticker" aria-hidden="true">
   <div class="ticker-track">
-    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>3 rides in the garage</span><i></i>
-    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>3 rides in the garage</span><i></i>
+    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>5 rides in the garage</span><i></i>
+    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>5 rides in the garage</span><i></i>
   </div>
 </div>
 
@@ -198,7 +200,7 @@
       <h3 id="feature-title">Monster Hills</h3>
       <p>A physics truck game with working suspension. The body squats, pitches and bounces over every bump. Collect <span data-coin-total>44</span> coins, clear two jumps, and knock down the can pyramid on your way to the flag.</p>
       <ul class="chips">
-        <li>Matter.js physics</li><li>3 rides</li><li>Buttons · Keyboard</li>
+        <li>Matter.js physics</li><li>5 rides</li><li>Buttons · Keyboard</li>
       </ul>
       <div class="feature-actions">
         <button class="btn-play" type="button" data-action="play">
@@ -307,6 +309,12 @@
       <button type="button" class="garage-card" data-vehicle="sedan" aria-pressed="false">
         <span class="ride-slot" data-ride="sedan"></span><b>Green Cruiser</b><span>Long · Stable · Steady</span><kbd>3</kbd>
       </button>
+      <button type="button" class="garage-card" data-vehicle="classic" aria-pressed="false">
+        <span class="ride-slot" data-ride="classic"></span><b>Red Classic</b><span>Low · Smooth · Classic</span><kbd>4</kbd>
+      </button>
+      <button type="button" class="garage-card" data-vehicle="skull" aria-pressed="false">
+        <span class="ride-slot" data-ride="skull"></span><b>Skull Crusher</b><span>Monster · Spooky · Big air</span><kbd>5</kbd>
+      </button>
     </div>
     <button class="modal-x" type="button" data-action="close-modal" aria-label="Close">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
@@ -353,9 +361,9 @@
 </div>
 
 <script src="assets/js/vendor/matter.min.js"></script>
-<script src="assets/js/physics.js?v=20261002e"></script>
-<script src="assets/js/games.js?v=20261002e"></script>
-<script src="assets/js/game.js?v=20261002e"></script>
-<script src="assets/js/hub.js?v=20261002e"></script>
+<script src="assets/js/physics.js?v=20261002r"></script>
+<script src="assets/js/games.js?v=20261002r"></script>
+<script src="assets/js/game.js?v=20261002r"></script>
+<script src="assets/js/hub.js?v=20261002r"></script>
 </body>
 </html>
