@@ -32,11 +32,15 @@ Edit `assets/js/games.js`. Each entry becomes a card in "Select your game" and a
 
 ## Controls
 
-| Input | Gas | Brake / reverse | Lean | Enter door |
-|---|---|---|---|---|
-| Keyboard | → / D | ← / A | ↑ ↓ | E / Enter |
-| Touch | right pedal | left pedal | (pedals in air) | gold button |
-| Gamepad | RT / A | LT / B | left stick | Y |
+| Input | Gas | Brake | Jump | Lean | Enter door |
+|---|---|---|---|---|---|
+| Keyboard | → / D | ← / A | Space / J | ↑ ↓ | E / Enter |
+| Touch | Gas button | Brake button | Jump button | (Gas/Brake in air) | gold button |
+| Gamepad | RT | LT / B | A | left stick | Y |
+
+Brake slows the car and then holds it still (on slopes too); it never reverses. If you're stuck, jump or press R to go back to the last checkpoint.
+
+The touch buttons show on touch screens and on any screen narrower than 900px while playing. Jump hops once per press, only with a wheel on the ground; its strength per vehicle is `jump` in `VEHICLES`.
 
 Other keys: `1` `2` `3` switch ride · `R` checkpoint · `B` horn · `M` mute · `Esc` exit.
 
@@ -51,3 +55,7 @@ const W = P.createWorld(); W.spawn('truck', W.SPAWN_X);
 for (let i = 0; i < 60 * 30; i++) W.step({ gas: true }, 1000 / 60);
 console.log(W.car.chassis.position.x > W.FINISH_X ? 'finished' : 'stuck');
 ```
+
+## Publishing an update
+
+`index.html` loads the stylesheet and scripts with a version tag (`hub.css?v=20260929`). After changing any CSS or JS, bump that number in `index.html` so browsers and GitHub Pages fetch the new files instead of a cached copy.

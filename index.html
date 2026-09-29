@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Rubik:wght@400;500;700;800&display=swap">
-<link rel="stylesheet" href="assets/css/hub.css">
+<link rel="stylesheet" href="assets/css/hub.css?v=20260929l">
 </head>
 <body>
 <a class="skip" href="#games">Skip to the game list</a>
@@ -105,7 +105,7 @@
     </div>
   </div>
 
-  <p class="key-hints" aria-hidden="true"><kbd>→</kbd> gas <kbd>←</kbd> brake / reverse <kbd>↑</kbd><kbd>↓</kbd> lean <kbd>E</kbd> enter door <kbd>R</kbd> reset <kbd>B</kbd> horn</p>
+  <p class="key-hints" aria-hidden="true"><kbd>→</kbd> gas <kbd>←</kbd> brake <kbd>Space</kbd> jump <kbd>↑</kbd><kbd>↓</kbd> lean <kbd>E</kbd> enter door <kbd>R</kbd> reset <kbd>B</kbd> horn</p>
 
   <button id="door-prompt" class="door-prompt" type="button" data-action="enter-door" hidden>
     <kbd>E</kbd><span class="dp-verb">Enter</span><b id="door-prompt-name"></b>
@@ -113,12 +113,19 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <div class="pedals">
-    <button class="pedal pedal-brake" type="button" data-pedal="brake" aria-label="Brake and reverse">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 5L7 12l9 7z"/></svg><span>Brake</span>
-    </button>
-    <button class="pedal pedal-gas" type="button" data-pedal="gas" aria-label="Gas">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l9 7-9 7z"/></svg><span>Gas</span>
-    </button>
+    <div class="pedal-group">
+      <button class="pedal is-foot pedal-brake" type="button" data-pedal="brake" aria-label="Brake">
+        <img src="assets/img/assets/break.png" alt="" draggable="false"><span class="pedal-label">Brake</span>
+      </button>
+    </div>
+    <div class="pedal-group right">
+      <button class="pedal pedal-jump" type="button" data-pedal="jump" aria-label="Jump">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5l7 8h-4.5v6h-5v-6H5z"/></svg><span>Jump</span>
+      </button>
+      <button class="pedal is-foot pedal-gas" type="button" data-pedal="gas" aria-label="Gas">
+        <img src="assets/img/assets/pedal.png" alt="" draggable="false"><span class="pedal-label">Gas</span>
+      </button>
+    </div>
   </div>
 </section>
 
@@ -181,7 +188,8 @@
       <h3>Keyboard</h3>
       <ul class="keys">
         <li><span><kbd>→</kbd><kbd>D</kbd></span>Gas</li>
-        <li><span><kbd>←</kbd><kbd>A</kbd></span>Brake and reverse</li>
+        <li><span><kbd>←</kbd><kbd>A</kbd></span>Brake</li>
+        <li><span><kbd>Space</kbd><kbd>J</kbd></span>Jump</li>
         <li><span><kbd>↑</kbd><kbd>↓</kbd></span>Lean in the air</li>
         <li><span><kbd>E</kbd><kbd>Enter</kbd></span>Enter a door</li>
         <li><span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd></span>Switch ride</li>
@@ -191,16 +199,17 @@
     <div class="howto-card reveal">
       <h3>Touch</h3>
       <div class="touch-demo" aria-hidden="true">
-        <span class="td-pedal l">Brake</span><span class="td-phone"></span><span class="td-pedal r">Gas</span>
+        <span class="td-pedal l">Brake</span><span class="td-phone"></span><span class="td-stack"><span class="td-pedal j">Jump</span><span class="td-pedal r">Gas</span></span>
       </div>
-      <p>Hold the pedals in the bottom corners. Tap the gold <b>Enter</b> button at a door.</p>
+      <p>Hold <b>Gas</b> and <b>Brake</b> in the bottom corners, and tap <b>Jump</b> to hop. At a door, tap the gold <b>Enter</b> button.</p>
     </div>
     <div class="howto-card reveal">
       <h3>Pro tips</h3>
       <ul class="tips">
         <li><b>Airborne?</b> Gas lifts the nose and brake drops it, so you can line up your landing.</li>
         <li><b>Steep climb?</b> Ease off the gas so the front wheels stay down.</li>
-        <li><b>Gamepad:</b> RT is gas and LT is brake. The stick leans the car.</li>
+        <li><b>Hop it:</b> jump over crates and cans, or to clear a bump at speed.</li>
+        <li><b>Gamepad:</b> RT is gas, LT is brake and A jumps. The stick leans the car.</li>
       </ul>
     </div>
   </div>
@@ -299,9 +308,9 @@
 </div>
 
 <script src="assets/js/vendor/matter.min.js"></script>
-<script src="assets/js/physics.js"></script>
-<script src="assets/js/games.js"></script>
-<script src="assets/js/game.js"></script>
-<script src="assets/js/hub.js"></script>
+<script src="assets/js/physics.js?v=20260929l"></script>
+<script src="assets/js/games.js?v=20260929l"></script>
+<script src="assets/js/game.js?v=20260929l"></script>
+<script src="assets/js/hub.js?v=20260929l"></script>
 </body>
 </html>

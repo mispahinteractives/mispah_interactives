@@ -15,7 +15,7 @@
   const VEHICLES = P.VEHICLES;
   const ASSET = 'assets/img/assets/';
   const SPRITES = ['truckbody', 'truckwheel', 'carbody', 'carbody2', 'wheel', 'wheel2', 'strut',
-    'rampleft', 'crate', 'box', 'suitcase', 'oilcan', 'beercan', 'sodacan'];
+    'rampleft', 'crate', 'box', 'suitcase', 'oilcan', 'beercan', 'sodacan', 'cloud', 'tree'];
   const FONT = '"Lilita One", "Rubik", system-ui, sans-serif';
   const TAU = Math.PI * 2;
 
@@ -105,6 +105,9 @@
       door: () => tone([523, 659, 784, 1047], 0.07, 'triangle', 0.16),
       finish: () => tone([523, 659, 784, 1047, 784, 1047, 1319], 0.11, 'square', 0.08),
       checkpoint: () => tone([660, 880], 0.08, 'triangle', 0.12),
+      // pedal clicks: a short mechanical tick down, a softer one on the way up
+      pedal: (down) => noise(down ? 0.035 : 0.028, down ? 0.14 : 0.08, down ? 2600 : 1900),
+      jump: () => { noise(0.14, 0.22, 700); tone([330, 494], 0.06, 'triangle', 0.1); },
       horn: () => { tone([440], 0.18, 'square', 0.08); tone([554], 0.18, 'square', 0.06); },
       toggle() {
         muted = !muted; store.set('muted', muted);
@@ -132,9 +135,9 @@
     shake: 0, t: 0, lastToastCp: 0
   };
   const cam = { x: W.SPAWN_X, y: -120, z: 1, fx: 0.62, fy: 0.62, look: 0 };
-  const input = { gas: false, brake: false, lean: 0 };
+  const input = { gas: false, brake: false, lean: 0, jump: false };
   const keys = new Set();
-  const touch = { gas: false, brake: false };
+  const touch = { gas: false, brake: false, jump: false };
   let particles = [];
   let canvas, ctx, dpr = 1, Wd = 0, Ht = 0;
   const ui = {};
@@ -181,21 +184,23 @@
   /* ---------------------------------------------------------------- input */
   function readInput() {
     if (state.mode === 'attract') return autopilot();
-    if (state.finished) { input.gas = false; input.brake = true; input.lean = 0; return input; }
+    if (state.finished) { input.gas = false; input.brake = true; input.lean = 0; input.jump = false; return input; }
     let gas = touch.gas || keys.has('ArrowRight') || keys.has('KeyD') || keys.has('KeyX');
     let brake = touch.brake || keys.has('ArrowLeft') || keys.has('KeyA') || keys.has('KeyZ');
+    let jump = touch.jump || keys.has('Space') || keys.has('KeyJ');
     let lean = (keys.has('ArrowDown') || keys.has('KeyS') ? 1 : 0) - (keys.has('ArrowUp') || keys.has('KeyW') ? 1 : 0);
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     for (const p of pads) {
       if (!p) continue;
-      if ((p.buttons[7] && p.buttons[7].value > 0.2) || (p.buttons[0] && p.buttons[0].pressed)) gas = true;
+      if (p.buttons[7] && p.buttons[7].value > 0.2) gas = true;
+      if (p.buttons[0] && p.buttons[0].pressed) jump = true;
       if ((p.buttons[6] && p.buttons[6].value > 0.2) || (p.buttons[1] && p.buttons[1].pressed)) brake = true;
       if (p.axes[0] && Math.abs(p.axes[0]) > 0.3) lean += p.axes[0];
       if (p.buttons[3] && p.buttons[3].pressed && !p._y) enterDoor();
       p._y = p.buttons[3] && p.buttons[3].pressed;
     }
-    input.gas = gas; input.brake = brake && !gas; input.lean = clamp(lean, -1, 1);
-    if ((gas || brake) && !state.started && !state.finished) state.started = true;
+    input.gas = gas; input.brake = brake && !gas; input.lean = clamp(lean, -1, 1); input.jump = jump;
+    if ((gas || brake || jump) && !state.started && !state.finished) state.started = true;
     return input;
   }
 
@@ -214,7 +219,7 @@
     const au = state.auto;
     if (Math.abs(v) < 0.6 && car.grounded) au.stall += 16; else au.stall = 0;
     if (au.stall > 1200) { au.reverse = 700; au.stall = 0; }
-    if (au.reverse > 0) { au.reverse -= 16; inp.gas = false; inp.brake = true; }
+    if (au.reverse > 0) { au.reverse -= 16; inp.gas = false; inp.reverse = true; }
     return inp;
   }
 
@@ -304,6 +309,9 @@
           Sound.land(s);
           if (e.air > 900) toast('BIG AIR ' + (e.air / 1000).toFixed(1) + 's');
         }
+      } else if (e.type === 'jump') {
+        car.wheels.forEach((w) => burst(w.position.x, w.position.y + car.rWheel * 0.8, 7, '#b89a74', 'dust', 2.2));
+        if (state.mode === 'play') Sound.jump();
       } else if (e.type === 'hit' && state.mode === 'play') {
         Sound.hit(); state.shake = Math.max(state.shake, 2);
       }
@@ -418,19 +426,29 @@
 
   function drawParallax() {
     const z = cam.z;
-    // blocky clouds, as in the reference
-    ctx.fillStyle = 'rgba(255,255,255,0.95)';
-    const cf = 0.08, drift = state.t * 0.006;
-    const span = 900;
-    const i0 = Math.floor((cam.x * cf - drift - cam.fx * Wd / z) / span) - 1;
-    const i1 = i0 + Math.ceil(Wd / z / span) + 3;
-    for (let i = i0; i <= i1; i++) {
-      const cx = layerX(i * span + rnd(i) * 500 + drift, cf);
-      const cy = Ht * (0.08 + rnd(i + 7) * 0.22);
-      const s = (0.7 + rnd(i + 3) * 0.7) * Math.max(0.55, z);
-      ctx.fillRect(cx, cy, 120 * s, 22 * s);
-      ctx.fillRect(cx + 26 * s, cy - 16 * s, 64 * s, 18 * s);
-      ctx.fillRect(cx - 24 * s, cy + 12 * s, 90 * s, 14 * s);
+    // clouds (cloud.png): two depths drifting slowly; the far layer is
+    // smaller, fainter and slower, which gives the sky some depth
+    const cloud = img.cloud;
+    if (ready(cloud)) {
+      const ratio = cloud.naturalHeight / cloud.naturalWidth;
+      [
+        { f: 0.04, span: 700, size: 130, alpha: 0.7, band: [0.06, 0.16], speed: 0.004, seed: 31 },
+        { f: 0.09, span: 950, size: 210, alpha: 0.95, band: [0.1, 0.3], speed: 0.008, seed: 0 }
+      ].forEach((L) => {
+        const drift = state.t * L.speed;
+        const i0 = Math.floor((cam.x * L.f - drift - cam.fx * Wd / z) / L.span) - 2;
+        const i1 = i0 + Math.ceil(Wd / z / L.span) + 4;
+        ctx.globalAlpha = L.alpha;
+        for (let i = i0; i <= i1; i++) {
+          const k = i + L.seed;
+          const w = L.size * (0.75 + rnd(k + 3) * 0.6) * Math.max(0.6, z);
+          const cx = layerX(i * L.span + rnd(k) * L.span * 0.5 + drift, L.f);
+          const cy = Ht * (L.band[0] + rnd(k + 7) * (L.band[1] - L.band[0]));
+          if (cx + w < 0 || cx - w > Wd) continue;
+          ctx.drawImage(cloud, cx, cy, w, w * ratio);
+        }
+      });
+      ctx.globalAlpha = 1;
     }
     // two mountain ranges
     drawRange(0.14, 560, 260, 520, '#b3c2d8', '#dde6f2', 180, 1);
@@ -484,14 +502,23 @@
   }
 
   function drawScenery(x0, x1) {
-    // lamp posts and bushes in town, pines on the hills
+    // Trees (tree.png) everywhere there's room: a grove before the start
+    // line, in the gaps between the buildings on Main Street, and all over the
+    // hills. They keep clear of buildings and signs so nothing gets covered.
+    const signs = [W.SPAWN_X - 250, W.TOWN_END - 250];
+    const clearOf = (x, gap) => !W.buildings.some((b) => Math.abs(b.x - x) < gap) &&
+      !signs.some((sx) => Math.abs(sx - x) < 130);
     for (let x = Math.floor(x0 / 170) * 170; x < x1; x += 170) {
       const i = Math.round(x / 170), gy = W.heightAt(x);
-      if (x < W.TOWN_END - 100 && x > 0) {
-        if (i % 4 === 0 && !W.buildings.some((b) => Math.abs(b.x - x) < 260)) drawLamp(x, gy);
+      const tx = x + rnd(i) * 80;
+      if (x <= 0) {
+        if (rnd(i + 11) > 0.25 && clearOf(tx, 0)) drawTree(tx, W.heightAt(tx), 0.85 + rnd(i + 4) * 0.5, rnd(i + 5) > 0.5);
+      } else if (x < W.TOWN_END - 100) {
+        if (i % 4 === 0 && clearOf(x, 260)) drawLamp(x, gy);
+        else if (rnd(i + 21) > 0.45 && clearOf(tx, 330)) drawTree(tx, W.heightAt(tx), 0.75 + rnd(i + 4) * 0.35, rnd(i + 5) > 0.5);
         else if (rnd(i) > 0.45) drawBush(x + rnd(i + 1) * 60, gy, 0.8 + rnd(i + 2) * 0.6);
       } else if (x > W.TOWN_END + 200 && rnd(i + 11) > 0.35) {
-        drawPine(x + rnd(i) * 80, W.heightAt(x + rnd(i) * 80), 0.7 + rnd(i + 4) * 0.8, rnd(i + 5) > 0.5);
+        drawTree(tx, W.heightAt(tx), 0.8 + rnd(i + 4) * 0.6, rnd(i + 5) > 0.5);
       }
     }
     // "MOUNTAINS -->" sign, like the reference
@@ -525,6 +552,21 @@
     ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#7cc55a';
     ctx.beginPath(); ctx.arc(x - 6 * s, gy - 32 * s, 8 * s, 0, TAU); ctx.fill();
+  }
+
+  // tree.png, planted by the base of its trunk; `flip` mirrors every other
+  // tree so the hills don't look copy-pasted. Falls back to a drawn pine
+  // until the image has loaded.
+  const TREE_H = 270, TREE_BASE_X = 0.46;
+  function drawTree(x, gy, s, flip) {
+    const t = img.tree;
+    if (!ready(t)) { drawPine(x, gy, s, flip); return; }
+    const h = TREE_H * s, w = h * t.naturalWidth / t.naturalHeight;
+    ctx.save();
+    ctx.translate(x, gy + 6 * s);            // sink the trunk a touch so it never floats on a slope
+    if (flip) ctx.scale(-1, 1);
+    ctx.drawImage(t, -w * TREE_BASE_X, -h, w, h);
+    ctx.restore();
   }
 
   function drawPine(x, gy, s, dark) {
@@ -834,7 +876,7 @@
     requestAnimationFrame(() => el.classList.add('open'));
     const f = el.querySelector('[data-autofocus]') || el.querySelector('button, a');
     if (f) setTimeout(() => f.focus({ preventScroll: true }), 60);
-    keys.clear(); touch.gas = touch.brake = false;
+    keys.clear(); touch.gas = touch.brake = touch.jump = false;
   }
   function closeModal(el) {
     el.classList.remove('open');
@@ -954,14 +996,29 @@
       else if (e.code === 'Digit3') setVehicle('sedan');
     });
     window.addEventListener('keyup', (e) => keys.delete(e.code));
-    window.addEventListener('blur', () => { keys.clear(); touch.gas = touch.brake = false; });
+    window.addEventListener('blur', () => { keys.clear(); touch.gas = touch.brake = touch.jump = false; });
 
     // touch pedals: pointer capture keeps a held pedal pressed while the
     // thumb slides a little
     document.querySelectorAll('[data-pedal]').forEach((el) => {
       const which = el.dataset.pedal;
-      const on = (e) => { e.preventDefault(); el.setPointerCapture && el.setPointerCapture(e.pointerId); touch[which] = true; el.classList.add('down'); Sound.ensure(); };
-      const off = () => { touch[which] = false; el.classList.remove('down'); };
+      const on = (e) => {
+        e.preventDefault();
+        if (el.setPointerCapture) el.setPointerCapture(e.pointerId);
+        touch[which] = true;
+        el.classList.add('down');
+        Sound.ensure();
+        if (el.classList.contains('is-foot')) {
+          Sound.pedal(true);
+          if (navigator.vibrate) navigator.vibrate(12);
+        }
+      };
+      const off = () => {
+        if (!touch[which] && !el.classList.contains('down')) return;
+        touch[which] = false;
+        el.classList.remove('down');
+        if (el.classList.contains('is-foot')) Sound.pedal(false);
+      };
       el.addEventListener('pointerdown', on);
       el.addEventListener('pointerup', off);
       el.addEventListener('pointercancel', off);

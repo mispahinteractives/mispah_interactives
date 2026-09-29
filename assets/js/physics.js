@@ -38,7 +38,7 @@
       exhaust: [545, 8],
       maxSpeed: 25, reverseSpeed: 9, accel: 0.075, brake: 0.86,
       spring: 0.008, springDamp: 0.05, travel: 30, arm: 0.9,
-      density: 0.0022, wheelDensity: 0.0024, wheelie: 0.00035, airTorque: 0.0011
+      density: 0.0022, wheelDensity: 0.0024, wheelie: 0.00035, airTorque: 0.0011, jump: 12
     },
     beetle: {
       name: 'Blue Bubble',
@@ -50,7 +50,7 @@
       exhaust: [20, 240],
       maxSpeed: 22, reverseSpeed: 8, accel: 0.085, brake: 0.84,
       spring: 0.012, springDamp: 0.06, travel: 16, arm: 0.9,
-      density: 0.0016, wheelDensity: 0.0026, wheelie: 0.0003, airTorque: 0.0013
+      density: 0.0016, wheelDensity: 0.0026, wheelie: 0.0003, airTorque: 0.0013, jump: 11
     },
     sedan: {
       name: 'Green Cruiser',
@@ -62,7 +62,7 @@
       exhaust: [18, 240],
       maxSpeed: 24, reverseSpeed: 8, accel: 0.07, brake: 0.84,
       spring: 0.011, springDamp: 0.06, travel: 18, arm: 0.9,
-      density: 0.0017, wheelDensity: 0.0026, wheelie: 0.00025, airTorque: 0.0011
+      density: 0.0017, wheelDensity: 0.0026, wheelie: 0.00025, airTorque: 0.0011, jump: 11
     }
   };
 
@@ -382,12 +382,33 @@
           const target = v.maxSpeed / car.rWheel;
           av += (target - av) * v.accel * car.throttle * k;
         } else if (input.brake) {
-          if (fwd > 1.5) av *= Math.pow(v.brake, k);
-          else av += (-v.reverseSpeed / car.rWheel - av) * v.accel * 0.6 * k;
+          // Brake only ever slows the wheels, whichever way they turn, then
+          // holds them once the car is (nearly) still, so it also stops a
+          // car rolling back down a hill. It never drives the car backwards.
+          av *= Math.pow(v.brake, k);
+          if (Math.abs(av * car.rWheel) < 0.5) av = 0;
+        } else if (input.reverse) {
+          // reverse gear: only the attract-mode autopilot uses this, to back
+          // away from something it is stuck against
+          av += (-v.reverseSpeed / car.rWheel - av) * v.accel * 0.6 * k;
         } else {
           av *= Math.pow(0.994, k);
         }
         Body.setAngularVelocity(w, av);
+      }
+
+      // Parking hold: stopped with the brake on and a wheel on the ground,
+      // bleed off any slide so the car stays put even on the steepest hill.
+      // Only motion along the chassis (the slide) is cancelled: the
+      // suspension can still settle up and down, and a hit from above still
+      // moves the car.
+      if (input.brake && car.grounded && Math.abs(fwd) < 1.2) {
+        const ax = Math.cos(c.angle), ay = Math.sin(c.angle);
+        for (const b of car.parts) {
+          const vb = Body.getVelocity(b);
+          const along = vb.x * ax + vb.y * ay;
+          Body.setVelocity(b, { x: vb.x - ax * along, y: vb.y - ay * along });
+        }
       }
 
       // Bump stop: past full travel the spring gets a stiff rubber block,
@@ -466,7 +487,33 @@
     /* ------------------------------------------------------------------- step */
     const SUB = 1000 / 120;
     let acc = 0;
+    /* Jump: one hop per press, only with a wheel on the ground. The kick goes
+       along the chassis' own "up", so on a slope the car hops off the hill
+       rather than straight up, and every part gets the same push so the
+       suspension stays settled mid-air. */
+    const JUMP_COOLDOWN = 450;
+    function tryJump(input) {
+      const held = !!input.jump;
+      const pressed = held && !car.jumpHeld;
+      car.jumpHeld = held;
+      if (!pressed || !car.chassis) return;
+      const now = engine.timing.timestamp;
+      const grounded = car.wheels.some((w) => now - w.lastContact < 90);
+      if (!grounded || now - (car.lastJump || -1e9) < JUMP_COOLDOWN) return;
+      car.lastJump = now;
+      const c = car.chassis, j = car.v.jump;
+      const up = { x: Math.sin(c.angle) * 0.6, y: -Math.cos(c.angle) };
+      for (const b of car.parts) {
+        const v = Body.getVelocity(b);
+        Body.setVelocity(b, { x: v.x + up.x * j, y: Math.min(v.y, 0) + up.y * j });
+      }
+      car.wheels.forEach((w) => { w.lastContact = -1e9; });
+      car.grounded = false;
+      api.events.push({ type: 'jump', x: c.position.x, y: c.position.y });
+    }
+
     function step(input, dtMs) {
+      tryJump(input);
       acc += Math.min(dtMs, 50);
       let n = 0;
       while (acc >= SUB && n < 8) {
