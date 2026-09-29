@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Rubik:wght@400;500;700;800&display=swap">
-<link rel="stylesheet" href="assets/css/hub.css?v=20260930j">
+<link rel="stylesheet" href="assets/css/hub.css?v=20260930m">
 </head>
 <body>
 <a class="skip" href="#games">Skip to the game list</a>
@@ -51,33 +51,45 @@
 
   <!-- hero overlay, shown while the demo drives itself -->
   <div class="hero" id="hero">
-    <div class="hero-card">
-      <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span>Featured · Physics racer</p>
-      <h1 class="title"><span class="t1">Monster</span><span class="t2">Hills</span></h1>
-      <p class="lede">Real suspension, real air. Cruise Main Street, drive into a door to play an arcade game, then race the hills to the flag.</p>
-      <div class="hero-actions">
-        <button class="btn-play" type="button" data-action="play" data-autofocus>
+    <div class="hero-main">
+      <p class="presents" style="--i:0"><span aria-hidden="true"></span>Mizpah Interactives presents</p>
+      <h1 class="title" style="--i:1">
+        <span class="t1">Monster</span><span class="t2">Hills</span>
+        <span class="title-badge" aria-hidden="true">Physics racer</span>
+      </h1>
+      <p class="lede" style="--i:2">Real suspension, real air. Find the four arcade doors on Main Street, dodge the haunted houses, then race the hills to the flag.</p>
+      <div class="hero-actions" style="--i:3">
+        <button class="btn-play xl" type="button" data-action="play" data-autofocus>
           <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span>
           Play now
           <kbd class="hint-kbd">Enter</kbd>
         </button>
-        <a class="btn-ghost" href="#games">More games</a>
+        <a class="btn-ghost" href="#games">Browse games</a>
       </div>
-      <div class="ride-picker" role="group" aria-label="Choose your ride">
-        <button type="button" data-vehicle="truck" aria-pressed="true"><span class="ride-slot" data-ride="truck"></span><span class="ride-name">Monster Truck</span></button>
-        <button type="button" data-vehicle="beetle" aria-pressed="false"><span class="ride-slot" data-ride="beetle"></span><span class="ride-name">Blue Bubble</span></button>
-        <button type="button" data-vehicle="sedan" aria-pressed="false"><span class="ride-slot" data-ride="sedan"></span><span class="ride-name">Green Cruiser</span></button>
-      </div>
-      <div class="time-toggle" role="group" aria-label="Time of day">
+      <div class="hero-setup" style="--i:4">
+        <div class="setup-head">
+          <span class="setup-label">Pick your ride</span>
+          <div class="time-toggle" role="group" aria-label="Time of day">
         <button type="button" data-time="morning" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Morning</button>
         <button type="button" data-time="night" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>Night</button>
       </div>
+        </div>
+        <div class="ride-picker" role="group" aria-label="Choose your ride">
+          <button type="button" data-vehicle="truck" aria-pressed="true"><span class="ride-slot" data-ride="truck"></span><span class="ride-name">Monster Truck</span><span class="ride-tag">Big air</span></button>
+          <button type="button" data-vehicle="beetle" aria-pressed="false"><span class="ride-slot" data-ride="beetle"></span><span class="ride-name">Blue Bubble</span><span class="ride-tag">Nimble</span></button>
+          <button type="button" data-vehicle="sedan" aria-pressed="false"><span class="ride-slot" data-ride="sedan"></span><span class="ride-name">Green Cruiser</span><span class="ride-tag">Steady</span></button>
+        </div>
+      </div>
     </div>
-    <ul class="hero-stats" aria-label="Course">
-      <li><b>12</b><span>coins</span></li>
-      <li><b>4</b><span>arcade doors</span></li>
-      <li><b data-best-hero>--:--.-</b><span>your best</span></li>
-    </ul>
+
+    <div class="hero-doors" style="--i:5">
+      <p class="doors-label"><b>Arcade doors</b><span>on Main Street · skip the haunted ones</span></p>
+      <div class="door-chips" id="door-chips"></div>
+      <ul class="hero-stats" aria-label="Your progress">
+        <li><i class="coin-ico" aria-hidden="true"></i><b>12</b><span>coins to find</span></li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 9v4l2.5 2M9 3h6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><b data-best-hero>--:--.-</b><span>your best</span></li>
+      </ul>
+    </div>
     <a class="scroll-cue" href="#games" aria-label="Scroll to games"><span></span></a>
   </div>
 
@@ -343,9 +355,9 @@
 </div>
 
 <script src="assets/js/vendor/matter.min.js"></script>
-<script src="assets/js/physics.js?v=20260930j"></script>
-<script src="assets/js/games.js?v=20260930j"></script>
-<script src="assets/js/game.js?v=20260930j"></script>
-<script src="assets/js/hub.js?v=20260930j"></script>
+<script src="assets/js/physics.js?v=20260930m"></script>
+<script src="assets/js/games.js?v=20260930m"></script>
+<script src="assets/js/game.js?v=20260930m"></script>
+<script src="assets/js/hub.js?v=20260930m"></script>
 </body>
 </html>

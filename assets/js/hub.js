@@ -19,6 +19,21 @@
   /* ride previews assembled from the sprites */
   $$('[data-ride]').forEach((slot) => slot.appendChild(G.vehiclePreview(slot.dataset.ride)));
 
+  /* ------------------------------------------- intro screen: door chips */
+  // One chip per arcade door; clicking starts the game parked at that door.
+  const chips = $('#door-chips');
+  if (chips) {
+    GAMES.forEach((g) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'door-chip';
+      b.dataset.action = 'drive-to'; b.dataset.game = g.id;
+      b.style.setProperty('--accent', g.color);
+      b.setAttribute('aria-label', 'Drive to door ' + g.door + ': ' + g.name);
+      b.innerHTML = `<span class="door-no">${g.door}</span><img src="${g.logo}" alt="" loading="lazy">`;
+      chips.appendChild(b);
+    });
+  }
+
   /* ---------------------------------------------------------- game cards */
   const row = $('#card-row');
   GAMES.forEach((g, i) => {
