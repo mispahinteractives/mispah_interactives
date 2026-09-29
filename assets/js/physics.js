@@ -75,8 +75,13 @@
   // open a game, `garage` opens vehicle select. `id` is looked up by game.js.
   const FIRST_DOOR = 950;
   const DOOR_SPACING = 1250;
-  const BUILDINGS = ['garage', 'animal-cafe', 'cinemoji', 'uno-clash', 'baggage-out'].map((id, i) => ({
-    id, x: FIRST_DOOR + i * DOOR_SPACING, kind: id === 'garage' ? 'garage' : 'game'
+  // A haunted house follows each game building. Entering one of those
+  // (`kind: 'wrong'`) fails the run; `variant` picks its house and ghost art.
+  const STREET = ['garage', 'animal-cafe', 'wrong-1', 'cinemoji', 'wrong-2', 'uno-clash', 'wrong-3', 'baggage-out', 'wrong-4'];
+  const BUILDINGS = STREET.map((id, i) => ({
+    id, x: FIRST_DOOR + i * DOOR_SPACING,
+    kind: id === 'garage' ? 'garage' : id.startsWith('wrong-') ? 'wrong' : 'game',
+    variant: id.startsWith('wrong-') ? Number(id.slice(6)) : 0
   }));
   const DOOR_HALF = 150;
   // a speed bump halfway between each pair of buildings
@@ -233,10 +238,10 @@
     addProp('suitcase', hill(7950)); addProp('oilcan', hill(8300));
 
     /* coins: plain data, collected by distance */
-    // one over each speed bump, the rest out in the hills; `air` lifts a
+    // one over every other speed bump, the rest out in the hills; `air` lifts a
     // coin high enough that only a jump off the ramp before it reaches it
     const coinSpots = [
-      ...SPEED_BUMPS.map((x) => ({ x })),
+      ...SPEED_BUMPS.filter((_, i) => i % 2 === 0).map((x) => ({ x })),
       { x: hill(550) }, { x: hill(1680), air: 250 }, { x: hill(2400) }, { x: hill(4000) },
       { x: hill(4850) }, { x: hill(5950), air: 330 }, { x: hill(7300) }, { x: hill(9300) }
     ];

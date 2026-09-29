@@ -59,3 +59,7 @@ console.log(W.car.chassis.position.x > W.FINISH_X ? 'finished' : 'stuck');
 ## Publishing an update
 
 `index.html` loads the stylesheet and scripts with a version tag (`hub.css?v=20260929`). After changing any CSS or JS, bump that number in `index.html` so browsers and GitHub Pages fetch the new files instead of a cached copy.
+
+## Haunted houses
+
+A haunted house (`wrong_house_1`–`4.png`) follows each game building on Main Street, in the `STREET` list in `assets/js/physics.js`. Bats (`bat.png`) loop round the roof and ghosts (`ghost_1`–`5.png`) float in the doorway and an upper window. The door prompt only says "Enter ???". Entering a haunted house fails the run: the ghost jumps at the screen and the "Spooked!" panel offers Try again or Back to hub.

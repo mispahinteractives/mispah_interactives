@@ -301,6 +301,24 @@ kbd {
   100% { opacity: 0; transform: translate(-50%, -20px) scale(1); }
 }
 
+/* wrong-house jump scare: the screen darkens and the ghost rushes at you */
+.spook {
+  position: absolute; inset: 0; z-index: 7; display: grid; place-items: center; pointer-events: none;
+  background: radial-gradient(circle at 50% 55%, rgba(40, 10, 70, 0.35), rgba(8, 2, 20, 0.92) 75%);
+  opacity: 0; visibility: hidden;
+}
+.spook img { width: min(34vmin, 220px); height: auto; opacity: 0; filter: blur(1.5px) drop-shadow(0 0 30px rgba(200, 220, 255, 0.7)); }
+.spook.show { visibility: visible; animation: spook-bg 1.6s ease-out forwards; }
+.spook.show img { animation: spook-ghost 1.3s cubic-bezier(.2, .9, .3, 1) forwards; }
+@keyframes spook-bg { 0% { opacity: 0; } 12% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0.85; } }
+@keyframes spook-ghost {
+  0% { opacity: 0; transform: scale(0.2) translateY(30%); }
+  35% { opacity: 1; transform: scale(2.4) rotate(-4deg); }
+  45% { transform: scale(2.3) rotate(4deg); }
+  55% { transform: scale(2.45) rotate(-3deg); }
+  100% { opacity: 0; transform: scale(3.4); }
+}
+
 /* touch controls: round buttons with a soft press. Held, a button shrinks a
    little and darkens; released, it eases back. No glow, no ripple. */
 .pedals { display: none; }
@@ -682,3 +700,10 @@ html.touch .is-playing .pedals { display: flex; }
   .ticker-track { animation: none; }
 }
 @media (hover: none) and (pointer: coarse) { .door-prompt kbd { display: none; } .door-prompt { padding-left: 20px; } }
+
+/* spooked panel */
+.fail-panel { background: linear-gradient(160deg, #2c1848, #150c2a); }
+.fail-panel h2 { color: #c9b8ff; }
+.fail-ghost { width: 72px; height: auto; margin: 0 auto 6px; image-rendering: pixelated; animation: float 2.4s ease-in-out infinite; }
+@keyframes float { 50% { transform: translateY(-8px); } }
+.finish-stats.two { grid-template-columns: repeat(2, 1fr); }

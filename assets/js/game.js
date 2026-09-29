@@ -15,7 +15,9 @@
   const VEHICLES = P.VEHICLES;
   const ASSET = 'assets/img/assets/';
   const SPRITES = ['truckbody', 'truckwheel', 'carbody', 'carbody2', 'wheel', 'wheel2', 'strut',
-    'rampleft', 'crate', 'box', 'suitcase', 'oilcan', 'beercan', 'sodacan', 'cloud', 'tree'];
+    'rampleft', 'crate', 'box', 'suitcase', 'oilcan', 'beercan', 'sodacan', 'cloud', 'tree', 'bat',
+    'wrong_house_1', 'wrong_house_2', 'wrong_house_3', 'wrong_house_4',
+    'ghost_1', 'ghost_2', 'ghost_3', 'ghost_4', 'ghost_5', 'correct_house_1', 'background_house1'];
   const FONT = '"Lilita One", "Rubik", system-ui, sans-serif';
   const TAU = Math.PI * 2;
 
@@ -103,6 +105,16 @@
       land: (s) => noise(0.3, 0.25 + 0.4 * s, 380),
       hit: () => noise(0.12, 0.18, 1200),
       door: () => tone([523, 659, 784, 1047], 0.07, 'triangle', 0.16),
+      spooky: () => {
+        if (!ctx || muted) return;
+        const t0 = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+        const lfo = ctx.createOscillator(), lg = ctx.createGain();
+        o.type = 'sine'; o.frequency.setValueAtTime(880, t0); o.frequency.exponentialRampToValueAtTime(240, t0 + 1.1);
+        lfo.frequency.value = 7; lg.gain.value = 28; lfo.connect(lg); lg.connect(o.frequency);
+        g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(0.16, t0 + 0.08); g.gain.exponentialRampToValueAtTime(0.001, t0 + 1.2);
+        o.connect(g); g.connect(master); o.start(t0); lfo.start(t0); o.stop(t0 + 1.25); lfo.stop(t0 + 1.25);
+        noise(0.9, 0.3, 160);
+      },
       finish: () => tone([523, 659, 784, 1047, 784, 1047, 1319], 0.11, 'square', 0.08),
       checkpoint: () => tone([660, 880], 0.08, 'triangle', 0.12),
       // pedal clicks: a short mechanical tick down, a softer one on the way up
@@ -175,7 +187,9 @@
   function resetRun(x) {
     W.resetProps();
     W.coins.forEach((c) => { c.taken = false; });
-    state.coins = 0; state.time = 0; state.started = false; state.finished = false;
+    state.coins = 0; state.time = 0; state.started = false; state.finished = false; state.failed = false;
+    W.buildings.forEach((b) => { b.appear = 0; });
+    if (ui.spook) ui.spook.classList.remove('show');
     state.checkpoint = W.SPAWN_X;
     spawnAt(x || W.SPAWN_X);
     particles = [];
@@ -453,20 +467,44 @@
     // two mountain ranges
     drawRange(0.14, 560, 260, 520, '#b3c2d8', '#dde6f2', 180, 1);
     drawRange(0.3, 430, 170, 330, '#94a6c2', null, 120, 2);
-    // distant rooftops over the town
+    // Town skyline behind Main Street: background_house1.png, hazed toward
+    // the sky colour so it reads as distant, tiled (every other copy
+    // mirrored) and scrolling slower than the road.
     const tf = 0.55;
-    if (cam.x < W.TOWN_END + 2500) {
-      ctx.fillStyle = 'rgba(126,140,178,0.55)';
-      for (let i = -2; i < 26; i++) {
-        const bx = i * 260 + rnd(i + 40) * 80;
-        const sx = layerX(bx, tf);
-        if (sx < -300 || sx > Wd + 300) continue;
-        const h = (90 + rnd(i + 50) * 120) * z, w = (140 + rnd(i + 60) * 80) * z;
-        const base = layerY(20, tf);
-        ctx.fillRect(sx, base - h, w, h + Ht);
-        ctx.beginPath(); ctx.moveTo(sx - 10 * z, base - h); ctx.lineTo(sx + w / 2, base - h - 50 * z); ctx.lineTo(sx + w + 10 * z, base - h); ctx.fill();
+    const sky = skylineImage();
+    if (sky && cam.x < W.TOWN_END + 2500) {
+      const tw = 660, th = tw * sky.height / sky.width, step = tw - 40;
+      const base = layerY(70, tf);
+      const i0 = Math.floor((cam.x * tf - cam.fx * Wd / z) / step) - 1;
+      const i1 = i0 + Math.ceil(Wd / z / step) + 2;
+      const last = Math.ceil((W.TOWN_END * tf + 900) / step);
+      for (let i = Math.max(i0, -4); i <= Math.min(i1, last); i++) {
+        const bx = i * step + rnd(i + 40) * 30;
+        const sx = layerX(bx, tf), w = tw * z, h = th * z;
+        ctx.save();
+        if (i % 2) { ctx.translate(sx + w, 0); ctx.scale(-1, 1); ctx.drawImage(sky, 0, base - h, w, h); }
+        else ctx.drawImage(sky, sx, base - h, w, h);
+        ctx.restore();
+        ctx.fillStyle = '#b8b3c9';                   // under the skyline, for when the camera rises
+        ctx.fillRect(sx, base - 2 * z, w + 1, Ht);
       }
     }
+  }
+
+  let skylineCache = null;
+  function skylineImage() {
+    if (skylineCache) return skylineCache;
+    const src = img.background_house1;
+    if (!ready(src)) return null;
+    const c = document.createElement('canvas');
+    c.width = src.naturalWidth; c.height = src.naturalHeight;
+    const g = c.getContext('2d');
+    g.drawImage(src, 0, 0);
+    g.globalCompositeOperation = 'source-atop';      // tint only the buildings, not the transparent sky
+    g.fillStyle = 'rgba(170, 200, 235, 0.38)';
+    g.fillRect(0, 0, c.width, c.height);
+    skylineCache = c;
+    return c;
   }
 
   function drawRange(f, spacing, hMin, hMax, color, snow, baseOff, seed) {
@@ -629,9 +667,160 @@
     ctx.fillRect(x + 28, gy - 230, 12, 230); ctx.strokeRect(x + 28, gy - 230, 12, 230);
   }
 
+  /* Haunted houses: the wrong doors. Each has a purple glow, its own house
+     art, a ghost hanging in the doorway that drifts out as you pull up, a
+     second ghost at an upper window, and bats looping round the roof. */
+  const HAUNT_W = 430;
+  // The house art is only 200px wide but is drawn ~430 world units wide
+  // (up to ~5x on a phone). Stretching it every frame with the browser's
+  // default resampling looks pixelated, so each house is enlarged once, in
+  // gentle 2x steps with high-quality smoothing, and that copy is drawn.
+  const smoothCache = {};
+  function smoothed(key) {
+    if (smoothCache[key]) return smoothCache[key];
+    const src = img[key];
+    if (!ready(src)) return null;
+    let cur = src, w = src.naturalWidth, h = src.naturalHeight;
+    for (let step = 0; step < 2; step++) {
+      const c = document.createElement('canvas');
+      c.width = w * 2; c.height = h * 2;
+      const g = c.getContext('2d');
+      g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+      g.drawImage(cur, 0, 0, c.width, c.height);
+      cur = c; w = c.width; h = c.height;
+    }
+    smoothCache[key] = cur;
+    return cur;
+  }
+  const HAUNT_DOOR = { 1: 0.46, 2: 0.64, 3: 0.44, 4: 0.375 };   // door position across each house image
+  function drawHaunted(b) {
+    const house = smoothed('wrong_house_' + b.variant);
+    const gy = W.heightAt(b.x) + 4;
+    const hh = house ? HAUNT_W * house.height / house.width : 380;
+    const active = state.door === b;
+    b.appear = lerp(b.appear || 0, active ? 1 : 0, 0.05);
+
+    const glow = ctx.createRadialGradient(b.x, gy - hh * 0.55, 30, b.x, gy - hh * 0.55, hh * 0.95);
+    glow.addColorStop(0, `rgba(96,36,150,${0.3 + 0.15 * b.appear})`); glow.addColorStop(1, 'rgba(96,36,150,0)');
+    ctx.fillStyle = glow; ctx.fillRect(b.x - hh, gy - hh * 1.6, hh * 2, hh * 1.65);
+    if (house) {
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(house, b.x - HAUNT_W / 2, gy - hh, HAUNT_W, hh);
+    }
+
+    const t = state.t / 1000;
+    // window ghost: faint, drifting side to side
+    drawGhostSprite(img.ghost_5, b.x + Math.sin(t * 0.7 + b.variant) * 60, gy - hh * 0.72 + Math.sin(t * 1.6) * 6,
+      70, 0.18 + 0.14 * (0.5 + 0.5 * Math.sin(t * 2.3 + b.variant)), Math.cos(t * 0.7 + b.variant) < 0);
+    // door ghost: flickers in the doorway, floats out when the car pulls up
+    const doorX = b.x - HAUNT_W / 2 + HAUNT_W * (HAUNT_DOOR[b.variant] || 0.5);
+    const a = b.appear;
+    const flicker = 0.75 + 0.25 * Math.sin(t * 9 + b.variant * 2);
+    drawGhostSprite(img['ghost_' + b.variant],
+      doorX + Math.sin(t * 1.3) * (8 + 26 * a), gy - 70 - a * 90 + Math.sin(t * 2.1) * 8,
+      110 + 50 * a, (0.28 + 0.62 * a) * flicker, false);
+    // bats: figure-of-eight loops round the roof, flapping. Drawn from a
+    // pre-smoothed copy too, so the tiny sprite doesn't look blocky.
+    const bat = smoothed('bat');
+    if (bat) {
+      for (let k = 0; k < 3; k++) {
+        const u = t * (0.9 + k * 0.22) + k * 2.1 + b.variant;
+        const bx = b.x + Math.sin(u) * (190 + 40 * k) * (k % 2 ? -1 : 1);
+        const by = gy - hh * (0.8 + 0.08 * k) + Math.sin(2 * u) * (55 + 15 * k);
+        const flap = 0.3 + 0.7 * Math.abs(Math.sin(state.t / 55 + k * 1.7));
+        const dir = Math.cos(u) * (k % 2 ? -1 : 1) >= 0 ? 1 : -1;
+        const w = 19 * 2.8, h = 13 * 2.8;
+        ctx.save(); ctx.translate(bx, by); ctx.scale(dir, flap);
+        ctx.drawImage(bat, -w / 2, -h / 2, w, h);
+        ctx.restore();
+      }
+    }
+  }
+
+  function drawGhostSprite(g, x, y, height, alpha, flip) {
+    if (!ready(g) || alpha <= 0.01) return;
+    const h = height, w = h * g.naturalWidth / g.naturalHeight;
+    ctx.save(); ctx.globalAlpha = clamp(alpha, 0, 1); ctx.translate(x, y);
+    if (flip) ctx.scale(-1, 1);
+    ctx.drawImage(g, -w / 2, -h / 2, w, h);
+    ctx.restore();
+  }
+
+  // Sign board with the game's own logo, ringed with chasing bulbs.
+  function drawSignBoard(cx, sy, g) {
+    const sw = 270, sh = 104, sx = cx - sw / 2;
+    outline(5);
+    ctx.fillStyle = '#231c3d'; roundRect(sx, sy, sw, sh, 14); ctx.fill(); ctx.stroke();
+    const bulbs = 18;
+    for (let k = 0; k < bulbs; k++) {
+      const t = k / bulbs, per = 2 * (sw + sh);
+      let d = t * per, bx, by;
+      if (d < sw) { bx = sx + d; by = sy; } else if ((d -= sw) < sh) { bx = sx + sw; by = sy + d; }
+      else if ((d -= sh) < sw) { bx = sx + sw - d; by = sy + sh; } else { d -= sw; bx = sx; by = sy + sh - d; }
+      const on = (k + Math.floor(state.t / 140)) % 3 === 0;
+      ctx.fillStyle = on ? '#fff3a8' : '#a07a2a';
+      ctx.beginPath(); ctx.arc(bx, by, 5, 0, TAU); ctx.fill();
+    }
+    const logo = g && logos[g.id];
+    if (ready(logo)) {
+      const pad = 12, bw2 = sw - pad * 2, bh2 = sh - pad * 2;
+      const s = Math.min(bw2 / logo.naturalWidth, bh2 / logo.naturalHeight);
+      const lw = logo.naturalWidth * s, lh = logo.naturalHeight * s;
+      ctx.drawImage(logo, cx - lw / 2, sy + sh / 2 - lh / 2, lw, lh);
+    } else {
+      ctx.fillStyle = '#ffc83d'; ctx.font = '46px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(g ? g.name.toUpperCase() : 'GARAGE', cx, sy + sh / 2 + 2);
+    }
+  }
+
+  function drawDoorPlate(cx, cy, text) {
+    ctx.fillStyle = '#ffc83d'; roundRect(cx - 62, cy - 17, 124, 34, 8); ctx.fill(); outline(3); ctx.stroke();
+    ctx.fillStyle = '#1b2033'; ctx.font = '22px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, cx, cy + 1);
+  }
+
+  /* Game buildings: correct_house_1.png, placed so its front door sits on
+     the door spot, with the game's lit sign on a rooftop billboard. The
+     door fractions below are where the door is in the image. */
+  const GAME_HOUSE_W = 460;
+  const GAME_DOOR = { x: 0.54, top: 0.69, bottom: 0.895, w: 0.1 };
+  function drawGameHouse(b, g) {
+    const house = smoothed('correct_house_1');
+    const gy = W.heightAt(b.x) + 3;
+    const hw = GAME_HOUSE_W, hh = hw * house.height / house.width;
+    const left = b.x - hw * GAME_DOOR.x, top = gy - hh;
+    const active = state.door === b;
+    const doorTop = top + hh * GAME_DOOR.top, doorBottom = top + hh * GAME_DOOR.bottom;
+    const doorW = hw * GAME_DOOR.w;
+    if (active) {
+      const pulse = 0.55 + 0.45 * Math.sin(state.t / 180);
+      const lg = ctx.createRadialGradient(b.x, (doorTop + doorBottom) / 2, 10, b.x, (doorTop + doorBottom) / 2, 200);
+      lg.addColorStop(0, `rgba(255,214,90,${0.6 * pulse})`); lg.addColorStop(1, 'rgba(255,214,90,0)');
+      ctx.fillStyle = lg; ctx.fillRect(b.x - 210, doorTop - 150, 420, 330);
+    }
+    // billboard posts, drawn first so the house covers their feet
+    const bbTop = top - 122;
+    outline(4); ctx.fillStyle = '#3b3f58';
+    for (const px of [b.x - 80, b.x + 70]) {
+      ctx.fillRect(px - 6, bbTop + 90, 12, 130); ctx.strokeRect(px - 6, bbTop + 90, 12, 130);
+    }
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(house, left, top, hw, hh);
+    if (active) {
+      // the doorway lights up warm when you pull up
+      const pulse = 0.5 + 0.5 * Math.sin(state.t / 160);
+      ctx.fillStyle = `rgba(255,214,90,${0.45 + 0.3 * pulse})`;
+      ctx.fillRect(b.x - doorW / 2, doorTop, doorW, doorBottom - doorTop);
+    }
+    drawSignBoard(b.x - 5, bbTop, g);
+    drawDoorPlate(b.x, doorTop - 26, 'DOOR ' + g.door);
+  }
+
   function drawBuildings(x0, x1) {
     for (const b of W.buildings) {
-      if (b.x + 260 < x0 || b.x - 260 > x1) continue;
+      if (b.x + 320 < x0 || b.x - 320 > x1) continue;
+      if (b.kind === 'wrong') { drawHaunted(b); continue; }
+      if (b.kind === 'game' && gameById[b.id] && smoothed('correct_house_1')) { drawGameHouse(b, gameById[b.id]); continue; }
       const g = gameById[b.id];
       const gy = W.heightAt(b.x) + 2;
       const w = 420, h = 300, left = b.x - w / 2, top = gy - h;
@@ -671,34 +860,8 @@
         ctx.fillRect(b.x - dw / 2 + 12, gy - dh + 14, dw - 24, 56);
         ctx.fillStyle = '#ffc83d'; ctx.beginPath(); ctx.arc(b.x + dw / 2 - 16, gy - dh / 2, 6, 0, TAU); ctx.fill();
       }
-      // sign board with the game's own logo, ringed with chasing bulbs
-      const sw = 270, sh = 104, sx = b.x - sw / 2, sy = top + 8;
-      outline(5);
-      ctx.fillStyle = '#231c3d'; roundRect(sx, sy, sw, sh, 14); ctx.fill(); ctx.stroke();
-      const bulbs = 18;
-      for (let k = 0; k < bulbs; k++) {
-        const t = k / bulbs, per = 2 * (sw + sh);
-        let d = t * per, bx, by;
-        if (d < sw) { bx = sx + d; by = sy; } else if ((d -= sw) < sh) { bx = sx + sw; by = sy + d; }
-        else if ((d -= sh) < sw) { bx = sx + sw - d; by = sy + sh; } else { d -= sw; bx = sx; by = sy + sh - d; }
-        const on = (k + Math.floor(state.t / 140)) % 3 === 0;
-        ctx.fillStyle = on ? '#fff3a8' : '#a07a2a';
-        ctx.beginPath(); ctx.arc(bx, by, 5, 0, TAU); ctx.fill();
-      }
-      const logo = g && logos[g.id];
-      if (ready(logo)) {
-        const pad = 12, bw2 = sw - pad * 2, bh2 = sh - pad * 2;
-        const s = Math.min(bw2 / logo.naturalWidth, bh2 / logo.naturalHeight);
-        const lw = logo.naturalWidth * s, lh = logo.naturalHeight * s;
-        ctx.drawImage(logo, b.x - lw / 2, sy + sh / 2 - lh / 2, lw, lh);
-      } else {
-        ctx.fillStyle = '#ffc83d'; ctx.font = '46px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(g ? g.name.toUpperCase() : 'GARAGE', b.x, sy + sh / 2 + 2);
-      }
-      // door plate
-      ctx.fillStyle = '#ffc83d'; roundRect(b.x - 62, gy - dh - 44, 124, 34, 8); ctx.fill(); outline(3); ctx.stroke();
-      ctx.fillStyle = '#1b2033'; ctx.font = '22px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(g ? 'DOOR ' + g.door : 'RIDES', b.x, gy - dh - 26);
+      drawSignBoard(b.x, top + 8, g);
+      drawDoorPlate(b.x, gy - dh - 27, g ? 'DOOR ' + g.door : 'RIDES');
     }
   }
 
@@ -864,7 +1027,7 @@
   function showDoorPrompt(b) {
     if (!b) { ui.prompt.hidden = true; return; }
     const g = gameById[b.id];
-    ui.promptName.textContent = g ? g.name : 'Garage · change ride';
+    ui.promptName.textContent = g ? g.name : b.kind === 'wrong' ? '???' : 'Garage · change ride';
     ui.prompt.hidden = false;
     Sound.door();
   }
@@ -890,6 +1053,7 @@
     if (state.mode !== 'play' || !state.door || state.paused) return;
     const b = state.door;
     if (b.kind === 'garage') { openGarage(); return; }
+    if (b.kind === 'wrong') { spooked(b); return; }
     const g = gameById[b.id];
     if (!g) return;
     const m = ui.modalDoor;
@@ -920,6 +1084,27 @@
     spawnAt(clamp(x, W.SPAWN_X, W.FINISH_X - 100), true);
     document.querySelectorAll('[data-vehicle]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.vehicle === key)));
     emit('vehicle', { key });
+  }
+
+  // Wrong house: the ghost bursts out at the screen and the run is over.
+  function spooked(b) {
+    state.finished = true; state.failed = true;
+    state.door = null; ui.prompt.hidden = true;
+    Sound.spooky();
+    state.shake = 14;
+    const ghost = img['ghost_' + b.variant];
+    ui.spookImg.src = ghost ? ghost.src : '';
+    ui.spook.classList.remove('show'); void ui.spook.offsetWidth; ui.spook.classList.add('show');
+    for (let i = 0; i < 40; i++) {
+      puff(b.x + (Math.random() - 0.5) * 200, W.heightAt(b.x) - 80 - Math.random() * 120,
+        (Math.random() - 0.5) * 5, -Math.random() * 3, 10 + Math.random() * 12, 1200 + Math.random() * 800,
+        ['#6e4a9e', '#4b2d73', '#9b7fd1'][i % 3], 'smoke');
+    }
+    const m = ui.modalFail;
+    $('[data-fail-ghost]', m).src = ghost ? ghost.src : '';
+    $('[data-fail-time]', m).textContent = fmtTime(state.time);
+    $('[data-fail-coins]', m).textContent = state.coins + '/' + W.coins.length;
+    setTimeout(() => { if (state.mode === 'play' && state.failed) openModal(m); }, 1500);
   }
 
   function finish() {
@@ -1115,7 +1300,8 @@
       coins: $('#hud-coins'), coinsVal: $('#hud-coins [data-val]'), time: $('#hud-time'),
       speed: $('#hud-speed'), progress: $('#hud-progress'), toast: $('#toast'),
       prompt: $('#door-prompt'), promptName: $('#door-prompt-name'),
-      modalDoor: $('#modal-door'), modalGarage: $('#modal-garage'), modalFinish: $('#modal-finish')
+      modalDoor: $('#modal-door'), modalGarage: $('#modal-garage'), modalFinish: $('#modal-finish'),
+      modalFail: $('#modal-fail'), spook: $('#spook'), spookImg: $('#spook img')
     });
     resize();
     new ResizeObserver(resize).observe(canvas);
