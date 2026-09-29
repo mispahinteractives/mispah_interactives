@@ -673,7 +673,7 @@ kbd {
   .hud-pill .lbl { display: none; }
   .icon-btn { width: 40px; height: 40px; border-radius: 12px; }
   .hud-right .icon-btn[data-action="mute"] { display: none; }
-  .door-prompt { font-size: 18px; bottom: auto; top: 118px; }
+  .door-prompt { bottom: auto; top: 118px; }
   .toast { top: 30%; }
   .card-row { grid-template-columns: repeat(4, 80%); gap: 20px; }
   .howto { grid-template-columns: 1fr; }
@@ -717,7 +717,6 @@ kbd {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
   .ticker-track { animation: none; }
 }
-@media (hover: none) and (pointer: coarse) { .door-prompt kbd { display: none; } .door-prompt { padding-left: 20px; } }
 
 /* spooked panel */
 .fail-panel { background: linear-gradient(160deg, #2c1848, #150c2a); }
@@ -1113,7 +1112,6 @@ kbd {
 }
 @keyframes live-ring { 0% { transform: scale(1); opacity: 0.7; } 70%, 100% { transform: scale(2.6); opacity: 0; } }
 
-.door-prompt { animation: prompt-in 0.3s cubic-bezier(.2, 1.4, .4, 1); }
 
 /* Featured card scene, cheap to animate: clouds drift with transform (no
    layout), and Night / Rain darken the scene with one static tint layer
@@ -1209,3 +1207,51 @@ kbd {
   .menu-glider { transition: none; }
   .menu-chip.is-hot { animation: none; }
 }
+
+/* ==========================================================================
+   DOOR PROMPT: a clean dark card: gold door icon, a small label over the
+   game name, and a keycap hint (E on PC, Tap on touch). Replaces the old
+   gold slab with a heavy outline.
+   ========================================================================== */
+.door-prompt {
+  display: inline-flex; align-items: center; gap: 14px; padding: 8px 10px 8px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 18px;
+  background: linear-gradient(135deg, rgba(34, 26, 78, 0.94), rgba(16, 12, 40, 0.96));
+  color: #fff; font: inherit; text-align: left; cursor: pointer;
+  box-shadow: 0 14px 34px rgba(5, 3, 20, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  animation: none;
+  transition: transform 0.2s var(--snap), border-color 0.2s, box-shadow 0.2s;
+}
+.door-prompt.pop { animation: dp-in 0.45s var(--snap); }
+@keyframes dp-in { from { opacity: 0; transform: translate(-50%, 24px) scale(0.9); } }
+.door-prompt:hover { transform: translate(-50%, -3px); border-color: rgba(255, 200, 61, 0.55); box-shadow: 0 18px 40px rgba(5, 3, 20, 0.55), 0 0 0 4px rgba(255, 200, 61, 0.12); }
+.door-prompt:active { transform: translate(-50%, 1px) scale(0.97); }
+.dp-icon {
+  position: relative; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 13px; flex: none;
+  background: linear-gradient(180deg, #ffe07a, var(--gold)); color: var(--outline);
+}
+.dp-icon svg { width: 22px; height: 22px; fill: currentColor; }
+.dp-icon::after {
+  content: ""; position: absolute; inset: -4px; border-radius: 16px; border: 2px solid rgba(255, 200, 61, 0.6);
+  animation: dp-ring 1.6s ease-out infinite;
+}
+@keyframes dp-ring { 0% { transform: scale(0.9); opacity: 0.9; } 100% { transform: scale(1.25); opacity: 0; } }
+.dp-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.door-prompt .dp-verb {
+  font: 700 10px/1 var(--body); letter-spacing: 0.18em; text-transform: uppercase; color: #bdb4ea;
+}
+.door-prompt b {
+  font: 800 17px/1.1 var(--body); letter-spacing: 0.01em; color: #fff; white-space: nowrap;
+  max-width: 44vw; overflow: hidden; text-overflow: ellipsis;
+}
+.dp-key {
+  display: grid; place-items: center; min-width: 34px; height: 30px; padding: 0 8px; margin-left: 4px; border-radius: 9px; flex: none;
+  background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); border-bottom-width: 3px;
+  font: 800 13px/1 var(--body); color: #fff; letter-spacing: 0.04em;
+}
+.dp-key-touch { display: none; font-size: 11px; text-transform: uppercase; }
+@media (hover: none) and (pointer: coarse) { .dp-key-pc { display: none; } .dp-key-touch { display: inline; } }
+/* haunted door: same card, purple accent, mystery name */
+.door-prompt.is-mystery .dp-icon { background: linear-gradient(180deg, #b79cff, #7a55d8); color: #1a1033; }
+.door-prompt.is-mystery .dp-icon::after { border-color: rgba(183, 156, 255, 0.6); }
+.door-prompt.is-mystery b { letter-spacing: 0.3em; color: #d8ccff; }

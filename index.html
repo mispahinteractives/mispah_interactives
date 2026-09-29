@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Rubik:wght@400;500;700;800&display=swap">
-<link rel="stylesheet" href="assets/css/hub.css?v=20261001x">
+<link rel="stylesheet" href="assets/css/hub.css?v=20261001z">
 </head>
 <body>
 <a class="skip" href="#games">Skip to the game list</a>
@@ -136,7 +136,9 @@
 
 
   <button id="door-prompt" class="door-prompt" type="button" data-action="enter-door" hidden>
-    <kbd>E</kbd><span class="dp-verb">Enter</span><b id="door-prompt-name"></b>
+    <span class="dp-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 21V4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M3.5 21h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="14.5" cy="12.5" r="1.3"/></svg></span>
+    <span class="dp-text"><span class="dp-verb">Enter door</span><b id="door-prompt-name"></b></span>
+    <span class="dp-key" aria-hidden="true"><span class="dp-key-pc">E</span><span class="dp-key-touch">Tap</span></span>
   </button>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="spook" class="spook" aria-hidden="true">
@@ -351,9 +353,9 @@
 </div>
 
 <script src="assets/js/vendor/matter.min.js"></script>
-<script src="assets/js/physics.js?v=20261001x"></script>
-<script src="assets/js/games.js?v=20261001x"></script>
-<script src="assets/js/game.js?v=20261001x"></script>
-<script src="assets/js/hub.js?v=20261001x"></script>
+<script src="assets/js/physics.js?v=20261001z"></script>
+<script src="assets/js/games.js?v=20261001z"></script>
+<script src="assets/js/game.js?v=20261001z"></script>
+<script src="assets/js/hub.js?v=20261001z"></script>
 </body>
 </html>

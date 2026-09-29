@@ -1791,7 +1791,10 @@
   function showDoorPrompt(b) {
     if (!b) { ui.prompt.hidden = true; return; }
     const g = gameById[b.id];
-    ui.promptName.textContent = g ? g.name : b.kind === 'wrong' ? '???' : 'Garage · change ride';
+    ui.promptName.textContent = g ? g.name : b.kind === 'wrong' ? '???' : 'Garage';
+    ui.prompt.querySelector('.dp-verb').textContent = b.kind === 'garage' ? 'Change ride' : 'Enter door';
+    ui.prompt.classList.toggle('is-mystery', b.kind === 'wrong');
+    ui.prompt.classList.remove('pop'); void ui.prompt.offsetWidth; ui.prompt.classList.add('pop');
     ui.prompt.hidden = false;
     Sound.door();
   }
