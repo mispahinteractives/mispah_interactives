@@ -564,17 +564,21 @@
   }));
   function drawRain() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const t = state.t / 1000, n = Math.round(DROPS.length * clamp(Wd * Ht / (1440 * 900), 0.35, 1));
-    const slant = 0.22, drift = (cam.x * cam.z * 0.6) % Wd;
+    // Drops are sized to the screen: shorter, finer and denser on phones so
+    // they read as rain rather than a few long scratches.
+    const t = state.t / 1000, small = Math.min(Wd, Ht);
+    const sc = clamp(small / 800, 0.5, 1);
+    const n = Math.round(DROPS.length * clamp(Wd * Ht / (1440 * 900), 0.7, 1));
+    const slant = 0.2, drift = (cam.x * cam.z * 0.6) % Wd;
     ctx.lineCap = 'round';
     for (const far of [true, false]) {
-      ctx.strokeStyle = far ? 'rgba(190,205,225,0.28)' : 'rgba(215,228,245,0.5)';
-      ctx.lineWidth = far ? 1 : 1.6;
+      ctx.strokeStyle = far ? 'rgba(200,214,232,0.3)' : 'rgba(222,233,248,0.55)';
+      ctx.lineWidth = (far ? 0.9 : 1.4) * (0.75 + 0.25 * sc);
       ctx.beginPath();
       for (let i = 0; i < n; i++) {
         const d = DROPS[i];
         if (d.far !== far) continue;
-        const sp = (far ? 900 : 1500) * d.s, len = (far ? 14 : 26) * d.s;
+        const sp = (far ? 700 : 1150) * d.s * (0.7 + 0.3 * sc), len = (far ? 11 : 20) * d.s * sc;
         const y = ((d.y * (Ht + 60) + t * sp) % (Ht + 60)) - 30;
         const x = (((d.x * (Wd + 200) - drift - y * slant) % (Wd + 200)) + Wd + 200) % (Wd + 200) - 100;
         ctx.moveTo(x, y); ctx.lineTo(x - len * slant, y + len);

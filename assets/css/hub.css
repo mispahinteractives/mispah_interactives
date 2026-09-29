@@ -959,3 +959,21 @@ html.touch .is-playing .pedals { display: flex; }
   .hero-setup .time-toggle { flex: 1; display: flex; }
   .hero-setup .time-toggle button { flex: 1; justify-content: center; }
 }
+
+/* ==========================================================================
+   CLEAN HEADINGS: no heavy outline stroke. A thin, soft drop shadow keeps the
+   text readable over the game scene while the letters stay crisp.
+   ========================================================================== */
+.title span, .title span.t1, .title span.t2,
+.section-head h2, .feature-info h3, .contact-intro h2, .finish-panel h2 {
+  -webkit-text-stroke: 0 !important;
+  text-shadow: 0 3px 0 rgba(10, 6, 30, 0.9), 0 10px 26px rgba(0, 0, 0, 0.4) !important;
+}
+.toast, .toast.count {
+  -webkit-text-stroke: 0 !important;
+  text-shadow: 0 3px 0 rgba(10, 6, 30, 0.9), 0 0 22px rgba(0, 0, 0, 0.55) !important;
+}
+.toast.count { text-shadow: 0 4px 0 rgba(10, 6, 30, 0.9), 0 0 36px rgba(255, 200, 61, 0.55) !important; }
+@media (max-width: 760px) {
+  .title span, .title span.t1, .title span.t2 { text-shadow: 0 2px 0 rgba(10, 6, 30, 0.9), 0 6px 16px rgba(0, 0, 0, 0.45) !important; }
+}
