@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Rubik:wght@400;500;700;800&display=swap">
-<link rel="stylesheet" href="assets/css/hub.css?v=20261001v">
+<link rel="stylesheet" href="assets/css/hub.css?v=20261001x">
 </head>
 <body>
 <a class="skip" href="#games">Skip to the game list</a>
@@ -24,12 +24,19 @@
     <img class="brand-logo" src="assets/img/logo.png" alt="Mizpah Interactives" width="600" height="394">
   </a>
   <nav class="menu" aria-label="Main">
-    <a class="menu-chip is-hot" href="#stage" data-action="play">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>Play
+    <span class="menu-glider" aria-hidden="true"></span>
+    <a class="menu-chip is-hot" href="#stage" data-action="play" data-spy="stage">
+      <span class="mc-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span><span class="mc-text">Play</span>
     </a>
-    <a class="menu-chip" href="#games">Games</a>
-    <a class="menu-chip" href="#controls">Controls</a>
-    <a class="menu-chip" href="#contact">Contact</a>
+    <a class="menu-chip" href="#games" data-spy="games">
+      <span class="mc-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h10a5 5 0 0 1 4.9 6l-.8 3.6a2.4 2.4 0 0 1-4.3.9L15 15H9l-1.8 2.5a2.4 2.4 0 0 1-4.3-.9L2.1 13A5 5 0 0 1 7 7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M7 10v3M5.5 11.5h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="10.5" r="1.1"/><circle cx="18" cy="12.5" r="1.1"/></svg></span><span class="mc-text">Games</span>
+    </a>
+    <a class="menu-chip" href="#controls" data-spy="controls">
+      <span class="mc-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2.2"/><path d="M3.5 10.5h6.3M14.2 10.5h6.3M12 14.2V21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><span class="mc-text">Controls</span>
+    </a>
+    <a class="menu-chip" href="#contact" data-spy="contact">
+      <span class="mc-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 20 17H10l-4.5 3.5V17H4a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 4 5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M7.5 9.5h9M7.5 12.5h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><span class="mc-text">Contact</span>
+    </a>
   </nav>
   <div class="player">
     <span class="coin-count" title="Coins collected, all runs">
@@ -344,9 +351,9 @@
 </div>
 
 <script src="assets/js/vendor/matter.min.js"></script>
-<script src="assets/js/physics.js?v=20261001v"></script>
-<script src="assets/js/games.js?v=20261001v"></script>
-<script src="assets/js/game.js?v=20261001v"></script>
-<script src="assets/js/hub.js?v=20261001v"></script>
+<script src="assets/js/physics.js?v=20261001x"></script>
+<script src="assets/js/games.js?v=20261001x"></script>
+<script src="assets/js/game.js?v=20261001x"></script>
+<script src="assets/js/hub.js?v=20261001x"></script>
 </body>
 </html>

@@ -203,6 +203,43 @@
     if (navigator.clipboard) navigator.clipboard.writeText(b.dataset.copy).then(done, () => {});
   }));
 
+  /* ------------------------------------------------------------ top menu */
+  // the lit glider slides to the hovered/focused item and rests on the
+  // section in view; a click adds a burst ring where you pressed
+  const menu = $('.menu'), glider = $('.menu-glider');
+  if (menu && glider) {
+    const chips = $$('.menu-chip', menu);
+    let active = null;
+    const glideTo = (el) => {
+      if (!el || el.classList.contains('is-hot')) { glider.style.setProperty('--go', 0); return; }
+      glider.style.setProperty('--gx', el.offsetLeft + 'px');
+      glider.style.setProperty('--gw', el.offsetWidth + 'px');
+      glider.style.setProperty('--go', 1);
+    };
+    chips.forEach((c) => {
+      c.addEventListener('pointerenter', () => glideTo(c));
+      c.addEventListener('focus', () => glideTo(c));
+      c.addEventListener('pointerdown', (e) => {
+        const r = c.getBoundingClientRect(), b = document.createElement('span');
+        b.className = 'mc-burst';
+        b.style.setProperty('--bx', (e.clientX - r.left) + 'px'); b.style.setProperty('--by', (e.clientY - r.top) + 'px');
+        c.appendChild(b); setTimeout(() => b.remove(), 520);
+      });
+    });
+    menu.addEventListener('pointerleave', () => glideTo(active));
+    // scroll spy: which section is in view
+    const spy = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (!en.isIntersecting) return;
+        chips.forEach((c) => c.classList.toggle('is-active', c.dataset.spy === en.target.id));
+        active = chips.find((c) => c.dataset.spy === en.target.id) || null;
+        if (!menu.matches(':hover')) glideTo(active);
+      });
+    }, { rootMargin: '-45% 0px -45% 0px' });
+    ['stage', 'games', 'controls', 'contact'].forEach((sid) => { const el = document.getElementById(sid); if (el) spy.observe(el); });
+    window.addEventListener('resize', () => glideTo(active));
+  }
+
   /* mark touch devices so the pedals show even on hybrid laptops */
   window.addEventListener('touchstart', () => document.documentElement.classList.add('touch'), { once: true, passive: true });
 })();

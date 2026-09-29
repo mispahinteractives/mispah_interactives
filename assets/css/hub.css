@@ -139,15 +139,7 @@ kbd {
   text-shadow: 0 3px 0 var(--outline), 2px 0 0 var(--outline), -2px 0 0 var(--outline), 0 -2px 0 var(--outline);
 }
 .brand-word b { font-weight: 400; color: var(--gold); }
-.menu { display: flex; gap: 8px; padding: 5px; border-radius: 18px; background: rgba(15, 11, 36, 0.78); border: 1px solid var(--line); }
-.menu-chip {
-  display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 13px;
-  text-decoration: none; font: 700 14px/1 var(--body); color: #e8e4ff; transition: background 0.2s, color 0.2s;
-}
-.menu-chip:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
-.menu-chip svg { width: 14px; height: 14px; fill: currentColor; }
-.menu-chip.is-hot { background: var(--gold); color: var(--outline); }
-.menu-chip.is-hot:hover { background: #ffd766; color: var(--outline); }
+.menu { display: flex; }
 .player { display: flex; align-items: center; gap: 10px; }
 .coin-count {
   display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px 8px 9px; border-radius: 14px;
@@ -1026,13 +1018,7 @@ kbd {
 }
 .btn-ghost:hover::after { transform: scaleX(1); }
 
-/* menu links: zip underline */
-.menu-chip { position: relative; }
-.menu-chip:not(.is-hot)::after {
-  content: ""; position: absolute; left: 16px; right: 16px; bottom: 5px; height: 2px; border-radius: 2px;
-  background: var(--gold); transform: scaleX(0); transform-origin: left; transition: transform 0.28s var(--zoom);
-}
-.menu-chip:not(.is-hot):hover::after { transform: scaleX(1); }
+
 
 /* game cards: lunge forward on hover */
 .gcard { transform: rotateX(var(--rx)) rotateY(var(--ry)) translateY(var(--lift, 0px)) scale(var(--sc, 1)); transition: transform 0.3s var(--zoom), box-shadow 0.3s, opacity 0.45s ease-out var(--delay, 0ms), filter 0.45s ease-out var(--delay, 0ms); }
@@ -1144,3 +1130,82 @@ kbd {
 .fs-sun { z-index: 1; }
 .is-night .fs-cloud { opacity: 0.45; }
 .is-rain .fs-cloud { opacity: 0.7; }
+
+/* ==========================================================================
+   TOP MENU: a dashboard-style bar. A lit "glider" slides between items on
+   hover (springy) and rests on the section in view; items carry icons with
+   their own little motion, speed streaks trail on hover, and a click gives a
+   quick press with a burst ring. Play is a gold racing button.
+   ========================================================================== */
+.menu {
+  position: relative; gap: 4px; padding: 6px; border-radius: 20px;
+  background:
+    linear-gradient(rgba(14, 10, 34, 0.86), rgba(14, 10, 34, 0.86)) padding-box,
+    linear-gradient(120deg, rgba(255, 200, 61, 0.55), rgba(255, 79, 139, 0.35) 40%, rgba(138, 92, 255, 0.35) 70%, rgba(255, 200, 61, 0.45)) border-box;
+  border: 1.5px solid transparent;
+  box-shadow: 0 10px 30px rgba(5, 3, 20, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.menu-glider {
+  position: absolute; left: 0; top: 6px; bottom: 6px; width: var(--gw, 0px); border-radius: 14px; pointer-events: none;
+  transform: translateX(var(--gx, 0px)); opacity: var(--go, 0);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 0 18px rgba(255, 200, 61, 0.18);
+  transition: transform 0.42s cubic-bezier(.2, 1.4, .35, 1), width 0.42s cubic-bezier(.2, 1.4, .35, 1), opacity 0.25s;
+}
+.menu-glider::after {                        /* the glowing brake-light strip under the lit item */
+  content: ""; position: absolute; left: 22%; right: 22%; bottom: 3px; height: 3px; border-radius: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--pink)); box-shadow: 0 0 8px rgba(255, 200, 61, 0.8);
+}
+.menu-chip {
+  position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 14px;
+  font: 800 13px/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: #cfc8f5; overflow: hidden; text-decoration: none;
+  transition: color 0.25s, transform 0.2s var(--snap);
+}
+.menu-chip:hover, .menu-chip.is-active, .menu-chip:focus-visible { background: none; color: #fff; }
+.menu-chip .mc-text { transition: transform 0.3s var(--zoom); }
+.menu-chip:hover .mc-text { transform: translateX(3px); }
+.mc-icon { display: grid; place-items: center; width: 18px; height: 18px; }
+.mc-icon svg { width: 18px; height: 18px; fill: currentColor; transition: transform 0.35s var(--snap); }
+.menu-chip[data-spy="games"]:hover .mc-icon svg { animation: mc-wiggle 0.5s var(--snap); }
+.menu-chip[data-spy="controls"]:hover .mc-icon svg { transform: rotate(-35deg); }
+.menu-chip[data-spy="contact"]:hover .mc-icon svg { transform: translateY(-2px) scale(1.15); }
+@keyframes mc-wiggle { 25% { transform: rotate(-14deg) scale(1.1); } 55% { transform: rotate(10deg) scale(1.1); } 80% { transform: rotate(-4deg); } }
+/* speed streaks trailing behind the text on hover */
+.menu-chip:not(.is-hot)::before {
+  content: ""; position: absolute; left: 6px; top: 50%; width: 14px; height: 10px; margin-top: -5px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 200, 61, 0.9)) 0 0 / 100% 2px no-repeat,
+              linear-gradient(90deg, transparent, rgba(255, 200, 61, 0.6)) 3px 4px / 100% 2px no-repeat,
+              linear-gradient(90deg, transparent, rgba(255, 200, 61, 0.9)) 0 8px / 100% 2px no-repeat;
+  opacity: 0; transform: translateX(10px) scaleX(0.3);
+}
+.menu-chip:not(.is-hot):hover::before { animation: mc-streak 0.45s ease-out; }
+@keyframes mc-streak { 0% { opacity: 0; transform: translateX(14px) scaleX(0.2); } 40% { opacity: 1; } 100% { opacity: 0; transform: translateX(-8px) scaleX(1.1); } }
+
+/* Play: gold racing button with stripes and a periodic light sweep */
+.menu-chip.is-hot {
+  color: var(--outline); margin-right: 4px; padding-right: 18px;
+  background:
+    linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.7) 50%, transparent 65%) -150% 0 / 250% 100% no-repeat,
+    repeating-linear-gradient(115deg, transparent 0 16px, rgba(27, 32, 51, 0.12) 16px 22px),
+    linear-gradient(180deg, #ffe07a, var(--gold));
+  box-shadow: 0 4px 0 #b77b00, 0 6px 16px rgba(255, 200, 61, 0.35);
+  animation: mc-sweep 3.6s ease-in-out infinite;
+}
+.menu-chip.is-hot:hover { color: var(--outline); transform: translateY(-2px); box-shadow: 0 6px 0 #b77b00, 0 10px 22px rgba(255, 200, 61, 0.5); }
+.menu-chip.is-hot:hover .mc-icon svg { transform: translateX(3px) scale(1.15); }
+@keyframes mc-sweep { 0%, 70% { background-position: -150% 0, 0 0, 0 0; } 100% { background-position: 150% 0, 0 0, 0 0; } }
+
+/* click: quick press and a burst ring */
+.menu-chip:active { transform: scale(0.93); }
+.menu-chip.is-hot:active { transform: translateY(3px) scale(0.96); box-shadow: 0 1px 0 #b77b00; }
+.menu-chip .mc-burst {
+  position: absolute; left: var(--bx, 50%); top: var(--by, 50%); width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%;
+  border: 2px solid rgba(255, 200, 61, 0.9); pointer-events: none; animation: mc-burst 0.5s ease-out forwards;
+}
+.menu-chip.is-hot .mc-burst { border-color: rgba(255, 255, 255, 0.95); }
+@keyframes mc-burst { to { transform: scale(9); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-glider { transition: none; }
+  .menu-chip.is-hot { animation: none; }
+}
