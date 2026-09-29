@@ -161,7 +161,7 @@
     const drawPoints = [];
     for (let x = START_X - 2400; x < START_X; x += STEP) drawPoints.push({ x, y: heightAt(START_X) });
     drawPoints.push(...points);
-    for (let x = END_X + STEP; x <= END_X + 2400; x += STEP) drawPoints.push({ x, y: heightAt(x) });
+    for (let x = END_X + STEP; x <= END_X + 2400; x += STEP) drawPoints.push({ x, y: heightAt(END_X) });
 
     // Ground: one convex quad per sample, reaching well below the lowest point.
     let lowest = -Infinity;

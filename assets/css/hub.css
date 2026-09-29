@@ -319,10 +319,10 @@ kbd {
 @keyframes spook-fly {
   0% { opacity: 0; transform: translate(-50%, -50%); }
   15% { opacity: 1; }
-  40% { transform: translate(calc(-50% + var(--dx) * 0.55), calc(-50% + var(--dy) * 0.55)) rotate(-6deg); }
-  60% { transform: translate(calc(-50% + var(--dx) * 0.8), calc(-50% + var(--dy) * 0.8)) rotate(5deg); }
+  40% { transform: translate(calc(-50% + var(--dx) * 0.55), calc(-50% + var(--dy) * 0.55)) }
+  60% { transform: translate(calc(-50% + var(--dx) * 0.8), calc(-50% + var(--dy) * 0.8)) }
   85% { opacity: 1; }
-  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(0deg); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) }
 }
 
 /* touch controls: round buttons with a soft press. Held, a button shrinks a

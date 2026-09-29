@@ -66,8 +66,8 @@ Main Street alternates game houses and haunted houses (the `STREET` list in `ass
 
 - **Game houses:** `correct_house_1`–`4.png`, one per game by door number. `correct_house_5.png` is the Garage. Each has the game's lit sign on a rooftop billboard.
 - **Haunted houses:** `wrong_house_1`–`6.png`. Bats (`bat.png`) loop round the roof, and ghosts (`ghost_1`–`5.png`) float in the doorway and an upper window. The door prompt only says "Enter ???". Entering one fails the run: the ghosts burst out at the screen, then the "Spooked!" panel offers Try again or Back to hub.
-- **Scaling:** houses are drawn at a fixed scale of their image size (`GAME_K`, `HAUNT_K` in `game.js`). `GAME_DOOR` / `HAUNT_DOOR` record where the door is in each picture, so the door lines up with the door spot. If you replace a house image, update its door position there.
-- **Ghosts:** always drawn at their natural size (one image pixel per screen pixel), in the game, the jump scare and the fail card. They only move and fade.
+- **Scale 1:** houses are always drawn at scale 1: one image pixel is one unit of the game world, and they're never enlarged or shrunk. To make a house bigger or smaller, change the image itself. `GAME_DOOR` / `HAUNT_DOOR` in `game.js` record where the door is in each picture, so the door lines up with the door spot. If you replace a house image, update its door position there.
+- **Ghosts:** also always at scale 1, in the game, the jump scare and the fail card. They only move and fade; they're never resized or tilted.
 
 ## Image quality
 

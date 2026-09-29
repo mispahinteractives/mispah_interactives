@@ -754,9 +754,9 @@
   /* Haunted houses: the wrong doors. Each has a purple glow, its own house
      art, a ghost in the doorway that drifts out as you pull up, a second
      ghost at an upper window, and bats looping round the roof. Houses are
-     scaled uniformly (so their relative sizes match the art) and placed so
+     drawn at scale 1 (one image pixel = one world unit, never resized) and placed so
      the door in the picture sits on the door spot. */
-  const HAUNT_K = 1.3;
+  const HAUNT_K = 1;
   const HAUNT_DOOR = { 1: 0.49, 2: 0.49, 3: 0.75, 4: 0.40, 5: 0.43, 6: 0.50 };   // door across each image
   function drawHaunted(b) {
     const house = img['wrong_house_' + b.variant];
@@ -779,7 +779,7 @@
     // door ghost: flickers in the doorway, floats out and up when the car
     // pulls up. Only its position and opacity change, never its size.
     const g = img['ghost_' + (((b.variant - 1) % 4) + 1)];
-    const gh = ready(g) ? g.naturalHeight / cam.z : 60;
+    const gh = ready(g) ? g.naturalHeight : 60;
     const flicker = 0.75 + 0.25 * Math.sin(t * 9 + b.variant * 2);
     const a = b.appear;
     drawGhostSprite(g, b.x + Math.sin(t * 1.3) * (6 + 18 * a),
@@ -802,11 +802,11 @@
     }
   }
 
-  // Ghosts are always drawn at their natural size: one image pixel per screen
-  // (CSS) pixel, whatever the camera zoom. They fade and float, never grow.
+  // Ghosts are drawn at scale 1 (one image pixel = one world unit), like the
+  // houses. They fade and float; their size never changes.
   function drawGhostSprite(g, x, y, alpha, flip) {
     if (!ready(g) || alpha <= 0.01) return;
-    const w = g.naturalWidth / cam.z, h = g.naturalHeight / cam.z;
+    const w = g.naturalWidth, h = g.naturalHeight;
     ctx.save(); ctx.globalAlpha = clamp(alpha, 0, 1); ctx.translate(x, y);
     if (flip) ctx.scale(-1, 1);
     ctx.drawImage(hq(g, w, h), -w / 2, -h / 2, w, h);
@@ -847,11 +847,11 @@
   }
 
   /* Game buildings: each game has its own house (correct_house_1-4, by door
-     number) and the Garage has correct_house_5. Houses are scaled uniformly
-     and placed so the door in the picture sits on the door spot; the
+     number) and the Garage has correct_house_5. Houses are drawn at scale 1
+     (never resized) and placed so the door in the picture sits on the door spot; the
      game's lit sign stands on a billboard above the roof. The fractions
      say where the door is in each image. */
-  const GAME_K = 1.4;
+  const GAME_K = 1;
   const GAME_DOOR = {
     1: { x: 0.546, top: 0.60, bottom: 0.955, w: 0.066 },
     2: { x: 0.444, top: 0.70, bottom: 0.96, w: 0.092 },
@@ -941,33 +941,132 @@
     }
   }
 
+  /* Ground, top to bottom: a grass verge behind the road; the road itself
+     (light kerb, white edge line, speckled asphalt, dashed centre line,
+     gravel base); a sandy embankment with pebbles and strata that darkens
+     with depth; and water at a fixed sea level with moving waves. The
+     asphalt, sand and gravel textures are tiles rendered once and anchored
+     to the world, so they scroll with the road instead of swimming. */
+  const ROAD_D = 46, BASE_D = 12;
+  const SEA = 175;                 // water surface: below the lowest road + its base (74 + 58)
+  let arcLen = null;
+  function roadArc() {
+    if (arcLen) return arcLen;
+    const p = W.points; arcLen = new Float64Array(p.length);
+    for (let i = 1; i < p.length; i++) arcLen[i] = arcLen[i - 1] + Math.hypot(p[i].x - p[i - 1].x, p[i].y - p[i - 1].y);
+    return arcLen;
+  }
+  const textures = {};
+  function texture(key, size, base, specks) {
+    if (textures[key]) return textures[key];
+    const c = document.createElement('canvas'); c.width = c.height = size;
+    const g = c.getContext('2d');
+    g.fillStyle = base; g.fillRect(0, 0, size, size);
+    specks.forEach((d, j) => {
+      g.fillStyle = d.c;
+      for (let k = 0; k < d.n; k++) {
+        const x = rnd(k * 3.1 + j * 17 + 1) * size, y = rnd(k * 7.7 + j * 29 + 2) * size;
+        const r = d.r * (0.5 + rnd(k * 1.3 + j * 11 + 3));
+        // draw wrapped copies so the tile repeats seamlessly
+        for (const ox of [-size, 0, size]) for (const oy of [-size, 0, size]) {
+          if (x + ox < -r || x + ox > size + r || y + oy < -r || y + oy > size + r) continue;
+          g.beginPath(); g.ellipse(x + ox, y + oy, r, r * (d.flat || 1), 0, 0, TAU); g.fill();
+        }
+      }
+    });
+    return (textures[key] = ctx.createPattern(c, 'repeat'));
+  }
+  const asphaltTex = () => texture('asphalt', 160, '#3c3b46', [
+    { c: 'rgba(0,0,0,0.22)', n: 170, r: 1.6 },
+    { c: 'rgba(255,255,255,0.07)', n: 220, r: 1.1 },
+    { c: 'rgba(255,255,255,0.04)', n: 25, r: 5, flat: 0.5 }
+  ]);
+  const sandTex = () => texture('sand', 200, '#dcb87e', [
+    { c: 'rgba(168,126,72,0.35)', n: 90, r: 1.8 },
+    { c: 'rgba(255,244,214,0.45)', n: 120, r: 1.2 },
+    { c: 'rgba(139,99,58,0.45)', n: 16, r: 5, flat: 0.7 },
+    { c: 'rgba(205,165,110,0.9)', n: 16, r: 4, flat: 0.7 }
+  ]);
+  const gravelTex = () => texture('gravel', 80, '#8b8175', [
+    { c: 'rgba(60,52,44,0.55)', n: 70, r: 2.2 },
+    { c: 'rgba(210,200,185,0.5)', n: 60, r: 1.8 }
+  ]);
+
   function drawTerrain(x0, x1) {
     const pts = W.points, step = pts[1].x - pts[0].x;
     const i0 = clamp(Math.floor((x0 - pts[0].x) / step) - 1, 0, pts.length - 1);
     const i1 = clamp(Math.ceil((x1 - pts[0].x) / step) + 1, 0, pts.length - 1);
     const bottom = cam.y + (Ht * (1 - cam.fy)) / cam.z + 200;
-    ctx.beginPath();
-    ctx.moveTo(pts[i0].x, bottom);
-    for (let i = i0; i <= i1; i++) ctx.lineTo(pts[i].x, pts[i].y);
-    ctx.lineTo(pts[i1].x, bottom); ctx.closePath();
-    const g = ctx.createLinearGradient(0, cam.y - 200, 0, bottom);
-    g.addColorStop(0, '#3d3b52'); g.addColorStop(1, '#23212f');
-    ctx.fillStyle = g; ctx.fill();
-    // soil band and grass edge
-    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-    const edge = (off, color, width) => {
-      ctx.beginPath();
-      for (let i = i0; i <= i1; i++) ctx[i === i0 ? 'moveTo' : 'lineTo'](pts[i].x, pts[i].y + off);
-      ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke();
+    const t = state.t / 1000;
+    const trace = (off) => { for (let i = i0; i <= i1; i++) ctx[i === i0 ? 'moveTo' : 'lineTo'](pts[i].x, pts[i].y + off); };
+    const band = (top, depth) => {
+      ctx.beginPath(); trace(top);
+      for (let i = i1; i >= i0; i--) ctx.lineTo(pts[i].x, pts[i].y + top + depth);
+      ctx.closePath();
     };
-    edge(26, 'rgba(0,0,0,0.18)', 22);
-    edge(3, '#5e9440', 12);
-    edge(-1, '#86c25a', 5);
-    // lane dashes through town
-    ctx.strokeStyle = 'rgba(255,214,90,0.8)'; ctx.lineWidth = 5; ctx.lineCap = 'butt';
-    for (let x = Math.max(0, Math.floor(x0 / 90) * 90); x < Math.min(x1, W.TOWN_END - 200); x += 90) {
-      const y = W.heightAt(x) + 34;
-      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 44, W.heightAt(x + 44) + 34); ctx.stroke();
+    const line = (off, color, width, dash, dashOff) => {
+      ctx.beginPath(); trace(off);
+      ctx.strokeStyle = color; ctx.lineWidth = width;
+      if (dash) { ctx.setLineDash(dash); ctx.lineDashOffset = dashOff || 0; }
+      ctx.stroke();
+      if (dash) ctx.setLineDash([]);
+    };
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+
+    // sandy embankment below the road, darker with depth, with strata
+    const under = ROAD_D + BASE_D;
+    ctx.beginPath(); trace(under - 1);
+    ctx.lineTo(pts[i1].x, bottom); ctx.lineTo(pts[i0].x, bottom); ctx.closePath();
+    ctx.fillStyle = sandTex(); ctx.fill();
+    const shade = ctx.createLinearGradient(0, cam.y - 150, 0, SEA + 60);
+    shade.addColorStop(0, 'rgba(120,80,40,0)'); shade.addColorStop(1, 'rgba(120,80,40,0.38)');
+    ctx.fillStyle = shade; ctx.fill();
+    line(under + 70, 'rgba(160,112,62,0.35)', 12);
+    line(under + 130, 'rgba(150,104,58,0.28)', 7);
+    line(under + 190, 'rgba(140,96,54,0.24)', 14);
+
+    // gravel base
+    band(ROAD_D - 1, BASE_D + 1);
+    ctx.fillStyle = gravelTex(); ctx.fill();
+
+    // asphalt, with its lower edge in shadow
+    band(0, ROAD_D);
+    ctx.fillStyle = asphaltTex(); ctx.fill();
+    line(ROAD_D - 4, 'rgba(0,0,0,0.28)', 8);
+    line(ROAD_D - 0.5, 'rgba(0,0,0,0.35)', 1.5);
+
+    // grass verge on the far side, kerb and white edge line on top
+    line(-3, '#5f9d45', 7);
+    line(-5.5, '#8bd064', 2.5);
+    line(1.5, '#b9b7c3', 3.5);
+    line(8, 'rgba(255,255,255,0.7)', 2.5);
+
+    // dashed centre line, the whole course; anchored to the road by arc length
+    ctx.lineCap = 'butt';
+    line(ROAD_D * 0.52, '#f2c230', 4, [46, 42], roadArc()[i0]);
+    ctx.lineCap = 'round';
+
+    // water at sea level: gentle waves, a foam line and drifting sparkles
+    if (SEA < bottom) {
+      const wave = (x) => SEA + Math.sin(x * 0.012 + t * 1.5) * 5 + Math.sin(x * 0.031 - t * 2.2) * 2.5;
+      const wx0 = Math.floor(x0 / 24) * 24;
+      ctx.beginPath(); ctx.moveTo(wx0, bottom);
+      for (let x = wx0; x <= x1 + 24; x += 24) ctx.lineTo(x, wave(x));
+      ctx.lineTo(x1 + 24, bottom); ctx.closePath();
+      const wg = ctx.createLinearGradient(0, SEA - 10, 0, SEA + 420);
+      wg.addColorStop(0, 'rgba(92,190,236,0.93)'); wg.addColorStop(0.35, 'rgba(44,140,205,0.96)'); wg.addColorStop(1, '#16508f');
+      ctx.fillStyle = wg; ctx.fill();
+      ctx.beginPath();
+      for (let x = wx0; x <= x1 + 24; x += 24) ctx[x === wx0 ? 'moveTo' : 'lineTo'](x, wave(x) + 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 3.5; ctx.stroke();
+      ctx.lineCap = 'round';
+      for (const [dy, speed, a, w] of [[26, 18, 0.28, 3], [60, -12, 0.2, 2.5], [105, 8, 0.14, 2]]) {
+        ctx.beginPath(); ctx.moveTo(wx0, SEA + dy); ctx.lineTo(x1 + 24, SEA + dy);
+        ctx.strokeStyle = `rgba(255,255,255,${a})`; ctx.lineWidth = w;
+        ctx.setLineDash([26 + dy * 0.2, 120 + dy]); ctx.lineDashOffset = wx0 - t * speed - dy * 7;   // anchored to the world, then drifting
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
     }
   }
 
