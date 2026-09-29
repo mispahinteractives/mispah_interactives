@@ -914,6 +914,9 @@
       ctx.globalAlpha = 1;
     }
     // two mountain ranges
+    ctx.globalAlpha = 1;
+    drawCrows();                                   // distant crows (Morning only), behind the mountains
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     // two mountain ranges from the mountain art; the drawn triangles are only
     // a fallback while the images load
     if (!drawMountains(0.14, ['mountain_2', 'mountain_3'], 560, -40, 0.4, '169,195,216', 1))

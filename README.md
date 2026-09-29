@@ -74,4 +74,4 @@ Rain uses the same lights-on pipeline as Night, with an overcast sky, slanted ra
 
 ## Crows
 
-Two crows (`crow_1.png` wings up, `crow_2.png` wings down) fly across the top of the screen at scale 1, alternating frames to flap. crow_1 faces left in the art, so it's drawn mirrored.
+In Morning only, three crows fly far off in the sky, between the clouds and the mountains. Some fly left to right and some right to left. They're drawn small and slightly faded to look distant, and flap slowly with long glides using `crow_1.png` (wings up, mirrored because the art faces left) and `crow_2.png` (wings down). See `CROWS` in `game.js`. Night and Rain have no crows.
