@@ -75,3 +75,10 @@ Rain uses the same lights-on pipeline as Night, with an overcast sky, slanted ra
 ## Crows
 
 In Morning only, three crows fly far off in the sky, between the clouds and the mountains. Some fly left to right and some right to left. They're drawn small and slightly faded to look distant, and flap slowly with long glides using `crow_1.png` (wings up, mirrored because the art faces left) and `crow_2.png` (wings down). See `CROWS` in `game.js`. Night and Rain have no crows.
+
+## Performance
+
+- **Intro demo:** runs every frame while you're looking at it, and drops to about 10 fps only when the browser window is in the background. Nothing is drawn while the tab is hidden or the game is scrolled off screen.
+- **Endless CSS animations:** paused for sections that are off screen (`anim-paused`), and pulses animate transform/opacity rather than box-shadow.
+- **Image cache:** pre-sized sprite copies are kept in a least-recently-used cache of 120 entries.
+- **Gamepad:** only polled after a gamepad connects, because polling it every frame keeps macOS's game-controller service busy.

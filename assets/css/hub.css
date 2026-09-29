@@ -245,17 +245,13 @@ kbd {
 .is-rain .stage { background: #6b7688; }
 .is-rain .feature-scene { background: linear-gradient(180deg, #3c4658, #98a3b3); }
 .is-rain .fs-sun { opacity: 0.15; }
-.is-rain .fs-cloud { filter: brightness(0.6); }
 .is-rain .fs-hills .h1 { fill: #6c7a8e; }
-.is-rain .fs-road, .is-rain .fs-hills .h2, .is-rain .fs-ride { filter: brightness(0.8) saturate(0.85); }
 .is-night .stage { background: #0b1640; }
 /* the featured card's little scene follows the time of day */
 .is-night .feature-scene { background: linear-gradient(180deg, #060d2b, #2a3d7a); }
 .is-night .fs-sun { background: #f5f1da; box-shadow: 0 0 50px 14px rgba(200, 215, 255, 0.45); }
 .is-night .fs-cloud { opacity: 0.35; }
 .is-night .fs-hills .h1 { fill: #3a4a78; }
-.is-night .fs-road, .is-night .fs-hills .h2 { filter: brightness(0.6); }
-.is-night .fs-ride { filter: brightness(0.65) saturate(0.9); }
 
 /* ---------------------------------------------------------------------- HUD */
 .hud {
@@ -540,7 +536,7 @@ kbd {
 .td-pedal.r { background: var(--mint); }
 .td-pedal.j { width: 56px; height: 44px; background: var(--gold); animation-delay: -0.35s; }
 .td-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-@keyframes press { 50% { transform: translateY(4px); box-shadow: 0 1px 0 var(--outline); } }
+@keyframes press { 50% { transform: translateY(4px) scale(0.97); } }
 
 .foot {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px;
@@ -1132,3 +1128,19 @@ kbd {
 @keyframes live-ring { 0% { transform: scale(1); opacity: 0.7; } 70%, 100% { transform: scale(2.6); opacity: 0; } }
 
 .door-prompt { animation: prompt-in 0.3s cubic-bezier(.2, 1.4, .4, 1); }
+
+/* Featured card scene, cheap to animate: clouds drift with transform (no
+   layout), and Night / Rain darken the scene with one static tint layer
+   instead of filters on the moving truck (a filter over animated content is
+   recalculated every frame). */
+.fs-cloud { left: 0 !important; animation: drift-x 30s linear infinite; will-change: transform; }
+.fs-cloud.c1 { transform: translateX(-160px); }
+.fs-cloud.c2 { animation-duration: 44s; animation-delay: -18s; }
+@keyframes drift-x { from { transform: translateX(-180px); } to { transform: translateX(min(1100px, 110vw)); } }
+.fs-ride .ride-body, .fs-ride .ride-wheel { will-change: transform; }
+.feature-scene::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: transparent; transition: background 0.3s; }
+.is-night .feature-scene::after { background: rgba(8, 14, 48, 0.38); }
+.is-rain .feature-scene::after { background: rgba(40, 50, 70, 0.28); }
+.fs-sun { z-index: 1; }
+.is-night .fs-cloud { opacity: 0.45; }
+.is-rain .fs-cloud { opacity: 0.7; }

@@ -19,7 +19,7 @@
     'wrong_house_1', 'wrong_house_2', 'wrong_house_3', 'wrong_house_4',
     'ghost_1', 'ghost_2', 'ghost_3', 'ghost_4', 'ghost_5', 'background_house1',
     'wrong_house_5', 'wrong_house_6', 'correct_house_1', 'correct_house_2', 'correct_house_3', 'correct_house_4', 'correct_house_5',
-    'mountain_1', 'mountain_2', 'mountain_3', 'mountain_4', 'grass_1', 'crow_1', 'crow_2'];
+    'mountain_1', 'mountain_2', 'mountain_3', 'mountain_4', 'grass_1', 'crow_1', 'crow_2', 'tree_2'];
   const FONT = '"Lilita One", "Rubik", system-ui, sans-serif';
   const TAU = Math.PI * 2;
 
@@ -274,7 +274,7 @@
     const c = car.chassis, a = Math.atan2(Math.sin(c.angle), Math.cos(c.angle));
     const v = W.forwardSpeed(), x = c.position.x;
     const inp = { gas: true, brake: false, lean: 0 };
-    const cruise = x < W.TOWN_END ? 9 : 30;
+    const cruise = x < W.TOWN_END ? 16 : 30;          // ~45 km/h through town, flat out in the hills
     if (v > cruise) inp.gas = false;
     if (!car.grounded) {
       if (a < -0.35) { inp.gas = false; inp.lean = 1; }
@@ -1127,14 +1127,18 @@
   // tree so the hills don't look copy-pasted. Falls back to a drawn pine
   // until the image has loaded.
   const TREE_H = 270, TREE_BASE_X = 0.46;
+  // Two trees: tree.png and the apple tree tree_2.png, picked per spot so
+  // about half the trees are apple trees. Each is planted by its trunk base.
+  const TREE_ART = { tree: { h: 1, base: TREE_BASE_X }, tree_2: { h: 0.95, base: 0.49 } };
   function drawTree(x, gy, s, flip) {
-    const t = img.tree;
+    const key = rnd(Math.round(x) * 0.013 + 7) > 0.5 && ready(img.tree_2) ? 'tree_2' : 'tree';
+    const t = img[key], art = TREE_ART[key];
     if (!ready(t)) { drawPine(x, gy, s, flip); return; }
-    const h = TREE_H * s, w = h * t.naturalWidth / t.naturalHeight;
+    const h = TREE_H * s * art.h, w = h * t.naturalWidth / t.naturalHeight;
     ctx.save();
     ctx.translate(x, gy + 6 * s);            // sink the trunk a touch so it never floats on a slope
     if (flip) ctx.scale(-1, 1);
-    ctx.drawImage(hq(t, w, h), -w * TREE_BASE_X, -h, w, h);
+    ctx.drawImage(hq(t, w, h), -w * art.base, -h, w, h);
     ctx.restore();
   }
 
@@ -2046,11 +2050,10 @@
   let lastDraw = 0;
   function frame(now) {
     requestAnimationFrame(frame);
-    // the intro demo doesn't need 60 fps: 25 while you look at it, 10 while
-    // the browser window is in the background. Actual play runs every frame.
-    if (state.mode !== 'play') {
-      const minGap = document.hasFocus() ? 38 : 95;
-      if (now - lastDraw < minGap) return;
+    // the intro demo runs every frame while you're looking at it; only when
+    // the browser window is in the background does it slow to ~10 fps
+    if (state.mode !== 'play' && !document.hasFocus()) {
+      if (now - lastDraw < 95) return;
       lastDraw = now;
     }
     const gap = last ? now - last : 16.67;
