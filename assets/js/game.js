@@ -154,7 +154,6 @@
   /* ---------------------------------------------------------------- state */
   let W = P.createWorld({ level: 1 });
   let car = W.car;
-  const MAIN_STREET = W.buildings.map((b) => ({ id: b.id, x: b.x }));   // game doors (level 1)
 
   /* Levels: 20 courses (physics.js). Progress is saved: the highest level
      unlocked, the best stars (1-3) and best time for each level. A level is
@@ -174,6 +173,11 @@
   const starsFor = (coins, total) => 1 + (coins >= total * 0.5 ? 1 : 0) + (coins >= total * 0.8 ? 1 : 0);
   const gameById = {};
   GAMES.forEach((g) => { gameById[g.id] = g; });
+  // the company stops (site.js): Services, Clients, Demos and Contact stand
+  // on Main Street in the same order as the website's world map
+  const SITE = window.GV_SITE || { stops: [], services: [], clients: [], demos: [] };
+  const stopById = {};
+  SITE.stops.forEach((st) => { stopById[st.id] = st; });
 
   const state = {
     mode: 'attract',          // attract | play
@@ -795,7 +799,7 @@
     }
     drawHeadlights();
     ctx.globalCompositeOperation = 'source-over';
-    for (const L of lights) if (L.sign) drawSignFace(L.cx, L.sy, L.g);
+    for (const L of lights) if (L.sign) { if (L.draw) L.draw(); else drawSignFace(L.cx, L.sy, L.g); }
   }
 
   // Headlight beam from the front of whichever car is being driven.
@@ -1501,10 +1505,178 @@
     drawDoorPlate(b.x, doorTop - 26, g ? 'DOOR ' + g.door : 'RIDES');
   }
 
+  /* Company stops: Services (a workshop), Clients (a billboard over a ticket
+     booth), Demos (a pit garage) and Contact (the HQ). Drawn in code in the
+     flat style of the house art, each with a lit stop sign on the roof in
+     its stop colour. Pulling up opens the doorway (the workshop's shutter
+     rolls up) and Enter opens the stop's panel. */
+  const STOP_GLYPH = {
+    wrench: 'M14.5 6.5a4 4 0 0 0-5.4 5.1L4 16.7 7.3 20l5.1-5.1a4 4 0 0 0 5.1-5.4l-2.4 2.4-2.8-.6-.6-2.8z',
+    star: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z',
+    bolt: 'M13 2L4 14h7l-1 8 9-12h-7z',
+    mail: 'M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5zM4 7l8 6 8-6'
+  };
+  const glyphs = {};
+  function drawGlyph(name, cx, cy, size, color) {
+    if (!STOP_GLYPH[name] || typeof Path2D === 'undefined') return;
+    const path = glyphs[name] || (glyphs[name] = new Path2D(STOP_GLYPH[name]));
+    ctx.save(); ctx.translate(cx - size / 2, cy - size / 2); ctx.scale(size / 24, size / 24);
+    ctx.strokeStyle = color; ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(path);
+    ctx.restore();
+  }
+  const rgbOf = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(',');
+  const STOP_SIGN_W = 250, STOP_SIGN_H = 76;
+  function drawStopSign(cx, roofTop, st) {
+    const sy = roofTop - STOP_SIGN_H - 26;
+    addLight(cx, sy + STOP_SIGN_H / 2, 190, rgbOf(st.color), 0.32);
+    if (state.night) lights.push({ sign: true, draw: () => drawStopSignFace(cx, sy, st) });
+    outline(4); ctx.fillStyle = '#3b3f58';
+    for (const px of [cx - 70, cx + 70]) { ctx.fillRect(px - 5, sy + STOP_SIGN_H - 4, 10, 32); ctx.strokeRect(px - 5, sy + STOP_SIGN_H - 4, 10, 32); }
+    outline(5); ctx.fillStyle = '#231c3d'; roundRect(cx - STOP_SIGN_W / 2, sy, STOP_SIGN_W, STOP_SIGN_H, 14); ctx.fill(); ctx.stroke();
+    drawStopSignFace(cx, sy, st);
+  }
+  function drawStopSignFace(cx, sy, st) {
+    const x = cx - STOP_SIGN_W / 2, my = sy + STOP_SIGN_H / 2;
+    ctx.strokeStyle = st.color; ctx.lineWidth = 3; roundRect(x + 7, sy + 7, STOP_SIGN_W - 14, STOP_SIGN_H - 14, 9); ctx.stroke();
+    ctx.fillStyle = st.color; ctx.beginPath(); ctx.arc(x + 44, my, 23, 0, TAU); ctx.fill();
+    drawGlyph(st.icon, x + 44, my, 26, '#1b2033');
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = st.color; ctx.font = '13px ' + FONT; ctx.fillText('STOP ' + st.no, x + 80, sy + 31);
+    ctx.fillStyle = '#ffffff'; ctx.font = '29px ' + FONT; ctx.fillText(st.name.toUpperCase(), x + 80, sy + 60);
+  }
+  // one building per stop; each returns its roof top and doorway
+  const STOP_BUILD = {
+    services(x, gy, st, open) {                                   // the workshop
+      const w = 400, h = 170, L = x - w / 2, T = gy - h;
+      ctx.fillStyle = '#3d525c'; ctx.fillRect(L, T, w, h);
+      ctx.fillStyle = 'rgba(255,255,255,0.07)';
+      for (let k = 0; k < 6; k++) ctx.fillRect(L, T + 22 + k * 25, w, 2);
+      ctx.fillStyle = '#26343c'; ctx.fillRect(L - 14, T - 16, w + 28, 18);
+      ctx.fillStyle = st.color; ctx.fillRect(L - 14, T + 2, w + 28, 6);
+      // side window and a tyre stack
+      ctx.fillStyle = '#1e2a30'; ctx.fillRect(L + 26, T + 44, 82, 58);
+      ctx.fillStyle = '#2bb9c9'; ctx.fillRect(L + 31, T + 49, 72, 48);
+      ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(L + 38, T + 53, 10, 40);
+      addLight(L + 67, T + 73, 70, '120,230,255', 0.25);
+      for (let k = 0; k < 3; k++) {
+        ctx.fillStyle = '#1b1d24'; roundRect(L + w - 88, gy - 26 - k * 24, 58, 24, 10); ctx.fill();
+        ctx.fillStyle = '#3a3d48'; ctx.fillRect(L + w - 74, gy - 17 - k * 24, 30, 5);
+      }
+      // the bay: a roll-up shutter over a lit workshop
+      const dw = 150, dh = 118, dl = x - dw / 2, dt = gy - dh;
+      ctx.fillStyle = '#1e2a30'; ctx.fillRect(dl - 8, dt - 8, dw + 16, dh + 8);
+      ctx.fillStyle = open > 0.05 ? `rgba(255,214,90,${0.5 + 0.5 * open})` : '#151d22'; ctx.fillRect(dl, dt, dw, dh);
+      const sh = dh * (1 - 0.62 * open);
+      for (let y = dt; y < dt + sh; y += 12) {
+        ctx.fillStyle = '#5b6874'; ctx.fillRect(dl, y, dw, Math.min(12, dt + sh - y));
+        ctx.fillStyle = '#46525d'; ctx.fillRect(dl, y + 10, dw, Math.min(2, Math.max(0, dt + sh - y - 10)));
+      }
+      for (let k = 0; k < dw; k += 20) { ctx.fillStyle = k % 40 ? '#1b2033' : '#ffc83d'; ctx.fillRect(dl + k, dt + sh - 7, 20, 7); }
+      return { top: T - 16, doorTop: dt, doorW: dw };
+    },
+    clients(x, gy, st, open) {                                    // billboard over a ticket booth
+      const bbW = 360, bbH = 128, bbT = gy - 300, bw = 190, bh = 118, L = x - bw / 2, T = gy - bh;
+      ctx.fillStyle = '#4a4f66';
+      for (const px of [x - 118, x + 118]) ctx.fillRect(px - 8, bbT + bbH, 16, gy - bbT - bbH);
+      ctx.fillStyle = '#3b3f58'; ctx.fillRect(x - bbW / 2 + 10, bbT + bbH + 4, bbW - 20, 8);     // catwalk
+      // booth
+      ctx.fillStyle = '#e8ecff'; ctx.fillRect(L, T, bw, bh);
+      ctx.fillStyle = '#2b3a8a'; ctx.fillRect(L - 12, T - 14, bw + 24, 16);
+      ctx.fillStyle = st.color; ctx.fillRect(L - 12, T + 2, bw + 24, 5);
+      ctx.fillStyle = '#2bb9c9'; ctx.fillRect(L + 12, T + 28, 30, 40); ctx.fillRect(L + bw - 42, T + 28, 30, 40);
+      const dw = 76, dh = 96, dt = gy - dh;
+      ctx.fillStyle = open > 0.05 ? `rgba(255,214,90,${0.5 + 0.5 * open})` : '#2b3a8a'; ctx.fillRect(x - dw / 2, dt, dw, dh);
+      ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(x - dw / 2 + 10, dt + 10, dw - 20, 30);
+      // the billboard: a stop-coloured header and the board itself
+      addLight(x, bbT + bbH / 2, 260, '255,240,200', 0.35);
+      const face = () => {
+        outline(6); ctx.fillStyle = '#f5f1ff'; roundRect(x - bbW / 2, bbT, bbW, bbH, 10); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = st.color; ctx.fillRect(x - bbW / 2 + 3, bbT + 3, bbW - 6, 34);
+        drawGlyph(st.icon, x - bbW / 2 + 26, bbT + 20, 20, '#ffffff');
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffffff'; ctx.font = '17px ' + FONT;
+        ctx.fillText('STOP ' + st.no + ' · ' + st.name.toUpperCase(), x - bbW / 2 + 44, bbT + 21);
+        ctx.textAlign = 'center'; ctx.fillStyle = '#3b2a7a';
+        const names = SITE.clients.map((c) => c.name);
+        ctx.font = (names.length ? '24px ' : '32px ') + FONT;
+        ctx.fillText(names.length ? names.slice(0, 3).join(' · ').toUpperCase() : 'YOUR BRAND HERE', x, bbT + 74);
+        ctx.fillStyle = '#6a5aa0'; ctx.font = '14px ' + FONT; ctx.fillText(st.place.toUpperCase(), x, bbT + 104);
+        for (let k = 0; k < 13; k++) {
+          const on = (k + Math.floor(state.t / 160)) % 3 === 0;
+          ctx.fillStyle = on ? '#fff3a8' : '#a07a2a'; ctx.beginPath(); ctx.arc(x - bbW / 2 + 24 + k * 26, bbT - 9, 4.5, 0, TAU); ctx.fill();
+        }
+      };
+      face();
+      if (state.night) lights.push({ sign: true, draw: face });
+      return { top: null, doorTop: dt, doorW: dw };
+    },
+    demos(x, gy, st, open) {                                      // the pit garage
+      const w = 420, h = 150, L = x - w / 2, T = gy - h;
+      ctx.fillStyle = '#2f2c3a'; ctx.fillRect(L, T, w, h);
+      ctx.fillStyle = '#1b1a22'; ctx.fillRect(L - 14, T - 16, w + 28, 18);
+      ctx.fillStyle = st.color; ctx.fillRect(L - 14, T + 2, w + 28, 7);
+      for (let k = 0; k < w; k += 28) { ctx.fillStyle = (k / 28) % 2 ? '#ffffff' : '#e63946'; ctx.fillRect(L + k, gy - 12, Math.min(28, w - k), 12); }
+      ctx.fillStyle = '#ffffff'; ctx.font = '18px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('PIT 05', L + 62, T + 50);
+      ctx.fillStyle = '#2bb9c9'; ctx.fillRect(L + w - 100, T + 36, 72, 44);
+      addLight(L + w - 64, T + 58, 70, '120,230,255', 0.25);
+      // open pit: tyres inside, lit orange when you pull up
+      const dw = 160, dh = 108, dl = x - dw / 2, dt = gy - 12 - dh;
+      ctx.fillStyle = open > 0.05 ? `rgba(255,170,90,${0.55 + 0.45 * open})` : '#17161d'; ctx.fillRect(dl, dt, dw, dh);
+      for (let k = 0; k < 2; k++) { ctx.fillStyle = '#1b1d24'; roundRect(dl + 14, dt + dh - 22 - k * 22, 52, 22, 9); ctx.fill(); }
+      ctx.fillStyle = '#45404f'; ctx.fillRect(dl + dw - 60, dt + dh - 40, 42, 40);
+      // chequered flag on the roof
+      const fx = L + w - 46, fy = T - 112, wave = Math.sin(state.t / 260) * 4;
+      ctx.fillStyle = '#c9cbd6'; ctx.fillRect(fx - 3, fy, 6, 96);
+      for (let r = 0; r < 4; r++) for (let c = 0; c < 6; c++) {
+        ctx.fillStyle = (r + c) % 2 ? '#1b2033' : '#ffffff';
+        ctx.fillRect(fx + 3 + c * 10, fy + 2 + r * 10 + wave * (c / 6), 10, 10);
+      }
+      return { top: T - 16, doorTop: dt, doorW: dw };
+    },
+    contact(x, gy, st, open) {                                    // the HQ
+      const w = 380, h = 206, L = x - w / 2, T = gy - h;
+      ctx.fillStyle = '#4b3d7a'; ctx.fillRect(L, T, w, h);
+      ctx.fillStyle = '#2a2150'; ctx.fillRect(L - 12, T - 14, w + 24, 16);
+      for (let c = 0; c < w / 12; c++) for (let r = 0; r < 2; r++) {
+        ctx.fillStyle = (r + c) % 2 ? '#1b2033' : '#ffffff'; ctx.fillRect(L + c * 12, T + 2 + r * 12, 12, 12);
+      }
+      // glass front
+      for (let r = 0; r < 2; r++) for (let c = 0; c < 4; c++) {
+        if (r === 1 && (c === 1 || c === 2)) continue;
+        const wx = L + 24 + c * 88, wy = T + 44 + r * 70;
+        ctx.fillStyle = '#8fd3ff'; ctx.fillRect(wx, wy, 68, 50);
+        ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(wx + 6, wy + 5, 9, 40);
+        addLight(wx + 34, wy + 25, 60, '255,220,160', 0.22);
+      }
+      const dw = 110, dh = 104, dt = gy - dh;
+      ctx.fillStyle = '#1b2033'; ctx.fillRect(x - dw / 2 - 6, dt - 6, dw + 12, dh + 6);
+      ctx.fillStyle = open > 0.05 ? `rgba(255,214,90,${0.5 + 0.5 * open})` : '#8fd3ff'; ctx.fillRect(x - dw / 2, dt, dw, dh);
+      ctx.fillStyle = '#1b2033'; ctx.fillRect(x - 2, dt, 4, dh);
+      // mailbox by the door
+      const mx = x + 118;
+      ctx.fillStyle = '#6b7190'; ctx.fillRect(mx - 3, gy - 56, 6, 56);
+      ctx.fillStyle = st.color; roundRect(mx - 24, gy - 86, 48, 34, 10); ctx.fill();
+      drawGlyph('mail', mx, gy - 69, 20, '#1b2033');
+      return { top: T - 14, doorTop: dt, doorW: dw };
+    }
+  };
+  function drawStop(b) {
+    const st = stopById[b.id], build = STOP_BUILD[b.id];
+    if (!st || !build) return;
+    const gy = vergeAt(b.x) + 3, active = state.door === b;
+    b.open = (b.open || 0) + ((active ? 1 : 0) - (b.open || 0)) * 0.12;       // doorway opens as you pull up
+    if (active) drawGlow(b.x, gy - 60, 210, rgbOf(st.color), 0.5 * (0.55 + 0.45 * Math.sin(state.t / 180)), 0.05);
+    const d = build(b.x, gy, st, b.open);
+    if (active) addLight(b.x, d.doorTop + 50, 160, '255,214,90', 0.55);
+    if (d.top != null) drawStopSign(b.x, d.top, st);
+    drawDoorPlate(b.x, d.doorTop - 26, 'STOP ' + st.no);
+  }
+
   function drawBuildings(x0, x1) {
     for (const b of W.buildings) {
       if (b.x + 320 < x0 || b.x - 320 > x1) continue;
       if (b.kind === 'wrong') { drawHaunted(b); continue; }
+      if (b.kind === 'stop') { drawStop(b); continue; }
       const pick = b.kind !== 'wrong' && houseFor(b);
       if (pick) { drawGameHouse(b, gameById[b.id], pick); continue; }
       const g = gameById[b.id];
@@ -1861,8 +2033,9 @@
   function showDoorPrompt(b) {
     if (!b) { ui.prompt.hidden = true; return; }
     const g = gameById[b.id];
-    ui.promptName.textContent = g ? g.name : b.kind === 'wrong' ? '???' : 'Garage';
-    ui.prompt.querySelector('.dp-verb').textContent = b.kind === 'garage' ? 'Change ride' : 'Enter door';
+    const st = b.kind === 'stop' && stopById[b.id];
+    ui.promptName.textContent = g ? g.name : st ? st.name : b.kind === 'wrong' ? '???' : 'Garage';
+    ui.prompt.querySelector('.dp-verb').textContent = b.kind === 'garage' ? 'Change ride' : st ? 'Visit stop' : 'Enter door';
     ui.prompt.classList.toggle('is-mystery', b.kind === 'wrong');
     ui.prompt.classList.remove('pop'); void ui.prompt.offsetWidth; ui.prompt.classList.add('pop');
     ui.prompt.hidden = false;
@@ -1891,6 +2064,7 @@
     const b = state.door;
     if (b.kind === 'garage') { openGarage(); return; }
     if (b.kind === 'wrong') { spooked(b); return; }
+    if (b.kind === 'stop') { openStop(b.id); return; }
     const g = gameById[b.id];
     if (!g) return;
     const m = ui.modalDoor;
@@ -1903,6 +2077,42 @@
     play.href = g.url;
     play.setAttribute('aria-label', 'Play ' + g.name + ' (opens in a new tab)');
     m.style.setProperty('--accent', g.color);
+    Sound.door();
+    openModal(m);
+  }
+
+  /* A company stop's panel: what's at the stop, plus a button that leaves
+     the run and travels to that stop on the website. At the Test Track each
+     demo can be run straight from the panel. */
+  function openStop(id) {
+    const st = stopById[id], m = ui.modalStop;
+    if (!st || !m) return;
+    m.style.setProperty('--accent', st.color);
+    $('[data-stop-icon]', m).innerHTML = window.GVWorld ? window.GVWorld.icon(st.icon) : '';
+    $('[data-stop-no]', m).textContent = 'Stop ' + st.no + ' · ' + st.place;
+    $('[data-stop-name]', m).textContent = st.name;
+    $('[data-stop-blurb]', m).textContent = st.blurb || '';
+    const list = $('[data-stop-list]', m);
+    list.replaceChildren();
+    const li = (text) => { const el = document.createElement('li'); el.textContent = text; list.appendChild(el); return el; };
+    if (id === 'services') SITE.services.forEach((sv) => li(sv.title));
+    else if (id === 'clients') {
+      if (SITE.clients.length) SITE.clients.forEach((c) => li(c.name));
+      else li('Billboards reserved for our next partners').classList.add('wide');
+    } else if (id === 'demos') {
+      SITE.demos.forEach((d, i) => {
+        const el = li(''), btn = document.createElement('button');
+        btn.type = 'button'; btn.dataset.stopDemo = i;
+        btn.textContent = d.title + ' ›';
+        el.appendChild(btn);
+      });
+    } else if (id === 'contact' && SITE.email) {
+      const a = document.createElement('a');
+      a.href = 'mailto:' + SITE.email; a.textContent = SITE.email;
+      li('').appendChild(a); list.lastChild.classList.add('wide');
+    }
+    $('[data-stop-visit]', m).dataset.stopVisit = id;
+    $('[data-stop-visit-label]', m).textContent = 'Open ' + st.name;
     Sound.door();
     openModal(m);
   }
@@ -2023,6 +2233,15 @@
   }
 
   /* ----------------------------------------------------------- mode flow */
+  // a named spot on Main Street: a door or stop id (parks just before it),
+  // 'ramp' (the run-up to the first stunt ramp) or 'ghosts' (the first
+  // haunted house)
+  function spotX(name) {
+    if (name === 'ramp') return W.ramps.length ? W.ramps[0].x - 870 : undefined;
+    const b = name === 'ghosts' ? W.buildings.find((x) => x.kind === 'wrong') : W.buildings.find((x) => x.id === name);
+    return b ? b.x - (name === 'ghosts' ? 550 : 420) : undefined;
+  }
+
   function start(opts) {
     opts = opts || {};
     // an explicit spot (`at`, e.g. a game door) is on Main Street = level 1
@@ -2033,7 +2252,7 @@
     closeAllModals();
     state.mode = 'play';
     document.body.classList.add('is-playing');
-    resetRun(opts.at);
+    resetRun(typeof opts.at === 'string' ? spotX(opts.at) : opts.at);
     state.door = null; ui.prompt.hidden = true;
     hudCache = ''; updateHud();
     canvas.focus({ preventScroll: true });
@@ -2130,8 +2349,7 @@
       if (a === 'play') { e.preventDefault(); start({ at: el.dataset.at ? Number(el.dataset.at) : undefined }); }
       else if (a === 'drive-to') {
         e.preventDefault();
-        const b = MAIN_STREET.find((x) => x.id === el.dataset.game);
-        start({ at: b ? b.x - 420 : undefined });
+        start({ at: el.dataset.game || el.dataset.stop });
       }
       else if (a === 'exit') exit();
       else if (a === 'garage') openGarage();
@@ -2159,6 +2377,18 @@
     // opening a game from a door leaves the run paused behind the modal
     ui.modalDoor.querySelector('[data-door-play]').addEventListener('click', () => {
       setTimeout(() => closeModal(ui.modalDoor), 300);
+    });
+    // stop panel: open the stop on the website, or run a demo from the pits
+    if (ui.modalStop) ui.modalStop.addEventListener('click', (e) => {
+      const visit = e.target.closest('[data-stop-visit]'), demo = e.target.closest('[data-stop-demo]');
+      if (visit) { exit(); if (window.GVWorld) window.GVWorld.travel(visit.dataset.stopVisit); }
+      else if (demo) {
+        const r = SITE.demos[+demo.dataset.stopDemo].run;
+        closeModal(ui.modalStop);
+        if (r.levels) { openLevels(); return; }
+        if (r.theme) setTime(r.theme);
+        start(r.at ? { at: r.at } : { level: r.level });
+      }
     });
   }
 
@@ -2218,7 +2448,7 @@
       coins: $('#hud-coins'), coinsVal: $('#hud-coins [data-val]'), time: $('#hud-time'),
       speed: $('#hud-speed'), progress: $('#hud-progress'), toast: $('#toast'),
       prompt: $('#door-prompt'), promptName: $('#door-prompt-name'),
-      modalDoor: $('#modal-door'), modalGarage: $('#modal-garage'), modalFinish: $('#modal-finish'),
+      modalDoor: $('#modal-door'), modalGarage: $('#modal-garage'), modalStop: $('#modal-stop'), modalFinish: $('#modal-finish'),
       modalFail: $('#modal-fail'), spook: $('#spook'), modalLevels: $('#modal-levels')
     });
     settleUntil = performance.now() + 2500;

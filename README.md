@@ -6,7 +6,7 @@ The contact email lives in two places: the Contact section of `index.html` and `
 
 ```
 ./
-├── index.html            page: live game stage, game select, controls, contact
+├── index.html            page: the six stops of the world (see "The world")
 ├── assets/css/hub.css    all styling
 ├── assets/css/fonts.css  @font-face rules for the local fonts
 ├── assets/fonts/         Russo One + Exo 2 (woff2, Latin subsets)
@@ -14,11 +14,33 @@ The contact email lives in two places: the Contact section of `index.html` and `
     ├── vendor/matter.min.js   Matter.js 0.20 (physics engine, vendored)
     ├── physics.js        course, props, vehicles, suspension (no DOM; runs in Node)
     ├── games.js          ← EDIT THIS: the external games (cards + arcade doors)
+    ├── site.js           ← EDIT THIS: stop names, services, process, clients, demos
     ├── game.js           renderer, input, camera, sound, doors, coins, finish
-    └── hub.js            cards, ride previews, stats, reveals
+    ├── hub.js            cards, ride previews, stats, reveals, contact form
+    └── world.js          world map, travel transition, workshop bays, billboards, demo pits
 ```
 
 The art lives in `assets/`: the truck and car sprites in `assets/img/assets/`, plus the game logos and cover images in `assets/img/games/`.
+
+## The world
+
+The whole site is a road trip through six stops. Each stop is a `<section>` with its own environment (`.stop-env`), and the stops are listed in driving order in `assets/js/site.js`:
+
+| Stop | Section | Place | What's there |
+|---|---|---|---|
+| 01 Start | `#stage` | Main Street | the live physics game, ride picker, arcade doors |
+| 02 Services | `#services` | The Workshop | six garage bays (click a door to roll it up) and the build pipeline road |
+| 03 Games | `#games` | Arcade Boulevard | Monster Hills plus the four linked games |
+| 04 Clients | `#clients` | Billboard Highway | one billboard per client |
+| 05 Demos | `#demos` | The Test Track | demo pits that launch the real game in a set-up, plus the driver's manual |
+| 06 Contact | `#contact` | Finish Line HQ | contact form and email |
+
+- **World map:** the road in the top bar. Your chosen ride drives along it as you scroll, and clicking a stop "travels" there: a road scene with a green "Next stop" sign covers the page while it moves. On phones the map is the map button in the top bar. With reduced motion turned on, travel jumps straight to the stop.
+- **Stops in the game:** Main Street follows the same map. After the garage (Start) comes the **Services** workshop, then the four game doors and the haunted houses, then the **Clients** billboard, the **Demos** pit garage and **Contact** HQ, then the hills. The stop buildings are drawn in code (`STOP_BUILD` in `game.js`) with a lit stop sign in the stop's colour. Pull up and press E (or tap the prompt) to open the stop's panel: what's at the stop, an "Open …" button that ends the run and travels to that stop on the site, and, at the Test Track, a button for each demo. Each website stop has a "Drive here in the game" button that starts the game parked outside its building.
+- **Next stop signs:** each stop ends with a sign to the next one.
+- **Always the intro first:** every load or refresh opens on the intro screen at the top of the page. Travelling doesn't put the stop in the address bar, a `#stop` in the address is ignored, and the browser's saved scroll position isn't restored.
+- **Clients:** `clients` in `site.js` is empty on purpose, so the highway shows "reserved" billboards rather than invented names. Add real clients as `{ name, logo, project, url }` and each becomes a billboard.
+- **Demos:** each demo's `run` is either `{ level: n }`, `{ at: 'ramp' | 'ghosts' | <door or stop id> }` (start at that spot on Main Street), `theme: 'night' | 'rain' | 'morning'`, or `{ levels: true }` to open the level map.
 
 ## How the car works
 

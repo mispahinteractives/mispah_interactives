@@ -12,33 +12,26 @@
 <meta property="og:image" content="assets/img/logo.png">
 <link rel="preload" href="assets/fonts/russo-one-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/exo-2-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/fonts.css?v=20261003g">
-<link rel="stylesheet" href="assets/css/hub.css?v=20261003g">
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261005d">
+<link rel="stylesheet" href="assets/css/hub.css?v=20261005d">
 </head>
 <body>
-<a class="skip" href="#games">Skip to the game list</a>
+<a class="skip" href="#services">Skip to the company stops</a>
 
 <!-- ================================================================ top bar -->
 <header class="topbar">
   <a class="brand" href="#top">
     <img class="brand-logo" src="assets/img/logo.png" alt="Mizpah Interactives" width="600" height="394">
   </a>
-  <nav class="menu" aria-label="Main">
-    <span class="menu-glider" aria-hidden="true"></span>
-    <a class="menu-chip is-hot" href="#stage" data-action="play" data-spy="stage">
-      <span class="mc-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span><span class="mc-text">Play</span>
-    </a>
-    <a class="menu-chip" href="#games" data-spy="games">
-      <span class="mc-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h10a5 5 0 0 1 4.9 6l-.8 3.6a2.4 2.4 0 0 1-4.3.9L15 15H9l-1.8 2.5a2.4 2.4 0 0 1-4.3-.9L2.1 13A5 5 0 0 1 7 7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M7 10v3M5.5 11.5h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="10.5" r="1.1"/><circle cx="18" cy="12.5" r="1.1"/></svg></span><span class="mc-text">Games</span>
-    </a>
-    <a class="menu-chip" href="#controls" data-spy="controls">
-      <span class="mc-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2.2"/><path d="M3.5 10.5h6.3M14.2 10.5h6.3M12 14.2V21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><span class="mc-text">Controls</span>
-    </a>
-    <a class="menu-chip" href="#contact" data-spy="contact">
-      <span class="mc-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 20 17H10l-4.5 3.5V17H4a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 4 5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M7.5 9.5h9M7.5 12.5h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><span class="mc-text">Contact</span>
-    </a>
+  <nav class="worldmap" aria-label="World map">
+    <div class="wm-road" aria-hidden="true"><span class="wm-fill"></span></div>
+    <ol class="wm-stops" id="wm-stops"></ol>
+    <div class="wm-car" aria-hidden="true"></div>
   </nav>
   <div class="player">
+    <button class="icon-btn map-btn" type="button" data-action="open-map" aria-label="Open the world map">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 4v13.5M15 6.5V20" stroke="currentColor" stroke-width="2"/></svg>
+    </button>
     <span class="coin-count" title="Coins collected, all runs">
       <i class="coin-ico" aria-hidden="true"></i><b id="lifetime-coins">0</b><span class="sr">coins collected</span>
     </span>
@@ -59,7 +52,7 @@
   <!-- hero overlay, shown while the demo drives itself -->
   <div class="hero" id="hero">
     <div class="hero-main">
-      <p class="presents" style="--i:0"><span aria-hidden="true"></span>Mizpah Interactives presents</p>
+      <p class="presents" style="--i:0"><span aria-hidden="true"></span>Stop 01 · Start · Mizpah Interactives</p>
       <h1 class="title" style="--i:1">
         <span class="t1">Monster</span><span class="t2">Hills</span>
         <span class="title-badge" aria-hidden="true">Physics racer</span>
@@ -72,7 +65,7 @@
           <span class="play-lv" data-level-label>LV 1</span>
         </button>
         <button class="btn-ghost btn-levels" type="button" data-action="levels"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 4v13.5M15 6.5V20" stroke="currentColor" stroke-width="2"/></svg>Levels</button>
-        <a class="btn-ghost hide-phone" href="#games">Browse games</a>
+        <button class="btn-ghost hide-phone" type="button" data-travel="services">Start the tour ›</button>
       </div>
       <div class="hero-setup" style="--i:4">
         <div class="setup-head">
@@ -180,10 +173,32 @@
 </div>
 
 <!-- ========================================================= game select -->
-<section id="games" class="select">
-  <header class="section-head reveal">
-    <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span>Arcade · 5 games online</p>
-    <h2>Select your game</h2>
+<!-- ====================================================== stop 02: services -->
+<section id="services" class="stop stop-services" aria-labelledby="services-title">
+  <div class="stop-env" aria-hidden="true">
+    <span class="env-lamp l1"></span><span class="env-lamp l2"></span><span class="env-lamp l3"></span>
+    <span class="env-neon">Workshop</span>
+    <span class="env-floor"></span>
+  </div>
+  <header class="stop-head reveal">
+    <p class="stop-tag"><span class="stop-no">02</span>The Workshop</p>
+    <h2 id="services-title">Services</h2>
+    <p class="stop-lede">Every bay in the workshop is something we build. Roll up a door to look inside.</p>
+  </header>
+  <div class="bays" id="bays"></div>
+  <div class="pipeline reveal">
+    <h3>The build pipeline</h3>
+    <div class="pl-road" id="pipeline"><div class="pl-car" aria-hidden="true"></div></div>
+  </div>
+</section>
+
+<!-- ========================================================= stop 03: games -->
+<section id="games" class="select stop stop-games" aria-labelledby="games-title">
+  <div class="stop-env" aria-hidden="true"><span class="env-marquee"></span></div>
+  <header class="stop-head reveal">
+    <p class="stop-tag"><span class="stop-no">03</span>Arcade Boulevard</p>
+    <h2 id="games-title">Our games</h2>
+    <p class="stop-lede">Every door on the boulevard is a game we made. Drive up in Monster Hills, or jump straight in.</p>
   </header>
 
   <article class="feature reveal" aria-labelledby="feature-title">
@@ -219,15 +234,29 @@
   <div class="card-row" id="card-row"></div>
 </section>
 
-<!-- ============================================================ controls -->
-<section id="controls" class="controls">
-  <header class="section-head reveal">
-    <p class="eyebrow">Tutorial</p>
-    <h2>How to drive</h2>
+<!-- ======================================================= stop 04: clients -->
+<section id="clients" class="stop stop-clients" aria-labelledby="clients-title">
+  <div class="stop-env" aria-hidden="true"><span class="env-sun"></span><span class="env-hills"></span><span class="env-highway"></span></div>
+  <header class="stop-head reveal">
+    <p class="stop-tag"><span class="stop-no">04</span>Billboard Highway</p>
+    <h2 id="clients-title">Our clients</h2>
+    <p class="stop-lede">The partners we build with, up in lights along the highway.</p>
   </header>
-  <div class="howto two">
+  <div class="billboards" id="billboards"></div>
+</section>
+
+<!-- ========================================================= stop 05: demos -->
+<section id="demos" class="stop stop-demos" aria-labelledby="demos-title">
+  <div class="stop-env" aria-hidden="true"><span class="env-kerb top"></span><span class="env-kerb bottom"></span></div>
+  <header class="stop-head reveal">
+    <p class="stop-tag"><span class="stop-no">05</span>The Test Track</p>
+    <h2 id="demos-title">Demos</h2>
+    <p class="stop-lede">Tech demos from our own engine. Each pit runs the real physics game with one feature switched on.</p>
+  </header>
+  <div class="pits" id="pits"></div>
+  <div class="manual reveal">
     <div class="howto-card reveal">
-      <h3>Controls</h3>
+      <h3>Driver’s manual</h3>
       <div class="touch-demo" aria-hidden="true">
         <span class="td-pedal l">Brake</span><span class="td-phone"></span><span class="td-stack"><span class="td-pedal j">Jump</span><span class="td-pedal r">Gas</span></span>
       </div>
@@ -248,12 +277,19 @@
 </section>
 
 <!-- ============================================================= contact -->
-<section id="contact" class="contact">
+<!-- ====================================================== stop 06: contact -->
+<section id="contact" class="contact stop stop-contact" aria-labelledby="contact-title">
+  <div class="stop-env" aria-hidden="true"><span class="env-checker"></span><span class="env-beam b1"></span><span class="env-beam b2"></span></div>
+  <header class="stop-head reveal">
+    <p class="stop-tag"><span class="stop-no">06</span>Finish Line HQ</p>
+    <h2 id="contact-title">You made it</h2>
+    <p class="stop-lede">Last stop on the road trip. Tell us what you want to build.</p>
+  </header>
   <div class="contact-card reveal">
     <div class="contact-intro">
       <p class="eyebrow">Contact</p>
-      <h2>Let’s talk</h2>
-      <p>Got a game idea, a project, or feedback on Monster Hills? Send us a message and we’ll get back to you.</p>
+      <h3 class="contact-h">Let’s talk</h3>
+      <p>Got a game idea, a project, or feedback on our games? Send us a message and we’ll get back to you.</p>
       <a class="contact-mail" href="mailto:mispahinteractives@gmail.com">
         <span class="contact-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 7l8 6 8-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
         <span><small>Email us</small>mispahinteractives@gmail.com</span>
@@ -279,6 +315,24 @@
 </footer>
 </main>
 
+<div class="modal" id="modal-map" role="dialog" aria-modal="true" aria-labelledby="map-title" hidden>
+  <div class="modal-panel map-panel">
+    <p class="eyebrow">World map</p>
+    <h2 id="map-title">Where to?</h2>
+    <ol class="map-list" id="map-list"></ol>
+    <button class="modal-x" type="button" data-action="close-modal" aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="travel" id="travel" aria-hidden="true">
+  <div class="tr-sky"></div><div class="tr-lines"></div>
+  <div class="tr-sign"><small>Next stop</small><b></b><span></span></div>
+  <div class="tr-road"><div class="tr-car"></div></div>
+</div>
+<p class="sr" id="travel-live" role="status" aria-live="polite"></p>
+
 <!-- ============================================================== modals -->
 <div class="modal" id="modal-door" role="dialog" aria-modal="true" aria-labelledby="door-title" hidden>
   <div class="modal-panel door-panel">
@@ -295,6 +349,24 @@
       </div>
       <p class="fine">Opens in a new tab. Your run waits here.</p>
     </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-stop" role="dialog" aria-modal="true" aria-labelledby="stop-title" hidden>
+  <div class="modal-panel stop-panel">
+    <div class="sp-sign">
+      <span class="sp-icon" data-stop-icon aria-hidden="true"></span>
+      <div><p class="eyebrow" data-stop-no></p><h2 id="stop-title" data-stop-name></h2></div>
+    </div>
+    <p class="sp-blurb" data-stop-blurb></p>
+    <ul class="sp-list" data-stop-list></ul>
+    <div class="modal-actions">
+      <button class="btn-play" type="button" data-stop-visit data-autofocus>
+        <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span><span data-stop-visit-label>Open stop</span>
+      </button>
+      <button class="btn-ghost" type="button" data-action="close-modal">Keep driving</button>
+    </div>
+    <p class="fine">Opening the stop ends this run and takes you to that part of the site.</p>
   </div>
 </div>
 
@@ -382,9 +454,11 @@
 </div>
 
 <script src="assets/js/vendor/matter.min.js"></script>
-<script src="assets/js/physics.js?v=20261003g"></script>
-<script src="assets/js/games.js?v=20261003g"></script>
-<script src="assets/js/game.js?v=20261003g"></script>
-<script src="assets/js/hub.js?v=20261003g"></script>
+<script src="assets/js/physics.js?v=20261005d"></script>
+<script src="assets/js/games.js?v=20261005d"></script>
+<script src="assets/js/site.js?v=20261005d"></script>
+<script src="assets/js/game.js?v=20261005d"></script>
+<script src="assets/js/hub.js?v=20261005d"></script>
+<script src="assets/js/world.js?v=20261005d"></script>
 </body>
 </html>

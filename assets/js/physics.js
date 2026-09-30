@@ -113,12 +113,16 @@
   const SPAWN_X = 260;
   const LEVELS = 20;
 
-  // Level 1 is Main Street: the town with the game doors, DOOR_SPACING apart,
-  // then the hills. `kind: 'game'` doors open a game, `garage` opens vehicle
-  // select, `wrong` is a haunted house (entering fails the run).
+  // Level 1 is Main Street: the town with the doors, DOOR_SPACING apart, then
+  // the hills. It follows the website's world map: Start (the garage),
+  // Services, the games, Clients, Demos, Contact. `kind: 'game'` doors open a
+  // game, `garage` opens vehicle select, `stop` is one of the company stops
+  // (site.js), `wrong` is a haunted house (entering fails the run).
   const FIRST_DOOR = 950;
   const DOOR_SPACING = 1250;
-  const STREET = ['garage', 'animal-cafe', 'wrong-1', 'wrong-2', 'cinemoji', 'wrong-3', 'uno-clash', 'wrong-4', 'wrong-5', 'baggage-out', 'wrong-6'];
+  const STOPS = ['services', 'clients', 'demos', 'contact'];
+  const STREET = ['garage', 'services', 'animal-cafe', 'wrong-1', 'wrong-2', 'cinemoji', 'wrong-3', 'uno-clash', 'wrong-4', 'wrong-5', 'baggage-out', 'wrong-6',
+    'clients', 'demos', 'contact'];
   const DOOR_HALF = 150;
 
   // Collision categories. Props bounce off the wheels (which bat them away)
@@ -142,7 +146,7 @@
     if (level === 1) {
       C.buildings = STREET.map((id, i) => ({
         id, x: FIRST_DOOR + i * DOOR_SPACING,
-        kind: id === 'garage' ? 'garage' : id.startsWith('wrong-') ? 'wrong' : 'game',
+        kind: id === 'garage' ? 'garage' : STOPS.includes(id) ? 'stop' : id.startsWith('wrong-') ? 'wrong' : 'game',
         variant: id.startsWith('wrong-') ? Number(id.slice(6)) : 0
       }));
       C.speedBumps = C.buildings.slice(1).map((b) => b.x - DOOR_SPACING / 2);
