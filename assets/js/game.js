@@ -116,7 +116,7 @@
     }
     return {
       ensure, engine, rain,
-      thunder: (d) => { setTimeout(() => noise(1.8, 0.55, 160), d); setTimeout(() => noise(0.5, 0.3, 500), d + 60); },
+      thunder: (d, v = 1) => { setTimeout(() => noise(1.2 + 0.6 * v, 0.55 * v, 160), d); setTimeout(() => noise(0.5, 0.3 * v, 500), d + 60); },
       coin: () => tone([988, 1319], 0.07, 'square', 0.09),
       land: (s) => { noise(0.3, 0.25 + 0.4 * s, 380); if (s > 0.35) tone([70, 50], 0.12, 'sine', 0.3 * s); },
       caw: () => { tone([540, 430], 0.07, 'sawtooth', 0.025); noise(0.12, 0.05, 1800); },
@@ -137,7 +137,9 @@
         noise(0.9, 0.3, 160);
       },
       finish: () => tone([523, 659, 784, 1047, 784, 1047, 1319], 0.11, 'square', 0.08),
+      star: (i) => tone([1047 * Math.pow(1.19, i), 1568 * Math.pow(1.19, i)], 0.08, 'triangle', 0.13),
       checkpoint: () => tone([660, 880], 0.08, 'triangle', 0.12),
+      light: (n) => tone([392 + n * 22], 0.16, 'square', 0.08),
       // pedal clicks: a short mechanical tick down, a softer one on the way up
       pedal: (down) => noise(down ? 0.035 : 0.028, down ? 0.14 : 0.08, down ? 2600 : 1900),
       jump: () => { noise(0.14, 0.22, 700); tone([330, 494], 0.06, 'triangle', 0.1); },
@@ -180,6 +182,7 @@
   SITE.stops.forEach((st) => { stopById[st.id] = st; });
 
   const state = {
+    bolts: [],                // lightning bolts on screen (rain)
     mode: 'attract',          // attract | play
     paused: false,            // a modal is open
     active: true,             // stage on screen
@@ -686,8 +689,11 @@
     ctx.restore();
   }
 
-  /* Rain: slanted streaks in two depths, splashes on the road, and now and
-     then a lightning flash with a bolt and a roll of thunder. */
+  /* Rain: slanted streaks in two depths, splashes on the road, and
+     lightning every few seconds: mostly small far-off forks (a soft flicker,
+     quiet distant thunder, sometimes two in quick succession), and now and
+     then a big strike (a bright double flash, a long bolt with branches,
+     close thunder). */
   const DROPS = Array.from({ length: 220 }, (_, i) => ({
     x: rnd(i * 2.3 + 1), y: rnd(i * 4.1 + 2), s: 0.6 + rnd(i * 1.7 + 3) * 0.8, far: i % 3 === 0
   }));
@@ -714,27 +720,69 @@
       }
       ctx.stroke();
     }
-    // lightning
+    // lightning: the sky flash, then each bolt (and its branches) fading
     const L = state.lightning || 0;
-    if (L > 0.01) {
-      ctx.fillStyle = `rgba(230,238,255,${0.45 * L})`; ctx.fillRect(0, 0, Wd, Ht);
-      if (L > 0.55 && state.bolt) {
-        ctx.strokeStyle = `rgba(255,255,255,${L})`; ctx.lineWidth = 3; ctx.shadowColor = '#cfe0ff'; ctx.shadowBlur = 18;
-        ctx.beginPath(); state.bolt.forEach(([bx, by], i) => ctx[i ? 'lineTo' : 'moveTo'](bx * Wd, by * Ht)); ctx.stroke();
-        ctx.shadowBlur = 0;
+    if (L > 0.01) { ctx.fillStyle = `rgba(230,238,255,${0.45 * L})`; ctx.fillRect(0, 0, Wd, Ht); }
+    if (state.bolts.length) {
+      const path = (pts) => { ctx.beginPath(); pts.forEach(([bx, by], i) => ctx[i ? 'lineTo' : 'moveTo'](bx * Wd, by * Ht)); ctx.stroke(); };
+      ctx.lineJoin = 'round'; ctx.shadowColor = '#cfe0ff';
+      for (const b of state.bolts) {
+        if (b.life < 0.04) continue;
+        const w = b.width * (0.75 + 0.25 * sc);
+        // a soft blue glow under a white-hot core; forks are thinner
+        ctx.shadowBlur = 0; ctx.strokeStyle = `rgba(170,200,255,${0.22 * b.life})`;
+        ctx.lineWidth = w * 4; path(b.main); ctx.lineWidth = w * 2.4; b.branches.forEach(path);
+        ctx.shadowBlur = b.big ? 20 : 10; ctx.strokeStyle = `rgba(255,255,255,${b.life})`;
+        ctx.lineWidth = w * 0.5; b.branches.forEach(path);
+        ctx.lineWidth = w; path(b.main);
       }
+      ctx.shadowBlur = 0;
     }
   }
+  // A jagged line from (x0,y0) to (x1,y1): split it in the middle, push the
+  // midpoint sideways, and repeat on both halves (midpoint displacement),
+  // so a bolt zigzags at every scale like real lightning.
+  function jag(x0, y0, x1, y1, d, depth, out) {
+    if (depth === 0) { out.push([x1, y1]); return; }
+    const mx = (x0 + x1) / 2 + (Math.random() - 0.5) * d, my = (y0 + y1) / 2 + (Math.random() - 0.5) * d * 0.25;
+    jag(x0, y0, mx, my, d * 0.55, depth - 1, out);
+    jag(mx, my, x1, y1, d * 0.55, depth - 1, out);
+  }
+  function strike(big) {
+    const x0 = 0.06 + Math.random() * 0.88, y0 = big ? -0.02 : Math.random() * 0.12;
+    const len = big ? 0.5 + Math.random() * 0.25 : 0.16 + Math.random() * 0.16;
+    const x1 = x0 + (Math.random() - 0.5) * (big ? 0.16 : 0.08);
+    const main = [[x0, y0]];
+    jag(x0, y0, x1, y0 + len, big ? 0.1 : 0.05, big ? 6 : 5, main);
+    // forks split off the upper part of the bolt and trail away to one side
+    const branches = [], nB = big ? 2 + Math.floor(Math.random() * 3) : (Math.random() < 0.6 ? 1 : 0);
+    for (let k = 0; k < nB; k++) {
+      const [sx, sy] = main[2 + Math.floor(Math.random() * main.length * 0.6)];
+      const dir = Math.random() < 0.5 ? -1 : 1, bl = big ? 0.07 + Math.random() * 0.13 : 0.04 + Math.random() * 0.06;
+      const br = [[sx, sy]];
+      jag(sx, sy, sx + dir * bl * 0.75, sy + bl, big ? 0.045 : 0.025, 4, br);
+      branches.push(br);
+    }
+    state.bolts.push({ main, branches, big, width: big ? 3.2 : 1.7, life: 1 });
+    state.lightning = Math.max(state.lightning || 0, big ? 1 : 0.32 + Math.random() * 0.2);
+    if (big) state.reflash = 90 + Math.random() * 70;               // the second flicker of a big strike
+    Sound.thunder(big ? 120 + Math.random() * 380 : 900 + Math.random() * 1300, big ? 1 : 0.32);
+  }
   function rainTick(dt, x0, x1) {
-    state.lightning = (state.lightning || 0) * Math.pow(0.9, dt / 16.67);
-    state.nextBolt = (state.nextBolt || 4000) - dt;
+    const fade = Math.pow(0.9, dt / 16.67);
+    state.lightning = (state.lightning || 0) * fade;
+    for (const b of state.bolts) b.life *= Math.pow(b.big ? 0.88 : 0.82, dt / 16.67);
+    state.bolts = state.bolts.filter((b) => b.life > 0.04);
+    if (state.reflash > 0 && (state.reflash -= dt) <= 0) {
+      state.lightning = Math.max(state.lightning, 0.85);
+      state.bolts.forEach((b) => { if (b.big) b.life = 1; });
+    }
+    state.nextBolt = (state.nextBolt || 2500) - dt;
     if (state.nextBolt <= 0) {
-      state.nextBolt = 6000 + Math.random() * 9000;
-      state.lightning = 1;
-      let bx = 0.2 + Math.random() * 0.6, by = 0; const pts = [[bx, by]];
-      while (by < 0.45) { by += 0.05 + Math.random() * 0.06; bx += (Math.random() - 0.5) * 0.08; pts.push([bx, by]); }
-      state.bolt = pts;
-      Sound.thunder(300 + Math.random() * 700);
+      const big = Math.random() < 0.34;
+      strike(big);
+      // every 2-6.5s; a small flicker is sometimes followed quickly by another
+      state.nextBolt = !big && Math.random() < 0.3 ? 250 + Math.random() * 450 : 2000 + Math.random() * 4500;
     }
     // splashes on the road around the camera
     const k = Math.random() < 0.6 ? 1 : 0;
@@ -746,22 +794,39 @@
     }
   }
 
-  /* 3-2-1-GO start: the truck revs and pops, controls unlock on GO. */
-  function tickCountdown(dt) {
-    const before = Math.ceil(state.countdown / 600);
-    state.countdown -= dt;
-    const after = Math.ceil(state.countdown / 600);
-    const rev = 0.35 + 0.35 * Math.abs(Math.sin(state.t / 140));
-    car.throttle = rev;
-    if (after !== before) {
-      if (after > 3) { /* level banner still showing */ }
-      else if (after > 0) { countdownToast(String(after)); Sound.beep(false); }
-      else { countdownToast('GO!'); Sound.beep(true); state.shake = 6; cam.punch = 0.06; car.throttle = 0.9; state.wasGas = true; }
-    }
+  /* Race start, instead of 3-2-1: letterbox bars slide in, a start gantry
+     drops with three red lights that come on one by one
+     while the engine revs higher, then every light turns green: GO! The
+     controls unlock on GO. The motion is CSS (#start-seq, driven by its
+     `on` / `go` classes and data-lights); times are ms from the start. */
+  const START_MS = 2750;
+  const START_LIGHTS = [1150, 1600, 2050];
+  let startLit = 0, startTimer = 0;
+  function startSequence() {
+    const el = ui.startSeq;
+    clearTimeout(startTimer);
+    startLit = 0; el.dataset.lights = 0;
+    el.classList.remove('on', 'go', 'hold'); void el.offsetWidth; el.classList.add('on');
+    ui.startLive.textContent = 'Level ' + state.level + '. Get ready.';
+    Sound.whoosh();
   }
-  function countdownToast(text) {
-    ui.toast.classList.add('count');
-    toast(text);
+  function endStartSequence() {
+    clearTimeout(startTimer);
+    ui.startSeq.classList.remove('on', 'go', 'hold');
+  }
+  function tickCountdown(dt) {
+    state.countdown = Math.max(0, state.countdown - dt);
+    const t = START_MS - state.countdown;
+    const lit = START_LIGHTS.filter((ms) => t >= ms).length;
+    car.throttle = 0.22 + 0.12 * lit + 0.16 * Math.abs(Math.sin(state.t / 110));      // revs climb with the lights
+    if (lit > startLit) { startLit = lit; ui.startSeq.dataset.lights = lit; Sound.light(lit); state.shake = Math.max(state.shake, 1.2); }
+    if (state.countdown === 0) {
+      ui.startSeq.classList.add('go');
+      ui.startLive.textContent = 'Go!';
+      Sound.beep(true); Sound.whoosh();
+      state.shake = 7; cam.punch = 0.07; car.throttle = 0.9; state.wasGas = true;
+      startTimer = setTimeout(endStartSequence, 1200);
+    }
   }
 
   function drawNight() {
@@ -2045,6 +2110,7 @@
   /* ---------------------------------------------------------------- modals */
   function openModal(el) {
     state.paused = true;
+    if (ui.startSeq) ui.startSeq.classList.add('hold');     // a paused start holds its animation too
     el.hidden = false;
     requestAnimationFrame(() => el.classList.add('open'));
     const f = el.querySelector('[data-autofocus]') || el.querySelector('button, a');
@@ -2052,6 +2118,7 @@
     keys.clear(); touch.gas = touch.brake = touch.jump = false;
   }
   function closeModal(el) {
+    if (ui.startSeq) ui.startSeq.classList.remove('hold');
     el.classList.remove('open');
     setTimeout(() => { el.hidden = true; }, 220);
     state.paused = false;
@@ -2130,6 +2197,7 @@
   const THEMES = ['morning', 'night', 'rain'];
   function setTime(mode) {
     state.theme = THEMES.includes(mode) ? mode : 'night';
+    state.bolts = []; state.lightning = 0; state.reflash = 0;
     state.night = state.theme !== 'morning';          // lights on
     store.set('time', state.theme);
     const root = document.documentElement;
@@ -2220,16 +2288,65 @@
     if (unlockedNew) progress.unlocked = L + 1;
     saveProgress();
     const m = ui.modalFinish;
-    $('#finish-title', m).textContent = 'Level ' + L + ' complete!';
-    $('[data-finish-stars]', m).innerHTML = [1, 2, 3].map((i) => `<i class="${i <= stars ? 'on' : ''}" style="--d:${i * 0.18}s"></i>`).join('');
-    $('[data-finish-time]', m).textContent = fmtTime(state.time);
-    $('[data-finish-coins]', m).textContent = state.coins + '/' + W.coins.length;
-    $('[data-finish-best]', m).textContent = fmtTime(isBest ? state.time : prev);
+    $('[data-finish-level]', m).textContent = 'Level ' + L + ' complete';
+    // the title drops in letter by letter
+    const title = $('#finish-title', m), word = L >= LEVELS ? 'Champion!' : 'Victory!';
+    title.setAttribute('aria-label', word);
+    title.innerHTML = '<span aria-hidden="true">' + [...word].map((ch, i) => `<b style="--i:${i}">${ch}</b>`).join('') + '</span>';
+    // each star: an empty socket, and for earned stars a gold star (rim,
+    // gradient face, gloss) that spins into it over a turning light burst
+    const STAR_SVG = '<svg class="ws-slot" viewBox="0 0 100 100"><use href="#ws-star" class="slot-rim"/><use href="#ws-star" class="slot-face"/></svg>' +
+      '<svg class="ws-gold" viewBox="0 0 100 100"><use href="#ws-star" class="gold-rim"/><use href="#ws-star" class="gold-face"/><use href="#ws-gloss" class="gold-gloss"/></svg>';
+    $('[data-finish-stars]', m).innerHTML = [1, 2, 3].map((i) =>
+      `<span class="win-star${i <= stars ? ' on' : ''}" style="--d:${0.7 + i * 0.22}s"><span class="ws-rays"></span>${STAR_SVG}<span class="ws-glint"></span></span>`).join('');
+    $('[data-finish-stars]', m).setAttribute('aria-label', stars + ' of 3 stars');
+    $('[data-finish-rating]', m).textContent = ['', 'Nice finish', 'Great drive', 'Perfect run'][stars];
     $('[data-finish-badge]', m).hidden = !isBest;
-    $('[data-finish-ride]', m).textContent = VEHICLES[state.vehicle].name + (unlockedNew ? ' · Level ' + (L + 1) + ' unlocked!' : '');
+    $('[data-finish-unlock]', m).hidden = !unlockedNew;
+    $('[data-finish-unlock-text]', m).textContent = 'Level ' + (L + 1) + ' unlocked';
+    $('[data-finish-ride]', m).textContent = 'Driven in the ' + VEHICLES[state.vehicle].name;
     $('[data-finish-next]', m).hidden = L >= LEVELS;
+    $('[data-finish-car]', m).replaceChildren(vehiclePreview(state.vehicle, { driver: true }));
+    const result = { time: state.time, coins: state.coins, total: W.coins.length, best: isBest ? state.time : prev, stars };
     emit('best', { vehicle: state.vehicle, time: state.time });
-    setTimeout(() => { if (state.mode === 'play') openModal(m); }, 1400);
+    setTimeout(() => { if (state.mode === 'play') { openModal(m); playWin(m, result); } }, 1400);
+  }
+
+  /* The win screen plays in order: backdrop rays and confetti, the title
+     slams in, your car drives onto the podium and brakes, the stars stamp
+     in one by one with a chime, then the numbers count up. The CSS does the
+     motion (all keyed off .modal.open); this adds the confetti, the star
+     chimes and the count-ups. */
+  const WIN_COLORS = ['#ffc83d', '#ff4f8b', '#37e2a0', '#5b8cff', '#ffffff', '#b98cff'];
+  function playWin(m, r) {
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const conf = $('[data-win-confetti]', m);
+    conf.replaceChildren();
+    if (!calm) {
+      for (let i = 0; i < 46; i++) {
+        const c = document.createElement('i');
+        c.style.cssText = `--x:${Math.random() * 100}%;--sway:${(Math.random() - 0.5) * 160}px;--r:${Math.random() * 720 - 360}deg;` +
+          `--dur:${2.8 + Math.random() * 2.4}s;--delay:${Math.random() * 1.6}s;--c:${WIN_COLORS[i % WIN_COLORS.length]}`;
+        if (i % 3 === 0) c.className = 'round';
+        conf.appendChild(c);
+      }
+    }
+    const time = $('[data-finish-time]', m), coins = $('[data-finish-coins]', m), best = $('[data-finish-best]', m);
+    const show = (k) => {
+      time.textContent = fmtTime(r.time * k);
+      coins.textContent = Math.round(r.coins * k) + '/' + r.total;
+      best.textContent = fmtTime(r.best * k);
+    };
+    if (calm) { show(1); return; }
+    show(0);
+    for (let i = 0; i < r.stars; i++) setTimeout(() => { if (m.classList.contains('open')) Sound.star(i); }, (0.7 + (i + 1) * 0.22 + 0.12) * 1000);
+    const t0 = performance.now() + 1350, dur = 900;
+    const tick = (now) => {
+      const k = clamp((now - t0) / dur, 0, 1);
+      show(1 - Math.pow(1 - k, 3));
+      if (k < 1 && m.classList.contains('open')) requestAnimationFrame(tick); else show(1);
+    };
+    requestAnimationFrame(tick);
   }
 
   /* ----------------------------------------------------------- mode flow */
@@ -2258,9 +2375,9 @@
     canvas.focus({ preventScroll: true });
     window.scrollTo({ top: 0 });
     emit('mode', { mode: 'play' });
-    state.countdown = 2500; state.wasGas = false;     // "LEVEL n" banner, then 3-2-1-GO
+    state.countdown = START_MS; state.wasGas = false;  // the race-start sequence, then GO
     cam.punch = 0.12;                                  // camera punch with the warp burst
-    toast('LEVEL ' + state.level);
+    startSequence();
   }
 
   function exit() {
@@ -2268,6 +2385,7 @@
     state.mode = 'attract';
     state.paused = false;
     state.countdown = 0;
+    endStartSequence();
     document.body.classList.remove('is-playing');
     ui.prompt.hidden = true; state.door = null;
     Sound.engine(0, 0, false);
@@ -2416,7 +2534,8 @@
   /* ------------------------------------------------ vehicle previews (DOM) */
   // A car assembled from its sprites for the menus: body plus two wheels at
   // their real hub positions, sized as percentages so it scales freely.
-  function vehiclePreview(key) {
+  // `driver: true` seats the character in the car, as in the game
+  function vehiclePreview(key, opts) {
     const v = VEHICLES[key];
     const [iw, ih] = v.bodySize, R = v.wheelRadius;
     const H = Math.max(ih, v.wheels[0][1] + R);
@@ -2428,6 +2547,15 @@
     body.src = ASSET + v.body + '.png'; body.alt = ''; body.className = 'ride-body';
     body.style.width = '100%'; body.style.top = '0';
     if (v.flip) body.style.transform = 'scaleX(-1)';
+    const seat = opts && opts.driver && CHAR_SEAT[key];
+    if (seat) {
+      const ch = new Image(), hc = seat[2] / 0.407, wc = hc * (ready(img.char) ? img.char.naturalWidth / img.char.naturalHeight : 534 / 590);
+      ch.src = ASSET + 'char.png'; ch.alt = ''; ch.className = 'ride-char';
+      ch.style.left = ((seat[0] - 0.187 * wc) / iw) * 100 + '%';
+      ch.style.top = ((seat[1] - 0.207 * hc) / H) * 100 + '%';
+      ch.style.width = (wc / iw) * 100 + '%';
+      el.appendChild(ch);                                  // behind the body, like in the game
+    }
     el.appendChild(body);
     v.wheels.forEach(([wx, wy]) => {
       const w = new Image();
@@ -2448,7 +2576,7 @@
       coins: $('#hud-coins'), coinsVal: $('#hud-coins [data-val]'), time: $('#hud-time'),
       speed: $('#hud-speed'), progress: $('#hud-progress'), toast: $('#toast'),
       prompt: $('#door-prompt'), promptName: $('#door-prompt-name'),
-      modalDoor: $('#modal-door'), modalGarage: $('#modal-garage'), modalStop: $('#modal-stop'), modalFinish: $('#modal-finish'),
+      modalDoor: $('#modal-door'), modalGarage: $('#modal-garage'), modalStop: $('#modal-stop'), startSeq: $('#start-seq'), startLive: $('#start-live'), modalFinish: $('#modal-finish'),
       modalFail: $('#modal-fail'), spook: $('#spook'), modalLevels: $('#modal-levels')
     });
     settleUntil = performance.now() + 2500;

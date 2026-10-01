@@ -94,7 +94,7 @@ Every sprite is resized once, with high quality, to the size it covers on screen
 
 The game starts in Night by default. Players pick a theme on the title card (Morning | Night | Rain), with the sun/moon button in the in-game top bar, or with `N`. The choice is remembered. At night the sky turns navy with stars and a moon (reflected on the water), and the world is tinted to moonlight in one pass (`drawNight()` in `game.js`). Light sources are then added on top: street lamps, headlights, game signs, coins, house windows, and the haunted houses and ghosts. Anything that should glow at night registers itself with `addLight()`.
 
-Rain uses the same lights-on pipeline as Night, with an overcast sky, slanted rain in two depths, splashes and tyre spray, a wet sheen on the road, and random lightning with thunder (`drawRain()` / `rainTick()` in `game.js`).
+Rain uses the same lights-on pipeline as Night, with an overcast sky, slanted rain in two depths, splashes and tyre spray, a wet sheen on the road, and lightning every 2–6.5 seconds (`drawRain()`, `strike()` and `rainTick()` in `game.js`). Most strikes are small: a short fork in the clouds, a soft flicker and quiet distant thunder, sometimes two in quick succession. About one in three is big: a bright double flash, a long bolt with branches, and close, loud thunder. Bolts are drawn jagged using midpoint displacement (`jag()`).
 
 ## Crows
 
@@ -128,12 +128,17 @@ On phones the ride picker becomes a swipeable row.
 
 There are 20 levels (`makeCourse(level)` in `physics.js`):
 
-- **Level 1** is Main Street: the town with the four game doors and the haunted houses, then the hills. It's hand-tuned.
-- **Levels 2–20** are generated from the level number, so each level is always the same course. They get longer (7,000 → 18,000), hillier and bumpier. Ramps grow from 1 to 5, haunted houses (with roof and door ghosts) from 0 to 6, and knock-over props from 1 to 4 stacks, with coin rows and jump arcs placed to match.
+- **Level 1** is Main Street: the town with all four game doors, all four company stops and the haunted houses, then the hills. It's hand-tuned.
+- **Every other level starts in a small town** with two game doors and two company stops (Services, Clients, Demos or Contact), alternating stop, game, stop, game, with speed bumps and coins between them. The pair of games and the pair of stops change from level to level (`GAME_IDS`, `PAIRS` and `TOWN_SPACING` in `physics.js`), and every game and every stop turns up across the levels.
+- **Levels 2–20** are generated from the level number, so each level is always the same course. After the town, the hills get longer (7,000 → 18,000), hillier and bumpier. Ramps grow from 1 to 5, haunted houses (with roof and door ghosts) from 0 to 6, and knock-over props from 1 to 4 stacks, with coin rows and jump arcs placed to match.
 - **Slope limit:** a maximum-slope filter keeps every generated hill at 30° (level 2) to 38° (level 20).
 - **Tested:** every level has been run in the simulator with all six cars, both driving carefully and just holding gas. All finish.
 
 **Progress** is saved in the browser (`gv:levels`). Finishing a level unlocks the next and awards 1–3 stars: one for finishing, one for half the coins, and one for 80% of the coins. The best time per level is kept too. **Play now** starts the last level you played; **Levels** opens the level map. The "Drive there" door buttons always start Main Street (level 1).
+
+**Race start** (`#start-seq`): every run opens with a race-start sequence instead of a 3-2-1 countdown. Letterbox bars slide in and a start gantry drops with three red lights that come on one by one (with a beep each) while the engine revs higher. After a held beat, every light turns green: **GO!** bursts in with a flash and speed streaks, and the controls unlock. It takes 2.75 seconds, and the timings are `START_MS` and `START_LIGHTS` in `game.js`. Opening a panel during the start pauses it.
+
+**Win screen** (`#modal-finish`): a victory scene that plays in order. The card zooms in under light rays and confetti, and a light sweeps across it. The "Victory!" title drops in letter by letter, with a shine running along it. Your ride, with the driver facing forward as in the game, races onto a lit podium with speed lines and squashes on the brakes. Two chequered flags rise on either side and wave. The stars stamp in one by one with a sparkle burst and a chime, and the stat cards flip up while the time, coins and best time count up. A "New record" stamp lands on the Best card and a "Level N unlocked" pill appears when they apply. The Next level button glints now and then. The motion is CSS keyed off `.modal.open` (the "WIN SCREEN" block at the end of `hub.css`); `playWin()` in `game.js` adds the confetti, the chimes and the count-ups. With reduced motion turned on, it shows the final state straight away.
 
 ## Character
 

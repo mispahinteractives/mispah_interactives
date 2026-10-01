@@ -12,8 +12,8 @@
 <meta property="og:image" content="assets/img/logo.png">
 <link rel="preload" href="assets/fonts/russo-one-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/exo-2-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/fonts.css?v=20261005d">
-<link rel="stylesheet" href="assets/css/hub.css?v=20261005d">
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261010b">
+<link rel="stylesheet" href="assets/css/hub.css?v=20261010b">
 </head>
 <body>
 <a class="skip" href="#services">Skip to the company stops</a>
@@ -139,6 +139,16 @@
     <span class="dp-key" aria-hidden="true"><span class="dp-key-pc">E</span><span class="dp-key-touch">Tap</span></span>
   </button>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="start-seq" class="start-seq" aria-hidden="true" data-lights="0">
+    <span class="ss-bar top"></span><span class="ss-bar bottom"></span>
+    <div class="ss-gantry">
+      <span class="ss-cable l"></span><span class="ss-cable r"></span>
+      <div class="ss-lights"><i></i><i></i><i></i></div>
+    </div>
+    <span class="ss-flash"></span>
+    <div class="ss-go"><span class="ss-streaks"></span><b>GO!</b></div>
+  </div>
+  <p class="sr" id="start-live" role="status" aria-live="polite"></p>
   <div id="spook" class="spook" aria-hidden="true">
     <img src="assets/img/assets/ghost_1.png" alt="" style="--dx:-34vw;--dy:-26vh;--d:0s">
     <img src="assets/img/assets/ghost_2.png" alt="" style="--dx:30vw;--dy:-30vh;--d:.08s">
@@ -431,34 +441,55 @@
   </div>
 </div>
 
-<div class="modal" id="modal-finish" role="dialog" aria-modal="true" aria-labelledby="finish-title" hidden>
+<div class="modal win" id="modal-finish" role="dialog" aria-modal="true" aria-labelledby="finish-title" hidden>
+  <div class="win-fx" aria-hidden="true"><div class="win-rays"></div><div class="win-confetti" data-win-confetti></div></div>
   <div class="modal-panel finish-panel">
-    <p class="badge-record" data-finish-badge hidden>New record!</p>
-    <h2 id="finish-title">Finish!</h2>
-    <div class="finish-stars" data-finish-stars aria-label="Stars"></div>
-    <p class="finish-ride" data-finish-ride></p>
+    <p class="win-level" data-finish-level>Level 1 complete</p>
+    <h2 id="finish-title" class="win-title" aria-label="Victory!">Victory!</h2>
+    <div class="win-stage" aria-hidden="true">
+      <span class="win-spot"></span>
+      <span class="win-flag l"><i></i></span><span class="win-flag r"><i></i></span>
+      <span class="win-speed"></span>
+      <div class="win-podium"><span class="win-ring"></span><b>1st</b></div>
+      <div class="win-car" data-finish-car></div>
+      <span class="win-dust d1"></span><span class="win-dust d2"></span>
+    </div>
+    <svg class="win-defs" aria-hidden="true" focusable="false"><defs>
+      <linearGradient id="ws-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c2"/><stop offset=".38" stop-color="#ffd23f"/><stop offset=".78" stop-color="#ffa11c"/><stop offset="1" stop-color="#f07a0c"/></linearGradient>
+      <linearGradient id="ws-slot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#140e33"/><stop offset="1" stop-color="#2c2266"/></linearGradient>
+      <path id="ws-star" d="M50.0 9.0 L61.8 36.8 L91.8 39.4 L69.0 59.2 L75.9 88.6 L50.0 73.0 L24.1 88.6 L31.0 59.2 L8.2 39.4 L38.2 36.8Z"/><path id="ws-gloss" d="M50.0 22.0 L56.5 37.1 L72.8 38.6 L60.5 49.4 L64.1 65.4 L50.0 57.0 L35.9 65.4 L39.5 49.4 L27.2 38.6 L43.5 37.1Z"/>
+    </defs></svg>
+    <div class="finish-stars" data-finish-stars role="img" aria-label="Stars"></div>
+    <p class="win-rating" data-finish-rating></p>
     <dl class="finish-stats">
-      <div><dt>Time</dt><dd class="mono" data-finish-time></dd></div>
-      <div><dt>Coins</dt><dd class="mono" data-finish-coins></dd></div>
-      <div><dt>Best</dt><dd class="mono" data-finish-best></dd></div>
+      <div><dt>Time</dt><dd data-finish-time></dd></div>
+      <div><dt>Coins</dt><dd data-finish-coins></dd></div>
+      <div><dt>Best</dt><dd data-finish-best></dd><p class="badge-record" data-finish-badge hidden>New record!</p></div>
     </dl>
-    <div class="modal-actions">
+    <p class="win-unlock" data-finish-unlock hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2.5"/><path d="M8 10V7.5a4 4 0 0 1 7.6-1.7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <span data-finish-unlock-text></span>
+    </p>
+    <p class="finish-ride" data-finish-ride></p>
+    <div class="modal-actions win-actions">
       <button class="btn-play" type="button" data-action="next-level" data-finish-next data-autofocus>
         <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span>Next level
       </button>
-      <button class="btn-ghost" type="button" data-action="restart">Race again</button>
-      <button class="btn-ghost" type="button" data-action="levels">Levels</button>
-      <button class="btn-ghost" type="button" data-action="exit">Back to hub</button>
+      <div class="win-more">
+        <button class="win-btn" type="button" data-action="restart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"/></svg>Race again</button>
+        <button class="win-btn" type="button" data-action="levels"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg>Levels</button>
+        <button class="win-btn" type="button" data-action="exit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7M6 9.5V20h12V9.5"/></svg>Hub</button>
+      </div>
     </div>
   </div>
 </div>
 
 <script src="assets/js/vendor/matter.min.js"></script>
-<script src="assets/js/physics.js?v=20261005d"></script>
-<script src="assets/js/games.js?v=20261005d"></script>
-<script src="assets/js/site.js?v=20261005d"></script>
-<script src="assets/js/game.js?v=20261005d"></script>
-<script src="assets/js/hub.js?v=20261005d"></script>
-<script src="assets/js/world.js?v=20261005d"></script>
+<script src="assets/js/physics.js?v=20261010b"></script>
+<script src="assets/js/games.js?v=20261010b"></script>
+<script src="assets/js/site.js?v=20261010b"></script>
+<script src="assets/js/game.js?v=20261010b"></script>
+<script src="assets/js/hub.js?v=20261010b"></script>
+<script src="assets/js/world.js?v=20261010b"></script>
 </body>
 </html>

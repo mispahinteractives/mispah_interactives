@@ -121,6 +121,11 @@
   const FIRST_DOOR = 950;
   const DOOR_SPACING = 1250;
   const STOPS = ['services', 'clients', 'demos', 'contact'];
+  // Levels 2-20 start in a smaller town: two game doors and two company stops,
+  // a different pair of each from level to level, TOWN_SPACING apart.
+  const GAME_IDS = ['animal-cafe', 'cinemoji', 'uno-clash', 'baggage-out'];
+  const PAIRS = [[0, 1], [2, 3], [0, 2], [1, 3], [0, 3], [1, 2]];
+  const TOWN_SPACING = 1100;
   const STREET = ['garage', 'services', 'animal-cafe', 'wrong-1', 'wrong-2', 'cinemoji', 'wrong-3', 'uno-clash', 'wrong-4', 'wrong-5', 'baggage-out', 'wrong-6',
     'clients', 'demos', 'contact'];
   const DOOR_HALF = 150;
@@ -154,7 +159,14 @@
       hillLen = 10900; amp = 1; f = [0.0021, 0.0047, 0.0113]; ph = [0, 1.3, 2.1]; trendDepth = 250; trendLen = 7400;
     } else {
       const d = (level - 2) / (LEVELS - 2);
-      C.townEnd = SPAWN_X + 900;
+      // the town: stop, game, stop, game (in website-map order within each pair)
+      const games = PAIRS[(level - 2) % 6].map((i) => GAME_IDS[i]);
+      const stops = PAIRS[(level + 1) % 6].map((i) => STOPS[i]);
+      [stops[0], games[0], stops[1], games[1]].forEach((id, i) => {
+        C.buildings.push({ id, x: FIRST_DOOR + i * TOWN_SPACING, kind: STOPS.includes(id) ? 'stop' : 'game', variant: 0 });
+      });
+      C.speedBumps = C.buildings.slice(1).map((b) => b.x - TOWN_SPACING / 2);
+      C.townEnd = C.buildings[C.buildings.length - 1].x + 900;
       hillLen = Math.round(7000 + 11000 * d);
       amp = 0.6 + 0.38 * d;
       const k = 1 + 0.15 * d;
@@ -227,6 +239,8 @@
     } else {
       const d = (level - 2) / (LEVELS - 2);
       const nR = 1 + Math.floor(d * 4.99), nH = Math.min(6, Math.floor(level / 3)), nP = 1 + Math.floor(d * 3.99);
+      C.speedBumps.forEach((x) => row(x, 2, 80));
+      C.checkpoints.push(...C.buildings.slice(1).map((b) => b.x - 200));
       // interleave the features, then space them evenly along the hills
       const feats = [];
       for (let i = 0; i < Math.max(nR, nH, nP); i++) {
