@@ -14,7 +14,7 @@
   const GAMES = window.GV_GAMES || [];
   const VEHICLES = P.VEHICLES;
   const ASSET = 'assets/img/assets/';
-  const SPRITES = ['truckbody', 'truckwheel', 'carbody', 'carbody2', 'wheel', 'wheel2', 'red_car', 'Wheels', 'black_car', 'black_tire', 'green_car', 'green_tire.pnge', 'char', 'strut',
+  const SPRITES = ['truckbody', 'truckwheel', 'carbody', 'carbody2', 'wheel', 'wheel2', 'red_car', 'red_car_tire', 'blue_car', 'blue_car_tire', 'grey_car', 'grey_car_tire', 'white_car', 'white_car_tire', 'black_car', 'black_tire', 'green_car', 'green_tire.pnge', 'char', 'strut',
     'rampleft', 'crate', 'box', 'suitcase', 'oilcan', 'beercan', 'sodacan', 'cloud', 'tree', 'bat',
     'wrong_house_1', 'wrong_house_2', 'wrong_house_3', 'wrong_house_4',
     'ghost_1', 'ghost_2', 'ghost_3', 'ghost_4', 'ghost_5', 'background_house1',
@@ -49,9 +49,66 @@
         const i = new Image(); i.onload = res; i.onerror = res; i.src = g.logo; logos[g.id] = i;
       }));
     });
-    return Promise.all(jobs);
+    return Promise.all(jobs).then(prepareCarArt);
   }
   const ready = (i) => i && i.complete && i.naturalWidth > 0;
+
+  /* Car art with `art` set (physics.js) is cleaned up once it loads: the
+     image is trimmed at art.crop (dropping its baked ground shadow) and the
+     glass inside each art.glass outline is made see-through, so the driver,
+     drawn behind the body, shows through tinted windows. The result replaces
+     the sprite for the game, and a PNG of it feeds the ride previews. */
+  const artSrc = {};
+  const artWaiting = [];
+  function prepareCarArt() {
+    Object.entries(VEHICLES).forEach(([key, v]) => {
+      const src = img[v.body], a = v.art;
+      if (!a || !ready(src)) return;
+      const W2 = src.naturalWidth, H2 = Math.min(a.crop, src.naturalHeight);
+      const c = document.createElement('canvas'); c.width = W2; c.height = H2;
+      const g = c.getContext('2d', { willReadFrequently: true });
+      g.drawImage(src, 0, 0);
+      if (a.wheels) {                                     // paint out wheels that are part of the picture
+        const wh = a.wheels;
+        for (const [cx, cy] of wh.at) {
+          g.save(); g.beginPath(); g.arc(cx, cy, wh.r, 0, Math.PI * 2); g.clip();
+          g.clearRect(cx - wh.r, cy - wh.r, wh.r * 2, wh.r * 2);
+          g.fillStyle = wh.fill; g.fillRect(cx - wh.r, cy - wh.r, wh.r * 2, Math.max(0, wh.below - (cy - wh.r)));
+          g.restore();
+        }
+      }
+      try {
+        const data = g.getImageData(0, 0, W2, H2), d = data.data;
+        for (const gl of a.glass || []) {
+          const poly = gl.poly, xs = poly.map((p) => p[0]), ys = poly.map((p) => p[1]);
+          const x0 = Math.max(0, Math.min(...xs)), x1 = Math.min(W2 - 1, Math.max(...xs));
+          const y0 = Math.max(0, Math.min(...ys)), y1 = Math.min(H2 - 1, Math.max(...ys));
+          for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+            if (!inPoly(x + 0.5, y + 0.5, poly)) continue;
+            const k = (y * W2 + x) * 4, r = d[k], gg = d[k + 1], b = d[k + 2], lum = (r + gg + b) / 3;
+            if (d[k + 3] < 200 || lum < gl.lum[0] || lum > gl.lum[1] || (gl.blue && b - r < 12)) continue;
+            d[k + 3] = Math.round(d[k + 3] * (gl.alpha == null ? 0.42 : gl.alpha));   // tinted glass
+          }
+        }
+        g.putImageData(data, 0, 0);
+      } catch (e) { /* pixels unreadable (file://): keep the opaque glass */ }
+      c.complete = true; c.naturalWidth = W2; c.naturalHeight = H2;
+      img[v.body] = c;
+      c.toBlob((blob) => {
+        if (!blob) return;
+        artSrc[key] = URL.createObjectURL(blob);
+        artWaiting.filter((w) => w.key === key).forEach((w) => { w.el.src = artSrc[key]; });
+      });
+    });
+  }
+  function inPoly(x, y, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const [xi, yi] = poly[i], [xj, yj] = poly[j];
+      if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  }
 
   /* ---------------------------------------------------------------- sound */
   const Sound = (function () {
@@ -2001,7 +2058,8 @@
      those pixels. His hands land on the steering wheel. */
   const CHAR_SEAT = {
     truck: [650, 115, 52], beetle: [318, 88, 40], sedan: [560, 70, 48],
-    classic: [430, 40, 52], skull: [66, 14, 15], sport: [410, 62, 46]
+    classic: [280, 60, 36], skull: [66, 14, 15], sport: [410, 62, 46],
+    bluebug: [262, 50, 32], coupe: [392, 48, 36], rally: [253, 42, 32]
   };
   function drawCharacter() {
     const seat = CHAR_SEAT[car.key], ch = img.char;
@@ -2418,6 +2476,9 @@
       else if (e.code === 'Digit4') setVehicle('classic');
       else if (e.code === 'Digit5') setVehicle('skull');
       else if (e.code === 'Digit6') setVehicle('sport');
+      else if (e.code === 'Digit7') setVehicle('bluebug');
+      else if (e.code === 'Digit8') setVehicle('coupe');
+      else if (e.code === 'Digit9') setVehicle('rally');
     });
     window.addEventListener('keyup', (e) => keys.delete(e.code));
     window.addEventListener('blur', () => { keys.clear(); touch.gas = touch.brake = touch.jump = false; });
@@ -2544,9 +2605,18 @@
     el.style.aspectRatio = iw + ' / ' + H;
     el.style.setProperty('--ar', (iw / H).toFixed(3));    // lets CSS fit wide cars into their tile
     const body = new Image();
-    body.src = ASSET + v.body + '.png'; body.alt = ''; body.className = 'ride-body';
+    body.src = artSrc[key] || ASSET + v.body + '.png'; body.alt = ''; body.className = 'ride-body';
     body.style.width = '100%'; body.style.top = '0';
     if (v.flip) body.style.transform = 'scaleX(-1)';
+    // trimmed art: show only the top `crop` px (no ground shadow), and swap in
+    // the cleaned image (see-through glass) once it is ready
+    let bodyBox = body;
+    if (v.art) {
+      if (!artSrc[key]) artWaiting.push({ key, el: body });
+      bodyBox = document.createElement('div'); bodyBox.className = 'ride-crop';
+      bodyBox.style.height = (ih / H) * 100 + '%';
+      bodyBox.appendChild(body);
+    }
     const seat = opts && opts.driver && CHAR_SEAT[key];
     if (seat) {
       const ch = new Image(), hc = seat[2] / 0.407, wc = hc * (ready(img.char) ? img.char.naturalWidth / img.char.naturalHeight : 534 / 590);
@@ -2556,7 +2626,7 @@
       ch.style.width = (wc / iw) * 100 + '%';
       el.appendChild(ch);                                  // behind the body, like in the game
     }
-    el.appendChild(body);
+    el.appendChild(bodyBox);
     v.wheels.forEach(([wx, wy]) => {
       const w = new Image();
       w.src = ASSET + v.wheel + '.png'; w.alt = ''; w.className = 'ride-wheel';

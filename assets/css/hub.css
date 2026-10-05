@@ -2128,3 +2128,12 @@ section.stop-contact { padding-top: clamp(100px, 11vw, 150px); }
   .ws-glint { width: 12px; height: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .win-star.on .ws-rays { opacity: 0.8; } }
+
+/* trimmed car art in ride previews: only the car, not its baked ground shadow */
+.ride-crop { position: absolute; left: 0; top: 0; width: 100%; overflow: hidden; z-index: 1; }
+.ride-crop .ride-body { position: absolute; left: 0; top: 0; }
+/* 9 rides: a 3x3 garage, every card in its own cell */
+@media (min-width: 900px) {
+  .garage-grid { grid-template-columns: repeat(3, 1fr); }
+  .garage-grid .garage-card:last-child:nth-child(odd) { grid-column: auto; }
+}

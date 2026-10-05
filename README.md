@@ -117,12 +117,24 @@ The site uses **Russo One** (headings, buttons and in-game text) and **Exo 2** (
 
 ## Rides
 
-Five rides: Monster Truck, Blue Bubble, Green Cruiser, **Red Classic** (`red_car.png` with `Wheels.png`) and **Skull Crusher** (`black_car.png` with `black_tire.png`).
+Nine rides, picked on the intro (3×3), in the garage, or with keys 1–9:
 
-- **Red Classic:** its art faces left, so it's drawn mirrored (`flip: true` in `VEHICLES` in `physics.js`), and its wheel, hull and exhaust coordinates are given in the mirrored image. Its collision hull tapers at the nose and tail so the long, low overhangs don't catch on ramps.
+| Key | Ride | Art |
+|---|---|---|
+| 1 | Monster Truck | `truckbody.png`, `truckwheel.png` |
+| 2 | Blue Bubble | `carbody.png`, `wheel.png` |
+| 3 | Green Cruiser | `carbody2.png`, `wheel2.png` |
+| 4 | Red Hatch | `red_car.png`, `red_car_tire.png` |
+| 5 | Skull Crusher | `black_car.png`, `black_tire.png` |
+| 6 | Green Sports | `green_car.png`, `green_tire.pnge.png` |
+| 7 | Sky Bug | `blue_car.png`, `blue_car_tire.png` |
+| 8 | Silver Coupe | `grey_car.png`, `grey_car_tire.png` |
+| 9 | White Rally | `white_car.png`, `white_car_tire.png` |
+
+- **Mirrored art:** Red Hatch, Green Sports, Sky Bug, Silver Coupe and White Rally face left, so they're drawn mirrored (`flip: true` in `VEHICLES` in `physics.js`). Their wheel, hull and exhaust coordinates are given in the mirrored image.
+- **Newer car art** (red, blue, grey, white) comes with a soft ground shadow and solid window glass. The `art` field cleans it up when the game loads, without changing the files. `crop` trims the image above the shadow, so no pale blob travels with the car at night or in the air. `glass` lists the window outlines (in the original, unmirrored image) whose glass is made see-through, so the driver shows through tinted windows; the Silver Coupe's headrest is cleared completely, since the driver sits there. The red and blue images also have wheels painted into the picture. `wheels` paints those over with the wheel-well colour, so only the real tyres show; painted wheels can't follow the suspension and would show as a second, static tyre. Ride previews use the same cleaned image. If an image is replaced with a new drawing, re-check its `crop`, `glass`, `wheels` and the driver position in `CHAR_SEAT` (`game.js`).
 - **Skull Crusher:** its art is small (192×119), so it's scaled up 1.55× to monster-truck size. Its collision hull covers only the body, not the X-frame underneath.
-
-On phones the ride picker becomes a swipeable row.
+- **Tested:** every ride finishes all 20 levels in the simulator.
 
 ## Levels
 
