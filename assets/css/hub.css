@@ -2132,8 +2132,21 @@ section.stop-contact { padding-top: clamp(100px, 11vw, 150px); }
 /* trimmed car art in ride previews: only the car, not its baked ground shadow */
 .ride-crop { position: absolute; left: 0; top: 0; width: 100%; overflow: hidden; z-index: 1; }
 .ride-crop .ride-body { position: absolute; left: 0; top: 0; }
-/* 9 rides: a 3x3 garage, every card in its own cell */
-@media (min-width: 900px) {
-  .garage-grid { grid-template-columns: repeat(3, 1fr); }
-  .garage-grid .garage-card:last-child:nth-child(odd) { grid-column: auto; }
+/* four rides, shown as two rows of two: in the intro picker and in the
+   garage, on every screen size */
+.ride-picker, .hero-setup .ride-picker {
+  grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: row; grid-auto-columns: auto; overflow: visible;
+}
+.ride-picker > button, .ride-picker > button:nth-child(4) { grid-column: auto; }   /* the older 6-column layout made tiles span 2 */
+.garage-grid, .garage-panel .garage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.garage-grid .garage-card:last-child:nth-child(odd) { grid-column: auto; }
+/* phones: the two-across garage cards stack vertically (car on top, then
+   the name and stats) instead of the old one-per-row side-by-side layout */
+@media (max-width: 760px) {
+  .garage-grid { gap: 10px; }
+  .garage-card { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 10px 12px; }
+  .garage-card .ride-slot { grid-row: auto; width: 100%; height: 64px; margin: 0 0 4px; }
+  .garage-card b { font-size: 17px; }
+  .garage-card span:not(.ride-slot) { font-size: 11.5px; line-height: 1.35; }
+  .garage-card kbd { top: 8px; right: 8px; }
 }

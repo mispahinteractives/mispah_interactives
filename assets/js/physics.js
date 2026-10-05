@@ -64,33 +64,6 @@
       spring: 0.011, springDamp: 0.06, travel: 18, arm: 0.9,
       density: 0.0017, wheelDensity: 0.0026, wheelie: 0.00025, airTorque: 0.0011, jump: 11
     },
-    /* The newer car art (red, blue, grey, white) faces left, so it is drawn
-       mirrored (flip) and wheel / hull / exhaust coordinates are in the
-       mirrored image (x' = image width - x). These images also come with a
-       soft ground shadow and opaque window glass, so `art` tells the game to
-       trim the image at `crop` px (dropping the shadow) and to make the glass
-       inside each `glass` outline see-through, so the driver shows. `glass`
-       outlines are in the original, unmirrored image; `lum` is the brightness
-       range of the glass pixels, `blue` also requires a blue tint, and `alpha`
-       (default 0.42) is how much of the glass is kept. `wheels` (unmirrored)
-       are wheels painted into the art: they are painted over with the wheel
-       well colour above `below` and cleared under it, so only the real
-       wheels show (painted wheels would not follow the suspension). */
-    classic: {
-      name: 'Red Hatch',
-      tag: 'Zippy · Agile',
-      body: 'red_car', bodySize: [570, 262], scale: 0.5, flip: true,
-      wheel: 'red_car_tire', wheelRadius: 56,
-      wheels: [[98, 229], [455, 229]],
-      hull: [[8, 140, 562, 250], [60, 20, 420, 140], [420, 118, 540, 140]],
-      exhaust: [10, 235],
-      art: { crop: 262, wheels: { at: [[115, 229], [472, 229]], r: 57, below: 250, fill: '#333' }, glass: [
-        { poly: [[148, 114], [235, 14], [495, 8], [548, 118], [515, 100], [360, 96], [200, 106]], lum: [150, 255], blue: true }
-      ] },
-      maxSpeed: 24, reverseSpeed: 8, accel: 0.08, brake: 0.84,
-      spring: 0.011, springDamp: 0.06, travel: 16, arm: 0.9,
-      density: 0.0017, wheelDensity: 0.0026, wheelie: 0.00028, airTorque: 0.0013, jump: 11
-    },
     // black_car.png is a small image (192x119), scaled up to monster-truck size
     skull: {
       name: 'Skull Crusher',
@@ -103,71 +76,6 @@
       maxSpeed: 25, reverseSpeed: 9, accel: 0.075, brake: 0.86,
       spring: 0.009, springDamp: 0.05, travel: 22, arm: 0.9,
       density: 0.002, wheelDensity: 0.0024, wheelie: 0.0003, airTorque: 0.0011, jump: 12
-    },
-    // green_car.png faces left: drawn mirrored, coordinates in the mirrored image
-    sport: {
-      name: 'Green Sports',
-      tag: 'Fast · Grippy',
-      body: 'green_car', bodySize: [1000, 267], scale: 0.3, flip: true,
-      wheel: 'green_tire.pnge', wheelRadius: 82,
-      wheels: [[194, 210], [760, 210]],
-      hull: [[120, 100, 880, 232], [880, 110, 995, 212], [5, 95, 120, 222], [140, 22, 640, 100]],
-      exhaust: [10, 215],
-      maxSpeed: 26, reverseSpeed: 9, accel: 0.08, brake: 0.84,
-      spring: 0.011, springDamp: 0.06, travel: 18, arm: 0.9,
-      density: 0.0017, wheelDensity: 0.0026, wheelie: 0.00025, airTorque: 0.0012, jump: 11
-    },
-    bluebug: {
-      name: 'Sky Bug',
-      tag: 'Retro · Bouncy',
-      body: 'blue_car', bodySize: [536, 264], scale: 0.5, flip: true,
-      wheel: 'blue_car_tire', wheelRadius: 63,
-      wheels: [[110, 229], [426, 229]],
-      hull: [[12, 150, 524, 250], [50, 95, 480, 150], [70, 15, 350, 95]],
-      exhaust: [12, 235],
-      art: { crop: 264, wheels: { at: [[110, 229], [426, 229]], r: 64, below: 250, fill: '#343434' }, glass: [
-        { poly: [[203, 76], [214, 34], [236, 12], [330, 14], [334, 32], [314, 86]], lum: [200, 255], blue: true },
-        { poly: [[336, 86], [340, 36], [358, 24], [392, 30], [420, 66], [420, 102]], lum: [200, 255], blue: true },
-        { poly: [[414, 40], [474, 98], [452, 98], [430, 60]], lum: [200, 255], blue: true }
-      ] },
-      maxSpeed: 22, reverseSpeed: 8, accel: 0.085, brake: 0.84,
-      spring: 0.012, springDamp: 0.06, travel: 18, arm: 0.9,
-      density: 0.0016, wheelDensity: 0.0026, wheelie: 0.0003, airTorque: 0.0013, jump: 11
-    },
-    coupe: {
-      name: 'Silver Coupe',
-      tag: 'Sleek · Fast',
-      body: 'grey_car', bodySize: [702, 238], scale: 0.43, flip: true,
-      wheel: 'grey_car_tire', wheelRadius: 66,
-      wheels: [[144, 203], [559, 203]],
-      hull: [[6, 110, 696, 216], [40, 85, 560, 110], [150, 15, 430, 85]],
-      exhaust: [8, 205],
-      art: { crop: 238, glass: [
-        { poly: [[262, 90], [300, 50], [362, 12], [420, 10], [500, 30], [556, 66], [440, 80], [330, 84]], lum: [0, 115] },
-        { poly: [[262, 90], [300, 50], [362, 12], [420, 10], [500, 30], [556, 66], [440, 80], [330, 84]], lum: [222, 255] },
-        // the round headrest sits where the driver goes: clear it completely
-        { poly: [[300, 58], [315, 54], [330, 58], [335, 72], [330, 86], [315, 90], [300, 86], [296, 72]], lum: [150, 235], alpha: 0 }
-      ] },
-      maxSpeed: 26, reverseSpeed: 9, accel: 0.08, brake: 0.84,
-      spring: 0.011, springDamp: 0.06, travel: 16, arm: 0.9,
-      density: 0.0017, wheelDensity: 0.0026, wheelie: 0.00025, airTorque: 0.0012, jump: 11
-    },
-    rally: {
-      name: 'White Rally',
-      tag: 'Rugged · Grippy',
-      body: 'white_car', bodySize: [553, 240], scale: 0.5, flip: true,
-      wheel: 'white_car_tire', wheelRadius: 54,
-      wheels: [[86, 218], [440, 218]],
-      hull: [[6, 135, 546, 228], [30, 80, 480, 135], [70, 8, 350, 80]],
-      exhaust: [14, 215],
-      art: { crop: 240, glass: [
-        { poly: [[243, 80], [252, 44], [280, 6], [362, 6], [352, 80]], lum: [0, 120] },
-        { poly: [[364, 80], [376, 6], [452, 6], [492, 80]], lum: [0, 120] },
-        { poly: [[198, 82], [262, 6], [272, 6], [214, 82]], lum: [0, 120] }
-      ] },
-      maxSpeed: 23, reverseSpeed: 8, accel: 0.08, brake: 0.86,
-      spring: 0.011, springDamp: 0.06, travel: 20, arm: 0.9,
-      density: 0.0018, wheelDensity: 0.0026, wheelie: 0.00028, airTorque: 0.0012, jump: 11
     }
   };
 

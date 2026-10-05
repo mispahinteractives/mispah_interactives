@@ -14,7 +14,7 @@
   const GAMES = window.GV_GAMES || [];
   const VEHICLES = P.VEHICLES;
   const ASSET = 'assets/img/assets/';
-  const SPRITES = ['truckbody', 'truckwheel', 'carbody', 'carbody2', 'wheel', 'wheel2', 'red_car', 'red_car_tire', 'blue_car', 'blue_car_tire', 'grey_car', 'grey_car_tire', 'white_car', 'white_car_tire', 'black_car', 'black_tire', 'green_car', 'green_tire.pnge', 'char', 'strut',
+  const SPRITES = ['truckbody', 'truckwheel', 'carbody', 'carbody2', 'wheel', 'wheel2', 'black_car', 'black_tire', 'char', 'strut',
     'rampleft', 'crate', 'box', 'suitcase', 'oilcan', 'beercan', 'sodacan', 'cloud', 'tree', 'bat',
     'wrong_house_1', 'wrong_house_2', 'wrong_house_3', 'wrong_house_4',
     'ghost_1', 'ghost_2', 'ghost_3', 'ghost_4', 'ghost_5', 'background_house1',
@@ -2057,9 +2057,7 @@
      use mirrored coordinates, like their wheels), and his head height in
      those pixels. His hands land on the steering wheel. */
   const CHAR_SEAT = {
-    truck: [650, 115, 52], beetle: [318, 88, 40], sedan: [560, 70, 48],
-    classic: [280, 60, 36], skull: [66, 14, 15], sport: [410, 62, 46],
-    bluebug: [262, 50, 32], coupe: [392, 48, 36], rally: [253, 42, 32]
+    truck: [650, 115, 52], beetle: [318, 88, 40], sedan: [560, 70, 48], skull: [66, 14, 15]
   };
   function drawCharacter() {
     const seat = CHAR_SEAT[car.key], ch = img.char;
@@ -2473,12 +2471,7 @@
       else if (e.code === 'Digit1') setVehicle('truck');
       else if (e.code === 'Digit2') setVehicle('beetle');
       else if (e.code === 'Digit3') setVehicle('sedan');
-      else if (e.code === 'Digit4') setVehicle('classic');
-      else if (e.code === 'Digit5') setVehicle('skull');
-      else if (e.code === 'Digit6') setVehicle('sport');
-      else if (e.code === 'Digit7') setVehicle('bluebug');
-      else if (e.code === 'Digit8') setVehicle('coupe');
-      else if (e.code === 'Digit9') setVehicle('rally');
+      else if (e.code === 'Digit4') setVehicle('skull');
     });
     window.addEventListener('keyup', (e) => keys.delete(e.code));
     window.addEventListener('blur', () => { keys.clear(); touch.gas = touch.brake = touch.jump = false; });
