@@ -2150,3 +2150,185 @@ section.stop-contact { padding-top: clamp(100px, 11vw, 150px); }
   .garage-card span:not(.ride-slot) { font-size: 11.5px; line-height: 1.35; }
   .garage-card kbd { top: 8px; right: 8px; }
 }
+
+/* Driver's manual: the key list runs in two columns where there's room */
+.manual .keys { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 22px; row-gap: 10px; margin-top: 16px; }
+.manual .keys li { font-size: 14px; }
+.manual .keys kbd { white-space: nowrap; }
+@media (max-width: 560px) { .manual .keys { grid-template-columns: 1fr; } }
+
+/* Jump button: the jump_icon.png push-button (an arrow over a round plate)
+   with a label, like Gas and Brake. Pressing squashes it down from the base
+   and dims it; releasing springs it back with a small bounce. */
+.pedal.pedal-jump.is-icon, .pedal.pedal-jump.is-icon.down {
+  --c: #f5a623; --c-down: #cf8710;
+  width: auto; aspect-ratio: auto; height: auto; padding: 0; gap: 6px;
+  border: 0; border-radius: 16px; background: none; box-shadow: none; transform: none;
+  margin-bottom: clamp(18px, 5vw, 26px);
+}
+.pedal-jump.is-icon img {
+  display: block; height: clamp(78px, 21vw, 98px); width: auto; pointer-events: none;
+  -webkit-user-drag: none; user-select: none;
+  transform-origin: 50% 100%; transform: none;
+  filter: drop-shadow(0 7px 6px rgba(10, 6, 30, 0.4)) brightness(1);
+  transition: transform 0.45s cubic-bezier(.3, 1.7, .5, 1), filter 0.3s ease-out;
+  will-change: transform;
+}
+.pedal-jump.is-icon.down img {
+  transform: scale(1.04, 0.86);
+  filter: drop-shadow(0 2px 2px rgba(10, 6, 30, 0.5)) brightness(0.88);
+  transition: transform 0.08s cubic-bezier(.25, .75, .35, 1), filter 0.08s ease-out;
+}
+.pedal-jump.is-icon.down .pedal-label { background: var(--c-down); transform: scale(0.95); transition-duration: 0.08s; }
+@media (max-width: 760px) {
+  .pedal.pedal-jump.is-icon { width: auto; margin-bottom: 16px; }
+  .pedal-jump.is-icon img { height: 70px; }
+}
+/* the manual's controls diagram shows the same icon */
+.td-pedal.j { background: none; border: 0; width: 44px; height: 58px; }
+.td-pedal.j img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.35)); }
+
+/* ==========================================================================
+   FAIL SCREEN: a haunted "run over" scene
+     0.0s  dark vignette, drifting fog, bats cross      0.1s card shudders in
+     0.2s  SPOOKED! / CAUGHT! letters drop and keep wobbling
+     0.4s  the ghost swoops in front of its haunted house and hovers;
+           your ride trembles, a "!" pops above it
+     0.9s  tip, distance bar fills, stats, buttons
+   ========================================================================== */
+#modal-fail { background: radial-gradient(circle at 50% 40%, rgba(120, 60, 170, 0.35), rgba(6, 3, 16, 0.95) 65%); }
+.fail-fx { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+.fog { position: absolute; left: -30%; width: 160%; height: 40vh; border-radius: 50%; filter: blur(30px); opacity: 0.55;
+  background: radial-gradient(ellipse at center, rgba(170, 140, 230, 0.35), transparent 65%); }
+.fog.f1 { bottom: -12vh; animation: fog-drift 16s ease-in-out infinite alternate; }
+.fog.f2 { top: -14vh; opacity: 0.35; animation: fog-drift 22s ease-in-out -6s infinite alternate-reverse; }
+@keyframes fog-drift { from { transform: translateX(-8%); } to { transform: translateX(8%); } }
+.fail-bat { position: absolute; width: 46px; height: auto; opacity: 0; filter: brightness(0.6) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5)); }
+.fail-bat.b1 { top: 14%; animation: bat-fly 6s linear 0.3s infinite, bat-flap 0.28s ease-in-out infinite alternate; }
+.fail-bat.b2 { top: 30%; width: 32px; animation: bat-fly-r 8s linear 1.6s infinite, bat-flap 0.24s ease-in-out infinite alternate; }
+.fail-bat.b3 { top: 70%; width: 38px; animation: bat-fly 9s linear 3.2s infinite, bat-flap 0.3s ease-in-out infinite alternate; }
+@keyframes bat-fly { 0% { opacity: 0; left: -8%; translate: 0 0; } 8%, 90% { opacity: 0.9; } 50% { translate: 0 -40px; } 100% { opacity: 0; left: 108%; translate: 0 10px; } }
+@keyframes bat-fly-r { 0% { opacity: 0; left: 108%; translate: 0 0; } 8%, 90% { opacity: 0.8; } 50% { translate: 0 30px; } 100% { opacity: 0; left: -8%; translate: 0 -10px; } }
+@keyframes bat-flap { from { scale: 1 1; } to { scale: 1 0.55; } }
+
+#modal-fail .fail-panel {
+  z-index: 1; width: min(560px, 100%); padding: 24px 26px 22px; text-align: center; border-radius: 30px;
+  border: 2px solid rgba(185, 140, 255, 0.5);
+  background: radial-gradient(120% 60% at 50% 0%, rgba(185, 140, 255, 0.18), transparent 62%), linear-gradient(170deg, #241640, #0f0a22);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.65), 0 0 70px rgba(140, 90, 220, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.fail-level { margin: 0; font: 800 12px/1 var(--body); letter-spacing: 0.26em; text-transform: uppercase; color: #cdb8ff; display: flex; align-items: center; justify-content: center; gap: 12px; }
+.fail-level::before, .fail-level::after { content: ""; width: 40px; height: 2px; border-radius: 1px; background: linear-gradient(90deg, transparent, #b98cff); }
+.fail-level::after { transform: scaleX(-1); }
+#modal-fail .fail-title {
+  margin: 6px 0 10px; font: 400 clamp(48px, 8.5vw, 76px)/0.95 var(--display); text-transform: uppercase;
+  -webkit-text-stroke: 0 !important; text-shadow: none !important; color: inherit;
+}
+#modal-fail .fail-title > span { display: inline-flex; filter: drop-shadow(0 4px 0 #2a0f4a) drop-shadow(0 0 22px rgba(160, 110, 255, 0.55)); }
+#modal-fail .fail-title b {
+  display: inline-block; font-weight: 400; color: transparent;
+  background: linear-gradient(180deg, #f3ecff 0%, #c9a8ff 45%, #8a5cff 100%); -webkit-background-clip: text; background-clip: text;
+}
+
+/* the haunted scene */
+.fail-stage {
+  position: relative; height: 180px; margin: 0 -4px; border-radius: 22px; overflow: hidden;
+  background: radial-gradient(70% 70% at 70% 30%, rgba(160, 120, 255, 0.25), transparent 70%), linear-gradient(180deg, #1b1240 0%, #120c2c 70%, #0b0820 70.5%, #150f33 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), inset 0 -30px 40px rgba(0, 0, 0, 0.4);
+}
+.fs-moon { position: absolute; left: 47%; top: 16px; width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle at 40% 40%, #fff8e0, #e9dcff 60%, #b9a6f0); box-shadow: 0 0 30px 8px rgba(220, 200, 255, 0.35); }
+.fs-house { position: absolute; right: 4%; bottom: 52px; height: 112px; width: auto; max-width: none; opacity: 0.7; filter: brightness(0.5) saturate(0.7) hue-rotate(220deg) drop-shadow(0 0 10px rgba(185, 140, 255, 0.35)); }
+.fs-mist { position: absolute; left: 0; right: 0; bottom: 34px; height: 46px; background: linear-gradient(transparent, rgba(150, 120, 220, 0.25), transparent); filter: blur(6px); }
+.fs-car { position: absolute; left: 12%; bottom: 30px; width: 200px; z-index: 1; }
+.fs-car .ride { width: min(100%, calc(var(--ar) * 92px)); height: auto; margin: 0 auto; filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.5)) brightness(0.92); }
+.fs-shock {
+  position: absolute; left: calc(12% + 84px); top: 18px; z-index: 2; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
+  background: #ffd75a; color: #2a0f4a; font: 400 22px/1 var(--display); box-shadow: 0 4px 0 #a5650a, 0 0 18px rgba(255, 215, 90, 0.6);
+}
+.fs-ghost { position: absolute; right: 18%; bottom: 46px; height: 118px; width: auto; max-width: none; z-index: 2; filter: drop-shadow(0 0 18px rgba(200, 170, 255, 0.7)); }
+
+/* tip, distance, stats */
+.fail-tip {
+  display: flex; align-items: flex-start; gap: 10px; margin: 16px 0 12px; padding: 12px 14px; border-radius: 16px; text-align: left;
+  background: rgba(185, 140, 255, 0.1); border: 1px solid rgba(185, 140, 255, 0.28); color: #e6dcff; font-size: 14.5px; line-height: 1.45;
+}
+.fail-tip svg { flex: none; width: 22px; height: 22px; margin-top: 1px; fill: none; stroke: #ffd75a; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fail-progress { margin: 0 0 12px; text-align: left; }
+.fp-head { display: flex; justify-content: space-between; margin-bottom: 6px; font: 800 11px/1 var(--body); letter-spacing: 0.16em; text-transform: uppercase; color: #cdb8ff; }
+.fp-head b { font: 400 15px/1 var(--display); letter-spacing: 0.04em; color: #fff; }
+.fp-track { position: relative; height: 12px; border-radius: 6px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); }
+.fp-fill { position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--p, 0) * 100%); border-radius: 6px; background: linear-gradient(90deg, #8a5cff, #ff4f8b); box-shadow: 0 0 12px rgba(255, 79, 139, 0.5); }
+.fp-fill::after { content: ""; position: absolute; right: -7px; top: 50%; width: 14px; height: 14px; margin-top: -7px; border-radius: 50%; background: #fff; box-shadow: 0 0 10px #ff4f8b; }
+.fp-flag { position: absolute; right: -2px; top: -7px; width: 18px; height: 24px; border-radius: 3px; background: conic-gradient(#fff 0 25%, #1b2033 0 50%, #fff 0 75%, #1b2033 0) 0 0 / 9px 8px; opacity: 0.8; }
+#modal-fail .finish-stats { gap: 10px; }
+#modal-fail .finish-stats div { position: relative; padding: 10px 8px 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-top: 3px solid #b98cff; }
+#modal-fail .finish-stats dt { color: #cdb8ff; }
+#modal-fail .finish-stats dd { margin-top: 6px; font: 400 24px/1 var(--display); color: #fff; }
+.fail-actions { margin-top: 16px; }
+.win-more.two { grid-template-columns: repeat(2, 1fr); }
+#modal-fail .btn-play { background: linear-gradient(180deg, #ffd75a, #f5a623); }
+
+/* the sequence */
+#modal-fail.open .fail-panel { animation: fail-in 0.75s cubic-bezier(.2, 1.2, .4, 1); }
+@keyframes fail-in {
+  0% { opacity: 0; transform: translateY(40px) scale(0.88); filter: blur(5px); }
+  55% { opacity: 1; transform: translateY(-4px) scale(1.01); filter: blur(0); }
+  65% { transform: translateX(-6px) rotate(-0.6deg); } 75% { transform: translateX(5px) rotate(0.5deg); }
+  85% { transform: translateX(-3px); } 100% { transform: none; }
+}
+#modal-fail.open .fail-level { animation: win-fade-down 0.5s ease-out 0.1s backwards; }
+#modal-fail.open .fail-title b {
+  animation: fail-letter 0.7s cubic-bezier(.2, 1.5, .35, 1) calc(0.2s + var(--i) * 0.06s) backwards,
+             fail-wobble 2.6s ease-in-out calc(1.1s + var(--i) * 0.12s) infinite;
+}
+@keyframes fail-letter { 0% { opacity: 0; transform: translateY(-50px) rotate(calc((var(--i) - 3) * 9deg)) scale(1.4); filter: blur(4px); } 60% { opacity: 1; transform: translateY(5px) rotate(-3deg); filter: blur(0); } }
+@keyframes fail-wobble { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-3px) rotate(2deg); } }
+#modal-fail.open .fs-moon { animation: win-fade-down 0.8s ease-out 0.2s backwards; }
+#modal-fail.open .fs-house { animation: fail-house 0.9s ease-out 0.25s backwards; }
+@keyframes fail-house { from { opacity: 0; transform: translateY(14px); } }
+#modal-fail.open .fs-ghost { animation: fail-ghost-in 0.9s cubic-bezier(.2, 1.3, .4, 1) 0.4s backwards, fail-ghost-hover 2.4s ease-in-out 1.3s infinite; }
+@keyframes fail-ghost-in { 0% { opacity: 0; transform: translate(90px, 50px) scale(0.3) rotate(25deg); } 60% { opacity: 1; transform: translate(-8px, -6px) scale(1.12) rotate(-6deg); } 100% { opacity: 1; transform: none; } }
+@keyframes fail-ghost-hover { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(3deg); } }
+#modal-fail.open .fs-car { animation: win-fade-up 0.4s ease-out 0.2s backwards, fail-tremble 0.14s linear 0.7s 10; }
+@keyframes fail-tremble { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px) rotate(-0.6deg); } 75% { transform: translateX(2px) rotate(0.6deg); } }
+#modal-fail.open .fs-shock { animation: fail-shock 0.5s cubic-bezier(.2, 1.8, .4, 1) 0.75s backwards, fail-shock-bob 1.2s ease-in-out 1.4s infinite; }
+@keyframes fail-shock { 0% { opacity: 0; transform: scale(0) rotate(-30deg); } 100% { opacity: 1; transform: none; } }
+@keyframes fail-shock-bob { 50% { transform: translateY(-4px) rotate(6deg); } }
+#modal-fail.open .fail-tip { animation: win-fade-up 0.5s cubic-bezier(.16, 1, .3, 1) 0.9s backwards; }
+#modal-fail.open .fail-progress { animation: win-fade-up 0.5s cubic-bezier(.16, 1, .3, 1) 1s backwards; }
+#modal-fail.open .fp-fill { animation: fp-fill 1s cubic-bezier(.16, 1, .3, 1) 1.15s backwards; }
+@keyframes fp-fill { from { width: 0; } }
+#modal-fail.open .finish-stats > div { animation: win-flip 0.6s cubic-bezier(.2, 1.3, .4, 1) backwards; }
+#modal-fail.open .finish-stats > div:nth-child(1) { animation-delay: 1.15s; }
+#modal-fail.open .finish-stats > div:nth-child(2) { animation-delay: 1.25s; }
+#modal-fail .finish-stats { perspective: 600px; }
+#modal-fail.open .fail-actions { animation: win-fade-up 0.6s cubic-bezier(.16, 1, .3, 1) 0.8s backwards; }
+
+@media (max-width: 560px) {
+  #modal-fail .fail-panel { padding: 20px 16px 18px; border-radius: 24px; }
+  #modal-fail .fail-title { font-size: 46px; }
+  .fail-stage { height: 150px; margin: 0; }
+  .fs-car { left: 6%; width: 160px; bottom: 26px; }
+  .fs-car .ride { width: min(100%, calc(var(--ar) * 72px)); }
+  .fs-shock { left: calc(6% + 64px); top: 14px; width: 28px; height: 28px; font-size: 18px; }
+  .fs-ghost { right: 10%; height: 96px; bottom: 40px; }
+  .fs-house { height: 92px; bottom: 44px; }
+  .fs-moon { width: 32px; height: 32px; left: 50%; top: 12px; }
+  .fail-tip { font-size: 13.5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #modal-fail *, #modal-fail .fail-panel { animation: none !important; }
+  .fail-fx { display: none; }
+}
+
+/* contact card: the founder */
+.contact-person { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+.cp-badge {
+  display: grid; place-items: center; flex: none; width: 46px; height: 46px; border-radius: 50%;
+  background: linear-gradient(160deg, #ffd75a, #f5a623); color: var(--outline); font: 400 16px/1 var(--display); letter-spacing: 0.02em;
+  box-shadow: 0 0 0 3px rgba(255, 200, 61, 0.25);
+}
+.contact-person b { display: block; font: 400 18px/1.15 var(--display); color: #fff; }
+.contact-person small { display: block; margin-top: 3px; font: 700 11px/1.2 var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+/* phones: keep the email address on one line */
+@media (max-width: 430px) { .contact-mail > span:last-child { font-size: 13.5px; white-space: nowrap; } .contact-mail { padding-right: 12px; } }

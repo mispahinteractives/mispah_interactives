@@ -98,7 +98,7 @@ Rain uses the same lights-on pipeline as Night, with an overcast sky, slanted ra
 
 ## Crows
 
-In Morning only, three crows fly far off in the sky, between the clouds and the mountains, crossing in both directions. They use only the in-flight pose `crow_1.png` (mirrored for right-flying crows), animated smoothly with a soft wing-beat squash, long glides, a gentle rise and fall, and a tilt that follows the path (`CROWS` / `drawCrows()` in `game.js`). `crow_2.png` isn't used: its pose is too different to animate between. Night and Rain have no crows.
+In Morning only, three crows fly far off in the sky, between the clouds and the mountains, crossing in both directions. They use only the in-flight pose `crow_1.png` (mirrored for right-flying crows), animated smoothly with a soft wing-beat squash, long glides, a gentle rise and fall, and a tilt that follows the path (`CROWS` / `drawCrows()` in `game.js`). A second crow pose was tried and dropped, because it was too different to animate between. Night and Rain have no crows.
 
 ## Performance
 
@@ -124,11 +124,11 @@ Four rides, shown as two rows of two in the intro picker and in the garage, and 
 | 1 | Monster Truck | `truckbody.png`, `truckwheel.png` |
 | 2 | Blue Bubble | `carbody.png`, `wheel.png` |
 | 3 | Green Cruiser | `carbody2.png`, `wheel2.png` |
-| 4 | Skull Crusher | `black_car.png`, `black_tire.png` |
+| 4 | Skull Crusher | `black_car.png`, `black_car_tire.png` |
 
-- **Skull Crusher:** its art is small (192×119), so it's scaled up 1.55× to monster-truck size. Its collision hull covers only the body, not the X-frame underneath.
+- **Skull Crusher:** its art (399×245) is drawn at 0.746× to come out at monster-truck size. Its headlight beam starts at the lamp (`light` in `VEHICLES`). The art is low-resolution and its edges are already stepped in the file, so the game enlarges, smooths and sharpens it once at load (`enhanceLowRes()` in `game.js`). A fresh export about 1200 px wide would look best. Its collision hull covers only the body, not the X-frame underneath.
 - **Saved rides:** a player whose saved ride is no longer offered starts in the Monster Truck.
-- **Adding a ride:** add it to `VEHICLES` in `physics.js`, a seat in `CHAR_SEAT` (`game.js`), a tile in the picker and a card in the garage (`index.html`), and a number key. Art that faces left can use `flip: true`. Art with a baked shadow, solid window glass or painted-in wheels can use the `art` field (`crop`, `glass`, `wheels`), which cleans the image up when it loads. The other car images in `assets/img/assets/` (red, blue, grey, white, green) aren't used at the moment.
+- **Adding a ride:** add it to `VEHICLES` in `physics.js`, a seat in `CHAR_SEAT` (`game.js`), a tile in the picker and a card in the garage (`index.html`), and a number key. Art that faces left can use `flip: true`. Art with a baked shadow, solid window glass or painted-in wheels can use the `art` field (`crop`, `glass`, `wheels`), which cleans the image up when it loads.
 - **Tested:** every ride finishes all 20 levels in the simulator.
 
 ## Levels
@@ -144,6 +144,8 @@ There are 20 levels (`makeCourse(level)` in `physics.js`):
 **Progress** is saved in the browser (`gv:levels`). Finishing a level unlocks the next and awards 1–3 stars: one for finishing, one for half the coins, and one for 80% of the coins. The best time per level is kept too. **Play now** starts the last level you played; **Levels** opens the level map. The "Drive there" door buttons always start Main Street (level 1).
 
 **Race start** (`#start-seq`): every run opens with a race-start sequence instead of a 3-2-1 countdown. Letterbox bars slide in and a start gantry drops with three red lights that come on one by one (with a beep each) while the engine revs higher. After a held beat, every light turns green: **GO!** bursts in with a flash and speed streaks, and the controls unlock. It takes 2.75 seconds, and the timings are `START_MS` and `START_LIGHTS` in `game.js`. Opening a panel during the start pauses it.
+
+**Fail screen** (`#modal-fail`): when you enter a haunted house (**Spooked!**) or a ghost touches you (**Caught!**), a haunted scene plays: fog and bats, the card shudders in, the title wobbles, and your ride trembles in front of that haunted house while its ghost swoops in. Below it are a tip about what went wrong, a distance bar showing how far along the course you got, your time and coins, and **Try again**, Levels and Hub. The text for each case is `FAIL_TEXT` in `game.js`.
 
 **Win screen** (`#modal-finish`): a victory scene that plays in order. The card zooms in under light rays and confetti, and a light sweeps across it. The "Victory!" title drops in letter by letter, with a shine running along it. Your ride, with the driver facing forward as in the game, races onto a lit podium with speed lines and squashes on the brakes. Two chequered flags rise on either side and wave. The stars stamp in one by one with a sparkle burst and a chime, and the stat cards flip up while the time, coins and best time count up. A "New record" stamp lands on the Best card and a "Level N unlocked" pill appears when they apply. The Next level button glints now and then. The motion is CSS keyed off `.modal.open` (the "WIN SCREEN" block at the end of `hub.css`); `playWin()` in `game.js` adds the confetti, the chimes and the count-ups. With reduced motion turned on, it shows the final state straight away.
 

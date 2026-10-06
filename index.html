@@ -12,8 +12,8 @@
 <meta property="og:image" content="assets/img/logo.png">
 <link rel="preload" href="assets/fonts/russo-one-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/exo-2-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/fonts.css?v=20261013c">
-<link rel="stylesheet" href="assets/css/hub.css?v=20261013c">
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261019b">
+<link rel="stylesheet" href="assets/css/hub.css?v=20261019b">
 </head>
 <body>
 <a class="skip" href="#services">Skip to the company stops</a>
@@ -162,8 +162,8 @@
       </button>
     </div>
     <div class="pedal-group right">
-      <button class="pedal pedal-jump" type="button" data-pedal="jump" aria-label="Jump">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5l7 8h-4.5v6h-5v-6H5z"/></svg><span>Jump</span>
+      <button class="pedal pedal-jump is-icon" type="button" data-pedal="jump" aria-label="Jump">
+        <img src="assets/img/assets/jump_icon.png" alt="" draggable="false"><span class="pedal-label">Jump</span>
       </button>
       <button class="pedal is-foot pedal-gas" type="button" data-pedal="gas" aria-label="Gas">
         <img src="assets/img/assets/pedal.png" alt="" draggable="false"><span class="pedal-label">Gas</span>
@@ -266,20 +266,35 @@
     <div class="howto-card reveal">
       <h3>Driver’s manual</h3>
       <div class="touch-demo" aria-hidden="true">
-        <span class="td-pedal l">Brake</span><span class="td-phone"></span><span class="td-stack"><span class="td-pedal j">Jump</span><span class="td-pedal r">Gas</span></span>
+        <span class="td-pedal l">Brake</span><span class="td-phone"></span><span class="td-stack"><span class="td-pedal j"><img src="assets/img/assets/jump_icon.png" alt=""></span><span class="td-pedal r">Gas</span></span>
       </div>
-      <p>Hold <b>Gas</b> and <b>Brake</b> in the bottom corners, and press <b>Jump</b> to hop. Tap them on a phone or click them with the mouse on a PC. At a door, press the gold <b>Enter</b> button.</p>
-      <ul class="keys"><li><span><kbd>→</kbd><kbd>D</kbd></span>Gas</li><li><span><kbd>←</kbd><kbd>A</kbd></span>Brake</li><li><span><kbd>Space</kbd><kbd>↑</kbd></span>Jump</li><li><span><kbd>E</kbd></span>Enter a door</li></ul>
+      <p>Hold <b>Gas</b> to drive, <b>Brake</b> to slow down, and tap <b>Jump</b> to hop. On a phone, use the pedals in the bottom corners. On a PC, click them or use the keyboard. Each race starts on the start lights: wait for the three red lights to turn green. Your car moves on <b>GO!</b></p>
+      <ul class="keys">
+        <li><span><kbd>→</kbd><kbd>D</kbd></span>Gas</li>
+        <li><span><kbd>←</kbd><kbd>A</kbd></span>Brake</li>
+        <li><span><kbd>Space</kbd><kbd>↑</kbd><kbd>W</kbd></span>Jump</li>
+        <li><span><kbd>↓</kbd><kbd>S</kbd></span>Lean forward</li>
+        <li><span><kbd>E</kbd><kbd>Enter</kbd></span>Door or stop</li>
+        <li><span><kbd>R</kbd></span>Back to checkpoint</li>
+        <li><span><kbd>1</kbd>–<kbd>4</kbd></span>Pick a ride</li>
+        <li><span><kbd>N</kbd></span>Morning, Night, Rain</li>
+        <li><span><kbd>B</kbd></span>Horn</li>
+        <li><span><kbd>M</kbd></span>Sound on/off</li>
+        <li><span><kbd>Esc</kbd></span>Exit the race</li>
+      </ul>
     </div>
     <div class="howto-card reveal">
       <h3>Pro tips</h3>
       <ul class="tips">
         <li><b>Airborne?</b> Gas lifts the nose and brake drops it, so you can line up your landing.</li>
         <li><b>Steep climb?</b> Ease off the gas so the front wheels stay down.</li>
-        <li><b>Haunted houses:</b> bats and ghosts mean a wrong door. Enter one and you're spooked, and the run is over.</li>
-        <li><b>Ghosts:</b> ghosts float over every haunted house, and now and then one stands at the door. If any ghost touches your car, you're spooked and the run is over, so don't jump into the roof ghosts, and wait while a ghost is at the door.</li>
-        <li><b>Hop it:</b> jump over crates and cans, or to clear a bump at speed.</li>
-              </ul>
+        <li><b>Doors and stops:</b> Main Street has the four game doors and the Services, Clients, Demos and Contact stops. Pull up and press Enter to look inside. Every other level starts in a small town with two of each.</li>
+        <li><b>Haunted houses:</b> bats and ghosts mean a wrong door. Enter one and you’re spooked, and the run is over.</li>
+        <li><b>Ghosts:</b> ghosts float over every haunted house, and now and then one waits at the door. If a ghost touches your car, the run is over, so don’t jump into the roof ghosts, and wait while one is at the door.</li>
+        <li><b>Coins and stars:</b> finishing earns 1 star, half the coins earn 2, and 80% earn all 3. Finish a level to unlock the next one, up to level 20.</li>
+        <li><b>Four rides:</b> Monster Truck for big air, Blue Bubble for quick flips, Green Cruiser for a steady drive, and the Skull Crusher. Switch in the garage or with 1–4.</li>
+        <li><b>Flipped or stuck?</b> Press R, or just wait a moment, to go back to the last checkpoint.</li>
+      </ul>
     </div>
   </div>
 </section>
@@ -303,6 +318,10 @@
         <span><small>Email us</small>mispahinteractives@gmail.com</span>
       </a>
       <button class="btn-ghost sm contact-copy" type="button" data-copy="mispahinteractives@gmail.com">Copy email</button>
+      <div class="contact-person">
+        <span class="cp-badge" aria-hidden="true">KG</span>
+        <span><b>K. Gideon Samuel</b><small>Founder, Mizpah Interactives</small></span>
+      </div>
     </div>
     <form class="contact-form" id="contact-form" novalidate>
       <label>Your name<input name="name" type="text" autocomplete="name" required></label>
@@ -318,7 +337,7 @@
 
 <footer class="foot">
   <a class="foot-brand" href="#top"><img src="assets/img/logo.png" alt="Mizpah Interactives" width="600" height="394"></a>
-  <p>Mizpah Interactives · Game development &amp; software technology studio.<br><a href="mailto:mispahinteractives@gmail.com">mispahinteractives@gmail.com</a> · Monster truck art by madmarcel.</p>
+  <p>Mizpah Interactives · Game development &amp; software technology studio · Founded by K. Gideon Samuel.<br><a href="mailto:mispahinteractives@gmail.com">mispahinteractives@gmail.com</a> · Monster truck art by madmarcel.</p>
   <a class="btn-ghost small" href="#top">Back to top ↑</a>
 </footer>
 </main>
@@ -402,21 +421,42 @@
   </div>
 </div>
 
-<div class="modal" id="modal-fail" role="dialog" aria-modal="true" aria-labelledby="fail-title" hidden>
-  <div class="modal-panel finish-panel fail-panel">
-    <img class="fail-ghost" data-fail-ghost alt="">
-    <h2 id="fail-title">Spooked!</h2>
-    <p class="finish-ride" data-fail-reason>That was a haunted house. Only doors with a game sign lead to a game. Watch for the bats!</p>
+<div class="modal fail" id="modal-fail" role="dialog" aria-modal="true" aria-labelledby="fail-title" hidden>
+  <div class="fail-fx" aria-hidden="true">
+    <span class="fog f1"></span><span class="fog f2"></span>
+    <img class="fail-bat b1" src="assets/img/assets/bat.png" alt=""><img class="fail-bat b2" src="assets/img/assets/bat.png" alt=""><img class="fail-bat b3" src="assets/img/assets/bat.png" alt="">
+  </div>
+  <div class="modal-panel fail-panel">
+    <p class="fail-level" data-fail-level>Level 1 · Run over</p>
+    <h2 id="fail-title" class="fail-title" aria-label="Spooked!">Spooked!</h2>
+    <div class="fail-stage" aria-hidden="true">
+      <span class="fs-moon"></span>
+      <img class="fs-house" data-fail-house alt="">
+      <span class="fs-mist"></span>
+      <div class="fs-car" data-fail-car></div>
+      <span class="fs-shock">!</span>
+      <img class="fs-ghost" data-fail-ghost alt="">
+    </div>
+    <p class="fail-tip">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg>
+      <span data-fail-reason>That was a haunted house. Only doors with a game sign lead to a game. Watch for the bats!</span>
+    </p>
+    <div class="fail-progress">
+      <div class="fp-head"><span>Distance</span><b data-fail-progress-text>0%</b></div>
+      <div class="fp-track"><span class="fp-fill" data-fail-progress></span><span class="fp-flag"></span></div>
+    </div>
     <dl class="finish-stats two">
       <div><dt>Time</dt><dd class="mono" data-fail-time></dd></div>
       <div><dt>Coins</dt><dd class="mono" data-fail-coins></dd></div>
     </dl>
-    <div class="modal-actions">
+    <div class="modal-actions win-actions fail-actions">
       <button class="btn-play" type="button" data-action="restart" data-autofocus>
-        <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span>Try again
+        <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Try again
       </button>
-      <button class="btn-ghost" type="button" data-action="levels">Levels</button>
-      <button class="btn-ghost" type="button" data-action="exit">Back to hub</button>
+      <div class="win-more two">
+        <button class="win-btn" type="button" data-action="levels"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg>Levels</button>
+        <button class="win-btn" type="button" data-action="exit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7M6 9.5V20h12V9.5"/></svg>Hub</button>
+      </div>
     </div>
   </div>
 </div>
@@ -477,11 +517,11 @@
 </div>
 
 <script src="assets/js/vendor/matter.min.js"></script>
-<script src="assets/js/physics.js?v=20261013c"></script>
-<script src="assets/js/games.js?v=20261013c"></script>
-<script src="assets/js/site.js?v=20261013c"></script>
-<script src="assets/js/game.js?v=20261013c"></script>
-<script src="assets/js/hub.js?v=20261013c"></script>
-<script src="assets/js/world.js?v=20261013c"></script>
+<script src="assets/js/physics.js?v=20261019b"></script>
+<script src="assets/js/games.js?v=20261019b"></script>
+<script src="assets/js/site.js?v=20261019b"></script>
+<script src="assets/js/game.js?v=20261019b"></script>
+<script src="assets/js/hub.js?v=20261019b"></script>
+<script src="assets/js/world.js?v=20261019b"></script>
 </body>
 </html>

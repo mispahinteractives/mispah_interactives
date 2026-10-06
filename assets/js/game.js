@@ -14,7 +14,7 @@
   const GAMES = window.GV_GAMES || [];
   const VEHICLES = P.VEHICLES;
   const ASSET = 'assets/img/assets/';
-  const SPRITES = ['truckbody', 'truckwheel', 'carbody', 'carbody2', 'wheel', 'wheel2', 'black_car', 'black_tire', 'char', 'strut',
+  const SPRITES = ['truckbody', 'truckwheel', 'carbody', 'carbody2', 'wheel', 'wheel2', 'black_car', 'black_car_tire', 'char', 'strut',
     'rampleft', 'crate', 'box', 'suitcase', 'oilcan', 'beercan', 'sodacan', 'cloud', 'tree', 'bat',
     'wrong_house_1', 'wrong_house_2', 'wrong_house_3', 'wrong_house_4',
     'ghost_1', 'ghost_2', 'ghost_3', 'ghost_4', 'ghost_5', 'background_house1',
@@ -49,7 +49,7 @@
         const i = new Image(); i.onload = res; i.onerror = res; i.src = g.logo; logos[g.id] = i;
       }));
     });
-    return Promise.all(jobs).then(prepareCarArt);
+    return Promise.all(jobs).then(() => { prepareCarArt(); enhanceLowRes(); });
   }
   const ready = (i) => i && i.complete && i.naturalWidth > 0;
 
@@ -97,9 +97,73 @@
       c.toBlob((blob) => {
         if (!blob) return;
         artSrc[key] = URL.createObjectURL(blob);
-        artWaiting.filter((w) => w.key === key).forEach((w) => { w.el.src = artSrc[key]; });
+        artWaiting.filter((w) => w.key === key && !w.kind).forEach((w) => { w.el.src = artSrc[key]; });
       });
     });
+  }
+  /* Low-resolution car art (fewer than ~2.2 image pixels per world pixel,
+     e.g. the 399 px Skull Crusher) would be stretched 2x or more on a
+     zoomed-in Retina screen and look soft and stair-stepped (black_car.png
+     is also an enlarged small image, so its edges are stepped in the file).
+     Once, at load, such a body and its wheel are enlarged 2-4x, the steps
+     are smoothed away, edge contrast is restored and the outline is made
+     crisp (see sharpUpscale), so the game and the previews scale down from
+     a smooth, sharp image instead of up from a small one. A higher-resolution
+     export of the art (~1200 px wide) would still look best. */
+  const wheelSrc = {};
+  function enhanceLowRes() {
+    const done = {};
+    Object.entries(VEHICLES).forEach(([key, v]) => {
+      if (1 / v.scale >= 2.2) return;
+      const f = Math.min(4, Math.max(2, Math.ceil(3.2 * v.scale)));
+      [[v.body, 'body'], [v.wheel, 'wheel']].forEach(([name, kind]) => {
+        if (!done[name]) done[name] = sharpUpscale(img[name], f);
+        const c = done[name];
+        if (!c) return;
+        img[name] = c;
+        c.toBlob((blob) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          if (kind === 'body') artSrc[key] = url; else wheelSrc[key] = url;
+          artWaiting.filter((w) => w.key === key && (w.kind || 'body') === kind).forEach((w) => { w.el.src = url; });
+        });
+      });
+    });
+  }
+  function sharpUpscale(src, f) {
+    if (!src || !(src.naturalWidth || src.width)) return null;
+    const w = (src.naturalWidth || src.width) * f, h = (src.naturalHeight || src.height) * f;
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+    g.drawImage(src, 0, 0, w, h);
+    try {
+      // 1) soften by about one source pixel, which melts stair-stepped
+      //    (already enlarged) edges into smooth curves; 2) unsharp mask to
+      //    bring the edge contrast back; 3) a steep curve on alpha, so the
+      //    outline is crisp and smooth rather than blurry
+      const blurred = (from, r) => {
+        const b = document.createElement('canvas'); b.width = w; b.height = h;
+        const bg = b.getContext('2d', { willReadFrequently: true });
+        bg.filter = `blur(${r.toFixed(2)}px)`; bg.drawImage(from, 0, 0);
+        return b;
+      };
+      const soft = blurred(c, 0.9 * f);
+      const s = soft.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, w, h).data;
+      const ss = blurred(soft, 1.6 * f).getContext('2d', { willReadFrequently: true }).getImageData(0, 0, w, h).data;
+      const data = g.getImageData(0, 0, w, h), d = data.data;
+      for (let k = 0; k < d.length; k += 4) {
+        for (let ch = 0; ch < 3; ch++) {
+          const v = s[k + ch] + 1.4 * (s[k + ch] - ss[k + ch]);
+          d[k + ch] = v < 0 ? 0 : v > 255 ? 255 : v;
+        }
+        const a = (s[k + 3] - 128) * 2.6 + 128;
+        d[k + 3] = a < 0 ? 0 : a > 255 ? 255 : a;
+      }
+      g.putImageData(data, 0, 0);
+    } catch (e) { /* pixels unreadable (file://): keep the smooth upscale */ }
+    c.complete = true; c.naturalWidth = w; c.naturalHeight = h;
+    return c;
   }
   function inPoly(x, y, poly) {
     let inside = false;
@@ -653,7 +717,7 @@
 
   /* Crows (Morning only): a few crows far off in the sky, between the
      clouds and the mountains, crossing in both directions. Each uses the
-     in-flight crow_1 pose only (swapping to the very different crow_2 pose
+     in-flight crow_1 pose only (swapping to a very different second pose
      looked like the bird was tumbling) and is animated smoothly: a soft
      wing-beat squash, long glides, a gentle rise and fall, and the body tilts
      with its path. Small and slightly faded, so they read as distant. */
@@ -928,7 +992,9 @@
   function drawHeadlights() {
     const c = car.chassis, v = car.v;
     if (!c) return;
-    const f = spriteLocal(v.bodySize[0] - 12, v.bodySize[1] * (car.key === 'truck' ? 0.58 : 0.62));
+    // `light` (physics.js) is the headlamp in the image; otherwise the front edge
+    const f = v.light ? spriteLocal(v.light[0], v.light[1])
+      : spriteLocal(v.bodySize[0] - 12, v.bodySize[1] * (car.key === 'truck' ? 0.58 : 0.62));
     const p = localToWorld(f.x, f.y);
     const len = 460, spread = 0.2;
     const ax = Math.cos(c.angle), ay = Math.sin(c.angle);
@@ -1521,10 +1587,7 @@
     return false;
   }
 
-  function caughtByGhost(b) {
-    spooked(b);
-    $('[data-fail-reason]', ui.modalFail).textContent = 'A ghost got you! Keep clear of the ghosts at the haunted houses: don\'t jump into the roof ghosts, and wait while a ghost stands at the door.';
-  }
+  function caughtByGhost(b) { spooked(b, 'ghost'); }
 
   function drawGhostSprite(g, x, y, alpha, flip) {
     if (!ready(g) || alpha <= 0.01) return;
@@ -2057,7 +2120,7 @@
      use mirrored coordinates, like their wheels), and his head height in
      those pixels. His hands land on the steering wheel. */
   const CHAR_SEAT = {
-    truck: [650, 115, 52], beetle: [318, 88, 40], sedan: [560, 70, 48], skull: [66, 14, 15]
+    truck: [650, 115, 52], beetle: [318, 88, 40], sedan: [560, 70, 48], skull: [152, 31, 31]
   };
   function drawCharacter() {
     const seat = CHAR_SEAT[car.key], ch = img.char;
@@ -2277,14 +2340,21 @@
     emit('vehicle', { key });
   }
 
-  // Wrong house: the ghost bursts out at the screen and the run is over.
-  function spooked(b) {
-    $('[data-fail-reason]', ui.modalFail).textContent = 'That was a haunted house. Only doors with a game sign lead to a game. Watch for the bats!';
+  // Wrong house (or a ghost touched the car): the ghost bursts out at the
+  // screen and the run is over. The fail screen then shows your ride shaking
+  // in front of that haunted house while its ghost swoops in, a tip, how far
+  // along the course you got, and your time and coins.
+  const FAIL_TEXT = {
+    house: { title: 'Spooked!', reason: 'That was a haunted house. Only doors with a game sign lead to a game. Watch for the bats!' },
+    ghost: { title: 'Caught!', reason: 'A ghost got you! Don\'t jump into the roof ghosts, and wait while a ghost stands at the door.' }
+  };
+  function spooked(b, how) {
+    const txt = FAIL_TEXT[how === 'ghost' ? 'ghost' : 'house'];
     state.finished = true; state.failed = true;
     state.door = null; ui.prompt.hidden = true;
     Sound.spooky();
     state.shake = 14;
-    const ghost = img['ghost_' + (((b.variant - 1) % 4) + 1)];
+    const ghost = img['ghost_' + (((b.variant - 1) % 4) + 1)], house = img['wrong_house_' + (((b.variant - 1) % 6) + 1)];
     ui.spook.classList.remove('show'); void ui.spook.offsetWidth; ui.spook.classList.add('show');
     for (let i = 0; i < 40; i++) {
       puff(b.x + (Math.random() - 0.5) * 200, W.heightAt(b.x) - 80 - Math.random() * 120,
@@ -2292,7 +2362,17 @@
         ['#6e4a9e', '#4b2d73', '#9b7fd1'][i % 3], 'smoke');
     }
     const m = ui.modalFail;
+    $('[data-fail-level]', m).textContent = 'Level ' + state.level + ' · Run over';
+    const title = $('#fail-title', m);
+    title.setAttribute('aria-label', txt.title);
+    title.innerHTML = '<span aria-hidden="true">' + [...txt.title].map((ch, i) => `<b style="--i:${i}">${ch}</b>`).join('') + '</span>';
+    $('[data-fail-reason]', m).textContent = txt.reason;
     $('[data-fail-ghost]', m).src = ghost ? ghost.src : '';
+    $('[data-fail-house]', m).src = house ? house.src : '';
+    $('[data-fail-car]', m).replaceChildren(vehiclePreview(state.vehicle, { driver: true }));
+    const frac = clamp((car.chassis.position.x - W.SPAWN_X) / (W.FINISH_X - W.SPAWN_X), 0, 1);
+    $('[data-fail-progress]', m).style.setProperty('--p', frac.toFixed(3));
+    $('[data-fail-progress-text]', m).textContent = Math.round(frac * 100) + '%';
     $('[data-fail-time]', m).textContent = fmtTime(state.time);
     $('[data-fail-coins]', m).textContent = state.coins + '/' + W.coins.length;
     setTimeout(() => { if (state.mode === 'play' && state.failed) openModal(m); }, 1500);
@@ -2604,6 +2684,7 @@
     // trimmed art: show only the top `crop` px (no ground shadow), and swap in
     // the cleaned image (see-through glass) once it is ready
     let bodyBox = body;
+    if (1 / v.scale < 2.2 && !artSrc[key]) artWaiting.push({ key, el: body });   // the sharpened art, once ready
     if (v.art) {
       if (!artSrc[key]) artWaiting.push({ key, el: body });
       bodyBox = document.createElement('div'); bodyBox.className = 'ride-crop';
@@ -2622,7 +2703,8 @@
     el.appendChild(bodyBox);
     v.wheels.forEach(([wx, wy]) => {
       const w = new Image();
-      w.src = ASSET + v.wheel + '.png'; w.alt = ''; w.className = 'ride-wheel';
+      w.src = wheelSrc[key] || ASSET + v.wheel + '.png'; w.alt = ''; w.className = 'ride-wheel';
+      if (1 / v.scale < 2.2 && !wheelSrc[key]) artWaiting.push({ key, el: w, kind: 'wheel' });
       w.style.left = ((wx - R) / iw) * 100 + '%';
       w.style.top = ((wy - R) / H) * 100 + '%';
       w.style.width = ((2 * R) / iw) * 100 + '%';

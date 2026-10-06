@@ -64,15 +64,17 @@
       spring: 0.011, springDamp: 0.06, travel: 18, arm: 0.9,
       density: 0.0017, wheelDensity: 0.0026, wheelie: 0.00025, airTorque: 0.0011, jump: 11
     },
-    // black_car.png is a small image (192x119), scaled up to monster-truck size
+    // black_car.png (399x245) is drawn at 0.746, so it comes out at
+    // monster-truck size
     skull: {
       name: 'Skull Crusher',
       tag: 'Monster · Spooky',
-      body: 'black_car', bodySize: [192, 119], scale: 1.55,
-      wheel: 'black_tire', wheelRadius: 31,
-      wheels: [[48, 66], [150, 66]],
-      hull: [[3, 22, 189, 57], [42, 4, 132, 22]],
-      exhaust: [4, 38],
+      body: 'black_car', bodySize: [399, 245], scale: 0.746,
+      wheel: 'black_car_tire', wheelRadius: 64,
+      wheels: [[100, 137], [312, 137]],
+      hull: [[6, 46, 393, 118], [87, 8, 274, 46]],
+      exhaust: [8, 79],
+      light: [388, 77],                  // the headlamp, where the beam starts
       maxSpeed: 25, reverseSpeed: 9, accel: 0.075, brake: 0.86,
       spring: 0.009, springDamp: 0.05, travel: 22, arm: 0.9,
       density: 0.002, wheelDensity: 0.0024, wheelie: 0.0003, airTorque: 0.0011, jump: 12
