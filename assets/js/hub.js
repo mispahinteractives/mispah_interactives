@@ -174,33 +174,104 @@
   onScroll();
 
   /* ------------------------------------------------------------- contact */
-  // No mail server behind this static site: the form writes the message into
-  // the visitor's own email app, addressed to the studio.
-  const CONTACT_EMAIL = 'mispahinteractives@gmail.com';
-  const form = $('#contact-form');
-  const status = $('#contact-status');
-  form.addEventListener('submit', (e) => {
+  // Messages go out in the background, so the visitor's email app never
+  // opens: the form posts to an email API that works on static hosting such
+  // as GitHub Pages, and the API emails the studio. With a Web3Forms access
+  // key (site.js, contactKey) it uses Web3Forms; without one it uses
+  // FormSubmit, which needs no key: the very first message sends a one-time
+  // "Activate Form" email to the studio inbox, and after one click every
+  // message arrives. If sending fails the visitor gets a one-click email link.
+  const SITE = window.GV_SITE || {};
+  const CONTACT_EMAIL = SITE.email || 'mispahinteractives@gmail.com';
+  const CONTACT_KEY = (SITE.contactKey || '').trim();
+  const SEND_URL = CONTACT_KEY ? 'https://api.web3forms.com/submit' : 'https://formsubmit.co/ajax/' + CONTACT_EMAIL;
+  const form = $('#contact-form'), status = $('#contact-status'), sent = $('#contact-sent');
+  const sendBtn = $('[data-send]', form), sendLabel = $('[data-send-label]', form);
+  status.textContent = 'We’ll reply to the email address you give us.';
+  const RULES = {
+    name: (v) => v ? '' : 'Please enter your name.',
+    email: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) ? '' : 'Please enter a valid email address.',
+    message: (v) => v.length >= 10 ? '' : 'Please write a little more (at least 10 characters).'
+  };
+  const check = (n) => {
+    const f = form.elements[n], msg = RULES[n](f.value.trim());
+    f.setAttribute('aria-invalid', String(!!msg));
+    $('#err-' + n).textContent = msg;
+    return !msg;
+  };
+  const setSending = (on) => {
+    sendBtn.disabled = on; sendBtn.classList.toggle('is-sending', on);
+    sendLabel.textContent = on ? 'Sending…' : 'Send message';
+  };
+  const mailtoHref = (name, from, message) => 'mailto:' + CONTACT_EMAIL + '?subject=' + encodeURIComponent('Hello from ' + name) +
+    '&body=' + encodeURIComponent(message + '\n\n— ' + name + ' (' + from + ')');
+  function showSent(name, from) {
+    $('[data-sent-text]', sent).textContent = `Thanks, ${name}! Your message is on its way. We’ll reply to ${from}.`;
+    form.hidden = true; sent.hidden = false;
+    sent.classList.remove('in'); void sent.offsetWidth; sent.classList.add('in');
+    sent.focus({ preventScroll: true });
+  }
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    let bad = null;
-    ['name', 'email', 'message'].forEach((n) => {
-      const f = form.elements[n];
-      const ok = f.value.trim() && (n !== 'email' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.value.trim()));
-      f.setAttribute('aria-invalid', String(!ok));
-      if (!ok && !bad) bad = f;
-    });
-    if (bad) {
-      status.textContent = 'Please fill in your name, a valid email and a message.';
-      status.classList.add('err'); bad.focus();
+    if (sendBtn.disabled) return;
+    const ok = ['name', 'email', 'message'].map(check);
+    if (ok.includes(false)) {
+      status.textContent = 'Please check the highlighted fields.'; status.classList.add('err');
+      form.elements[['name', 'email', 'message'][ok.indexOf(false)]].focus();
       return;
     }
-    const name = form.elements.name.value.trim(), from = form.elements.email.value.trim();
-    const body = form.elements.message.value.trim() + '\n\n— ' + name + ' (' + from + ')';
-    window.location.href = 'mailto:' + CONTACT_EMAIL + '?subject=' + encodeURIComponent('Hello from ' + name) +
-      '&body=' + encodeURIComponent(body);
-    status.textContent = 'Your email app should open with the message ready. If not, write to ' + CONTACT_EMAIL + '.';
-    status.classList.remove('err');
+    const name = form.elements.name.value.trim(), from = form.elements.email.value.trim(), message = form.elements.message.value.trim();
+    if (form.elements.botcheck.checked) { showSent(name, from); return; }        // a bot: pretend it worked
+    setSending(true);
+    status.textContent = 'Sending your message…'; status.classList.remove('err');
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 15000);
+    try {
+      const res = await fetch(SEND_URL, {
+        method: 'POST', signal: ctl.signal,
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(CONTACT_KEY ? {
+          access_key: CONTACT_KEY,
+          subject: 'New message from ' + name + ' · Mizpah Interactives website',
+          from_name: 'Mizpah Interactives website',
+          name, email: from, message, botcheck: false
+        } : {
+          _subject: 'New message from ' + name + ' · Mizpah Interactives website',
+          _template: 'table', _captcha: 'false', _honey: '',
+          name, email: from, message
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      const okSent = data.success === true || data.success === 'true';
+      if (!res.ok || !okSent) {
+        const e = new Error(data.message || 'The server said no (' + res.status + ').');
+        e.activation = /activat/i.test(data.message || '');
+        throw e;
+      }
+      form.reset();
+      ['name', 'email', 'message'].forEach((n) => { form.elements[n].removeAttribute('aria-invalid'); $('#err-' + n).textContent = ''; });
+      status.textContent = '';
+      showSent(name, from);
+    } catch (err) {
+      const why = err.activation ? 'The contact form is being switched on and will work shortly.'
+        : err.name === 'AbortError' ? 'The connection timed out.' : (navigator.onLine === false ? 'You seem to be offline.' : '');
+      status.classList.add('err');
+      status.innerHTML = '';
+      status.append(`Sorry, your message couldn’t be sent.${why ? ' ' + why : ''} Please try again, or `);
+      const a = document.createElement('a'); a.href = mailtoHref(name, from, message); a.textContent = 'email us directly';
+      status.append(a, '.');
+    } finally {
+      clearTimeout(timer); setSending(false);
+    }
   });
-  form.addEventListener('input', (e) => e.target.removeAttribute('aria-invalid'));
+  ['name', 'email', 'message'].forEach((n) => {
+    form.elements[n].addEventListener('blur', () => { if (form.elements[n].getAttribute('aria-invalid') === 'true' || form.elements[n].value) check(n); });
+    form.elements[n].addEventListener('input', () => { if (form.elements[n].getAttribute('aria-invalid') === 'true') check(n); });
+  });
+  $('[data-send-another]', sent).addEventListener('click', () => {
+    sent.hidden = true; form.hidden = false;
+    status.textContent = 'We’ll reply to the email address you give us.'; status.classList.remove('err');
+    form.elements.name.focus();
+  });
 
   $$('[data-copy]').forEach((b) => b.addEventListener('click', () => {
     const done = () => { b.textContent = 'Copied!'; setTimeout(() => { b.textContent = 'Copy email'; }, 1600); };

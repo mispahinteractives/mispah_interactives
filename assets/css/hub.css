@@ -2365,3 +2365,35 @@ section.stop-contact { padding-top: clamp(100px, 11vw, 150px); }
 @media (prefers-reduced-motion: reduce) { .contact-person::after, .cp-badge, .cp-badge > span { animation: none; } }
 /* phones: keep the email address on one line */
 @media (max-width: 430px) { .contact-mail > span:last-child { font-size: 13.5px; white-space: nowrap; } .contact-mail { padding-right: 12px; } }
+
+/* contact form, sent in the background: field errors, the hidden spam trap,
+   a spinner while sending, and the "Message sent!" card */
+.contact-side { min-width: 0; }
+.contact-form[hidden], .contact-sent[hidden] { display: none; }
+.contact-form .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.field-err { min-height: 0; font: 600 12.5px/1.3 var(--body); letter-spacing: 0; text-transform: none; color: #ff9fbf; }
+.field-err:empty { display: none; }
+.contact-form [aria-invalid="true"] { border-color: var(--pink); box-shadow: 0 0 0 3px rgba(255, 79, 139, 0.18); }
+.contact-form .fine a { color: var(--gold); font-weight: 700; }
+.contact-form .btn-play.is-sending { opacity: 0.85; cursor: progress; }
+.contact-form .btn-play.is-sending .btn-play-icon svg { display: none; }
+.contact-form .btn-play.is-sending .btn-play-icon::after {
+  content: ""; width: 16px; height: 16px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.35); border-top-color: #fff;
+  animation: spin 0.7s linear infinite;
+}
+.contact-sent {
+  display: grid; justify-items: center; align-content: center; gap: 10px; min-height: 100%; padding: 26px 18px; text-align: center;
+  border-radius: 22px; border: 2px solid rgba(55, 226, 160, 0.55); background: linear-gradient(160deg, rgba(55, 226, 160, 0.12), rgba(255, 255, 255, 0.03));
+  outline: none;
+}
+.contact-sent h3 { margin: 4px 0 0; font: 400 clamp(28px, 3.4vw, 38px)/1 var(--display); text-transform: uppercase; color: #fff; }
+.contact-sent p { margin: 0 0 6px; color: #d9f8ec; max-width: 34ch; }
+.cs-check { width: 72px; height: 72px; fill: none; stroke: #37e2a0; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 12px rgba(55, 226, 160, 0.5)); }
+.cs-check circle { stroke-dasharray: 145; stroke-dashoffset: 0; }
+.cs-check path { stroke-dasharray: 40; stroke-dashoffset: 0; }
+.contact-sent.in { animation: win-fade-up 0.5s cubic-bezier(.16, 1, .3, 1); }
+.contact-sent.in .cs-check circle { animation: cs-draw 0.6s ease-out backwards; }
+.contact-sent.in .cs-check path { animation: cs-draw-tick 0.4s ease-out 0.45s backwards; }
+@keyframes cs-draw { from { stroke-dashoffset: 145; } }
+@keyframes cs-draw-tick { from { stroke-dashoffset: 40; } }
+@media (prefers-reduced-motion: reduce) { .contact-sent.in, .contact-sent.in .cs-check * { animation: none; } }

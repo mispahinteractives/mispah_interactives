@@ -7,6 +7,14 @@
 window.GV_SITE = {
   email: 'mispahinteractives@gmail.com',
 
+  // Contact form: messages are always sent in the background (the visitor's
+  // email app never opens). While this is empty they go through FormSubmit
+  // (formsubmit.co) to `email` above: the first message sends a one-time
+  // "Activate Form" email to that inbox, and after one click every message
+  // arrives. Optionally, get a free Web3Forms access key (web3forms.com) for
+  // the same address and paste it here to send through Web3Forms instead.
+  contactKey: '',
+
   // the stops, in driving order; `id` is the section id on the page. The
   // same stops stand on Main Street in the game (Services, Clients, Demos and
   // Contact are buildings you can drive into); `blurb` is what the in-game

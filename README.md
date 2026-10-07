@@ -2,7 +2,14 @@
 
 The Mizpah Interactives website: a game hub built around a playable physics truck game. It's static with no build step. Open `index.html` through any web server (XAMPP: `http://localhost/aim/mispah_interactives/`).
 
-The contact email lives in two places: the Contact section of `index.html` and `CONTACT_EMAIL` in `assets/js/hub.js`. The logo is `assets/img/logo.png` (the favicon is `assets/img/logo-icon.png`).
+The contact email lives in two places: the Contact section of `index.html` and `email` in `assets/js/site.js`. The logo is `assets/img/logo.png` (the favicon is `assets/img/logo-icon.png`).
+
+**Contact form:** messages are always sent in the background, so the visitor's email app never opens. The path is visitor → website → email API → the studio's inbox, and it works on static hosting such as GitHub Pages.
+
+- **No setup (the default):** with `contactKey` empty in `assets/js/site.js`, the form sends through [FormSubmit](https://formsubmit.co) to `email` in `site.js`. **One-time step:** the very first message sent from the live site triggers an "Activate Form" email to `mispahinteractives@gmail.com`. Click that link once, and every message from then on arrives automatically. Until then, visitors see "The contact form is being switched on".
+- **Optional, Web3Forms:** get a free access key at web3forms.com for the same address (250 messages a month) and paste it into `contactKey`. The form then sends through Web3Forms instead. The key is meant to be public in the page; it only lets people send to your inbox.
+
+Each message arrives with the subject "New message from …", and you can reply straight to the visitor. The form checks the name, email and message (at least 10 characters) before sending, shows a "Sending…" spinner, then a "Message sent!" card. A hidden trap field quietly drops spam bots. If sending fails (offline, timeout, server error), the visitor sees a message with a one-click "email us directly" link. The code is in the contact part of `assets/js/hub.js`.
 
 ```
 ./

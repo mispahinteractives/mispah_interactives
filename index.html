@@ -12,8 +12,8 @@
 <meta property="og:image" content="assets/img/logo.png">
 <link rel="preload" href="assets/fonts/russo-one-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/exo-2-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/fonts.css?v=20261022a">
-<link rel="stylesheet" href="assets/css/hub.css?v=20261022a">
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261024a">
+<link rel="stylesheet" href="assets/css/hub.css?v=20261024a">
 </head>
 <body>
 <a class="skip" href="#services">Skip to the company stops</a>
@@ -323,15 +323,25 @@
         <span class="cp-text"><span class="cp-role">Founder</span><b>K. Gideon Samuel</b><small>Mizpah Interactives</small></span>
       </div>
     </div>
-    <form class="contact-form" id="contact-form" novalidate>
-      <label>Your name<input name="name" type="text" autocomplete="name" required></label>
-      <label>Your email<input name="email" type="email" autocomplete="email" required></label>
-      <label>Message<textarea name="message" rows="4" required></textarea></label>
-      <button class="btn-play sm" type="submit">
-        <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span>Send message
-      </button>
-      <p class="fine" id="contact-status" role="status">Opens your email app with the message ready to send.</p>
-    </form>
+    <div class="contact-side">
+      <form class="contact-form" id="contact-form" novalidate>
+        <!-- spam trap: hidden from people, bots fill it in -->
+        <input class="hp" type="checkbox" name="botcheck" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <label>Your name<input name="name" type="text" autocomplete="name" maxlength="80" required aria-describedby="err-name"><span class="field-err" id="err-name"></span></label>
+        <label>Your email<input name="email" type="email" autocomplete="email" maxlength="120" required aria-describedby="err-email"><span class="field-err" id="err-email"></span></label>
+        <label>Message<textarea name="message" rows="4" maxlength="4000" required aria-describedby="err-message"></textarea><span class="field-err" id="err-message"></span></label>
+        <button class="btn-play sm" type="submit" data-send>
+          <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span><span data-send-label>Send message</span>
+        </button>
+        <p class="fine" id="contact-status" role="status"></p>
+      </form>
+      <div class="contact-sent" id="contact-sent" tabindex="-1" hidden>
+        <svg class="cs-check" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="23"/><path d="M15 27l7 7 15-16"/></svg>
+        <h3>Message sent!</h3>
+        <p data-sent-text>Thanks! We’ll get back to you soon.</p>
+        <button class="btn-ghost sm" type="button" data-send-another>Send another message</button>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -517,11 +527,11 @@
 </div>
 
 <script src="assets/js/vendor/matter.min.js"></script>
-<script src="assets/js/physics.js?v=20261022a"></script>
-<script src="assets/js/games.js?v=20261022a"></script>
-<script src="assets/js/site.js?v=20261022a"></script>
-<script src="assets/js/game.js?v=20261022a"></script>
-<script src="assets/js/hub.js?v=20261022a"></script>
-<script src="assets/js/world.js?v=20261022a"></script>
+<script src="assets/js/physics.js?v=20261024a"></script>
+<script src="assets/js/games.js?v=20261024a"></script>
+<script src="assets/js/site.js?v=20261024a"></script>
+<script src="assets/js/game.js?v=20261024a"></script>
+<script src="assets/js/hub.js?v=20261024a"></script>
+<script src="assets/js/world.js?v=20261024a"></script>
 </body>
 </html>
