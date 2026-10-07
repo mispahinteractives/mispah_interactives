@@ -388,8 +388,8 @@
   }
 
   /* ---------------------------------------------------------------- input */
-  function readInput() {
-    if (state.mode === 'attract') return autopilot();
+  function readInput(dt) {
+    if (state.mode === 'attract') return autopilot(dt);
     if (state.countdown > 0) { input.gas = input.brake = input.jump = false; input.lean = 0; return input; }
     if (state.finished) { input.gas = false; input.brake = true; input.lean = 0; input.jump = false; return input; }
     // on-screen Brake / Gas / Jump buttons (touch or mouse), and on a PC the
@@ -417,7 +417,8 @@
 
   // Attract mode: keep moving, cruise slowly past the arcade doors so they
   // read, back off on steep climbs, and back up if something is in the way.
-  function autopilot() {
+  function autopilot(dt) {
+    dt = dt || 16.67;                               // timers below run on real time, at any frame rate
     const c = car.chassis, a = Math.atan2(Math.sin(c.angle), Math.cos(c.angle));
     const v = W.forwardSpeed(), x = c.position.x;
     const inp = { gas: true, brake: false, lean: 0 };
@@ -428,9 +429,9 @@
       else if (a > 0.45) inp.lean = -1;
     } else if (a < -0.9) inp.gas = false;
     const au = state.auto;
-    if (Math.abs(v) < 0.6 && car.grounded) au.stall += 16; else au.stall = 0;
+    if (Math.abs(v) < 0.6 && car.grounded) au.stall += dt; else au.stall = 0;
     if (au.stall > 1200) { au.reverse = 700; au.stall = 0; }
-    if (au.reverse > 0) { au.reverse -= 16; inp.gas = false; inp.reverse = true; }
+    if (au.reverse > 0) { au.reverse -= dt; inp.gas = false; inp.reverse = true; }
     return inp;
   }
 
@@ -530,7 +531,7 @@
   /* -------------------------------------------------------------- update */
   function update(dt) {
     state.t += dt;
-    const inp = readInput();
+    const inp = readInput(dt);
     updateHouseGhosts(dt);
     state.lastInput = inp;
     if (state.countdown > 0) tickCountdown(dt);
@@ -2646,19 +2647,32 @@
 
   /* --------------------------------------------------------------- loop */
   let last = 0;
-  let lastDraw = 0;
+  // The game draws every frame whenever the page can be seen, focused or
+  // not: with another window on top, the site is often still partly visible
+  // behind it, and slowing down there looked like lag. When the page can't be
+  // seen at all (minimised, another tab, fully covered) the browser stops
+  // requestAnimationFrame by itself, and document.hidden skips the work.
+  // Coming back, the clock restarts so there is no catch-up jump.
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) last = 0; });
+  // Adaptive quality only judges the speed while the window is in front (or
+  // on a phone, where focus can't be trusted): a window behind another app
+  // can be slowed by the system for a moment, and that shouldn't leave the
+  // game at a lower resolution for good.
+  const COARSE = window.matchMedia('(pointer: coarse)').matches;
+  let behind = false;
+  window.addEventListener('blur', () => { behind = true; });
+  window.addEventListener('focus', () => { behind = false; settleUntil = performance.now() + 1500; });
+  window.addEventListener('pointerdown', () => { behind = false; }, { passive: true });
   function frame(now) {
     requestAnimationFrame(frame);
-    // the intro demo runs every frame while you're looking at it; only when
-    // the browser window is in the background does it slow to ~10 fps
-    if (state.mode !== 'play' && !document.hasFocus()) {
-      if (now - lastDraw < 95) return;
-      lastDraw = now;
-    }
     const gap = last ? now - last : 16.67;
-    const dt = Math.min(50, gap);
+    // a slow frame on the intro still moves the demo on in real time (up to
+    // 66 ms per frame) instead of slow motion; races keep the 50 ms cap
+    const dt = Math.min(state.mode === 'play' ? 50 : 66, gap);
     last = now;
-    if (state.active && !document.hidden && state.mode === 'play') watchFrameRate(gap, now); else settleUntil = now + 1500;
+    // adaptive quality runs on the intro too, so a phone that can't keep up
+    // drops to a lighter render resolution instead of stuttering
+    if (state.active && !document.hidden && (!behind || COARSE)) watchFrameRate(gap, now); else settleUntil = now + 1500;
     if (!state.active || document.hidden) return;
     if (!state.paused) update(dt);
     else updateParticles(dt);

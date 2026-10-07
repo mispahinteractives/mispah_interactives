@@ -102,7 +102,8 @@ In Morning only, three crows fly far off in the sky, between the clouds and the 
 
 ## Performance
 
-- **Intro demo:** runs every frame while you're looking at it, and drops to about 10 fps only when the browser window is in the background. Nothing is drawn while the tab is hidden or the game is scrolled off screen.
+- **Background windows:** the intro demo and races run at full speed whenever the page can be seen, even when another app or window is in front. A partly covered site is still visible, and slowing it down there looked like lag. When the page can't be seen at all (minimised, another tab, fully covered), the browser pauses drawing by itself and the game skips its work (`document.hidden`). Coming back, the game clock restarts, so there's no jump. Held keys are released when the window loses focus. Nothing is drawn while the game is scrolled off screen.
+- **Adaptive quality:** if frames run slow (under about 48 fps for 1.5 s), the canvas drops to a lower render resolution. This works on the intro as well as in a race, so a slower phone gets a smooth demo instead of stutter. On desktop it only judges speed while the window is in front, so a moment of system slowdown behind another app doesn't lower the resolution for good. On the intro a slow frame still advances the demo in real time (up to 66 ms per frame; races cap it at 50 ms), and the autopilot's stall and back-up timers run on real time too.
 - **Endless CSS animations:** paused for sections that are off screen (`anim-paused`), and pulses animate transform/opacity rather than box-shadow.
 - **Image cache:** pre-sized sprite copies are kept in a least-recently-used cache of 120 entries.
 - **Gamepad:** only polled after a gamepad connects, because polling it every frame keeps macOS's game-controller service busy.
