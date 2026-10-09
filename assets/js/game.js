@@ -19,7 +19,7 @@
     'wrong_house_1', 'wrong_house_2', 'wrong_house_3', 'wrong_house_4',
     'ghost_1', 'ghost_2', 'ghost_3', 'ghost_4', 'ghost_5', 'background_house1',
     'wrong_house_5', 'wrong_house_6', 'correct_house_1', 'correct_house_2', 'correct_house_3', 'correct_house_4', 'correct_house_5',
-    'mountain_1', 'mountain_2', 'mountain_3', 'mountain_4', 'grass_1', 'crow_1', 'tree_2'];
+    'mountain_2', 'mountain_3', 'grass_1', 'crow_1', 'tree_2'];
   const FONT = '"Russo One", "Exo 2", system-ui, sans-serif';
   const TAU = Math.PI * 2;
 
@@ -1258,16 +1258,15 @@
       });
       ctx.globalAlpha = 1;
     }
-    // two mountain ranges
+    // the mountain range
     ctx.globalAlpha = 1;
     drawCrows();                                   // distant crows (Morning only), behind the mountains
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // two mountain ranges from the mountain art; the drawn triangles are only
-    // a fallback while the images load
+    // one distant mountain range from the mountain art, with water at its
+    // foot (there's no middle range); the drawn triangles are only a
+    // fallback while the images load
     if (!drawMountains(0.14, ['mountain_2', 'mountain_3'], 560, -40, 0.4, '169,195,216', 1, true))
       drawRange(0.14, 560, 260, 520, '#b3c2d8', '#dde6f2', 180, 1);
-    if (!drawMountains(0.3, ['mountain_1', 'mountain_4'], 470, 50, 0.14, '150,168,166', 2, true))
-      drawRange(0.3, 430, 170, 330, '#94a6c2', null, 120, 2);
     // Town skyline behind Main Street: background_house1.png, hazed toward
     // the sky colour so it reads as distant, tiled (every other copy
     // mirrored) and scrolling slower than the road.
@@ -1309,12 +1308,12 @@
     return c;
   }
 
-  /* Mountains (mountain_1-4.png) at scale 1: the camera zoom is the only
-     thing that changes their size. Each range scrolls at its own parallax
+  /* Mountains (mountain_2-3.png) at scale 1: the camera zoom is the only
+     thing that changes their size. A range scrolls at its own parallax
      factor `f` and alternates its two images, some mirrored, at uneven
-     spacing. The far range is hazed toward the sky so it reads as distant;
-     a matching haze colour fills in below the range for when the camera
-     climbs above it. */
+     spacing. It is hazed toward the sky so it reads as distant; below it
+     there's either a matching haze or (`lake`) the far water, for when the
+     camera climbs above it. */
   const hazeCache = {};
   function hazed(key, haze) {
     const id = key + '|' + haze;
@@ -1359,7 +1358,7 @@
     if (lake) drawLake(f, base);
     return true;
   }
-  // The far water behind the road, at the foot of each mountain range: the
+  // The far water behind the road, at the foot of the mountain range: the
   // same colours and drifting ripples as the sea in front, but no bright
   // waterline (only the foreground water has one), scrolled with its range
   // and scaled for distance (the farther the range, the finer the ripples).
@@ -2210,22 +2209,38 @@
   // both sides, the water is a single body that flows steadily downstream
   // (waves, highlights and streaks all drift the same way), the bridge and
   // its piers are reflected faintly, the current ripples round the piers,
-  // and a reedy far bank sits behind it.
+  // and a grassy far bank sits behind it.
   const BANK_RUN = 110;                                   // how far each bank slopes out under the bridge
   function drawRiverBack(r) {
-    const wy = riverWaterY(r), t = state.t / 1000, top = r.y + ROAD_NEAR + BASE_D - 2;
-    // far bank behind the water: a soft grassy slope with reeds
-    const fb = (x) => wy - 26 + Math.sin(x * 0.02) * 4;
-    ctx.beginPath(); ctx.moveTo(r.x0, wy + 4);
-    for (let x = r.x0; x <= r.x1; x += 20) ctx.lineTo(x, fb(x));
-    ctx.lineTo(r.x1, wy + 4); ctx.closePath();
-    const fg = ctx.createLinearGradient(0, wy - 30, 0, wy);
-    fg.addColorStop(0, '#4f8a3e'); fg.addColorStop(1, '#2f5a2c');
-    ctx.fillStyle = fg; ctx.fill();
-    ctx.strokeStyle = '#3d6f33'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
-    for (let x = r.x0 + 30; x < r.x1 - 20; x += 23) {
-      const sway = Math.sin(t * 1.4 + x * 0.05) * 3, h = 16 + rnd(x) * 18;
-      ctx.beginPath(); ctx.moveTo(x, fb(x) + 4); ctx.quadraticCurveTo(x + sway * 0.5, fb(x) - h * 0.5, x + sway, fb(x) - h); ctx.stroke();
+    const wy = riverWaterY(r), top = r.y + ROAD_NEAR + BASE_D - 2;
+    // the far bank of the river, seen under the bridge: the same earth as
+    // the embankment, in the bridge's shade, rising from the water to a
+    // gently rolling top lined with grass (grass_1), darker and wet where it
+    // meets the water, with a few stones at the waterline
+    const rise = clamp((wy - r.y) * 0.5, 46, 110);
+    const fb = (x) => wy - rise + Math.sin(x * 0.011 + r.x0) * 7 + Math.sin(x * 0.029) * 3;
+    ctx.beginPath(); ctx.moveTo(r.x0, wy + 6);
+    for (let x = r.x0; x <= r.x1; x += 16) ctx.lineTo(x, fb(x));
+    ctx.lineTo(r.x1, fb(r.x1)); ctx.lineTo(r.x1, wy + 6); ctx.closePath();
+    ctx.fillStyle = sandTex(); ctx.fill();
+    const shade = ctx.createLinearGradient(0, wy - rise - 10, 0, wy + 4);
+    shade.addColorStop(0, 'rgba(70,46,22,0.28)'); shade.addColorStop(0.7, 'rgba(62,40,18,0.42)'); shade.addColorStop(1, 'rgba(45,30,14,0.62)');
+    ctx.fillStyle = shade; ctx.fill();
+    ctx.fillStyle = '#7d7a86';
+    for (let x = r.x0 + 40; x < r.x1 - 30; x += 52) {
+      if (rnd(x * 3) < 0.45) continue;
+      const sx = x + rnd(x) * 30, w = 6 + rnd(x + 1) * 8;
+      ctx.beginPath(); ctx.ellipse(sx, wy - 2, w, w * 0.55, 0, Math.PI, 0); ctx.fill();
+    }
+    const grass = img.grass_1;
+    if (ready(grass)) {
+      for (let x = r.x0 + 20, i = 0; x < r.x1 - 10; x += 58, i++) {
+        const sc = [0.55, 0.7, 0.62][i % 3], w = grass.naturalWidth * sc, h = grass.naturalHeight * sc, gx = x + (rnd(x + 7) - 0.5) * 24;
+        ctx.save(); ctx.translate(gx, fb(gx) + h * 0.32);
+        if (rnd(x + 11) > 0.5) ctx.scale(-1, 1);
+        ctx.drawImage(hq(grass, w, h), -w / 2, -h, w, h);
+        ctx.restore();
+      }
     }
     // wooden piers (drawn before the water, so their feet are under it)
     outline(3);
