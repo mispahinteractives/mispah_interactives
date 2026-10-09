@@ -1264,7 +1264,7 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     // two mountain ranges from the mountain art; the drawn triangles are only
     // a fallback while the images load
-    if (!drawMountains(0.14, ['mountain_2', 'mountain_3'], 560, -40, 0.4, '169,195,216', 1))
+    if (!drawMountains(0.14, ['mountain_2', 'mountain_3'], 560, -40, 0.4, '169,195,216', 1, true))
       drawRange(0.14, 560, 260, 520, '#b3c2d8', '#dde6f2', 180, 1);
     if (!drawMountains(0.3, ['mountain_1', 'mountain_4'], 470, 50, 0.14, '150,168,166', 2, true))
       drawRange(0.3, 430, 170, 330, '#94a6c2', null, 120, 2);
@@ -1335,7 +1335,7 @@
     if (pics.some((p) => !p)) return false;
     const z = cam.z, base = layerY(baseOff, f);
     // misty valley under the range: the mountain colour fading into haze
-    // (under the near range it's the far water instead, drawn after the range)
+    // (the far water instead when `lake` is set, drawn after the range)
     if (!lake) {
       const mist = ctx.createLinearGradient(0, base - 2, 0, base + 160 * z);
       mist.addColorStop(0, `rgba(${fill},1)`); mist.addColorStop(1, 'rgba(200,226,244,1)');
@@ -1359,11 +1359,12 @@
     if (lake) drawLake(f, base);
     return true;
   }
-  // The far water behind the road, at the foot of the near range: the same
-  // water as the sea in front (its colours, bright waterline and ripples
-  // drifting to and fro), scrolled with the range and scaled for distance.
+  // The far water behind the road, at the foot of each mountain range: the
+  // same colours and drifting ripples as the sea in front, but no bright
+  // waterline (only the foreground water has one), scrolled with its range
+  // and scaled for distance (the farther the range, the finer the ripples).
   function drawLake(f, base) {
-    const z = cam.z, t = state.t / 1000, k = 0.6 * z;      // ripples sit closer together far away
+    const z = cam.z, t = state.t / 1000, k = f * 2 * z;    // ripples sit closer together far away
     const wave = (x) => base + (Math.sin((x / z + cam.x * f) * 0.012 + t * 1.5) * 2.4 + Math.sin((x / z + cam.x * f) * 0.031 - t * 2.2) * 1.2) * z;
     ctx.beginPath(); ctx.moveTo(-24, Ht + 2);
     for (let x = -24; x <= Wd + 24; x += 24) ctx.lineTo(x, wave(x));
@@ -1371,9 +1372,7 @@
     const g = ctx.createLinearGradient(0, base - 6 * z, 0, base + 300 * z);
     g.addColorStop(0, 'rgba(92,190,236,1)'); g.addColorStop(0.35, 'rgba(44,140,205,1)'); g.addColorStop(1, '#16508f');
     ctx.fillStyle = g; ctx.fill();
-    ctx.beginPath();
-    for (let x = -24; x <= Wd + 24; x += 24) ctx[x === -24 ? 'moveTo' : 'lineTo'](x, wave(x) + 1.5 * z);
-    ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = Math.max(1.5, 3 * z); ctx.lineCap = 'round'; ctx.stroke();
+    ctx.lineCap = 'round';
     const anchor = layerX(0, f);                            // ripples stay put on the water as the view scrolls
     for (const [dy, speed, a, w] of [[26, 18, 0.28, 3], [60, -12, 0.2, 2.5], [105, 8, 0.14, 2]]) {
       const y = base + dy * k;
