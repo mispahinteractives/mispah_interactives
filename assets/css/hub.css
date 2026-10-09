@@ -2094,7 +2094,6 @@ section.stop-contact { padding-top: clamp(100px, 11vw, 150px); }
 .win-star.on .ws-gold { opacity: 1; }
 .gold-rim { fill: none; stroke: #b4560a; stroke-width: 11; stroke-linejoin: round; }
 .gold-face { fill: url(#ws-gold); stroke: #ffe58a; stroke-width: 2.5; stroke-linejoin: round; }
-.gold-gloss { fill: rgba(255, 255, 255, 0.42); }
 .ws-rays {
   position: absolute; inset: -55%; border-radius: 50%; opacity: 0; pointer-events: none;
   background: repeating-conic-gradient(rgba(255, 220, 110, 0.38) 0 9deg, transparent 9deg 30deg);
@@ -2397,3 +2396,113 @@ section.stop-contact { padding-top: clamp(100px, 11vw, 150px); }
 @keyframes cs-draw { from { stroke-dashoffset: 145; } }
 @keyframes cs-draw-tick { from { stroke-dashoffset: 40; } }
 @media (prefers-reduced-motion: reduce) { .contact-sent.in, .contact-sent.in .cs-check * { animation: none; } }
+
+/* fail screen: a red danger outline. The card gets a red border whose glow
+   pulses like a warning light, and the screen edges flash red as it opens,
+   then keep a faint red glow. */
+#modal-fail .fail-panel {
+  border: 3px solid #ff3b5c;
+  box-shadow: 0 0 0 1px rgba(255, 59, 92, 0.35), 0 0 28px rgba(255, 40, 80, 0.55), 0 30px 80px rgba(0, 0, 0, 0.65), inset 0 0 22px rgba(255, 40, 80, 0.12);
+}
+#modal-fail.open .fail-panel { animation: fail-in 0.75s cubic-bezier(.2, 1.2, .4, 1), fail-alarm 1.6s ease-in-out 0.8s infinite; }
+@keyframes fail-alarm {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(255, 59, 92, 0.35), 0 0 22px rgba(255, 40, 80, 0.45), 0 30px 80px rgba(0, 0, 0, 0.65), inset 0 0 18px rgba(255, 40, 80, 0.1); border-color: #ff3b5c; }
+  50% { box-shadow: 0 0 0 4px rgba(255, 59, 92, 0.3), 0 0 46px rgba(255, 40, 80, 0.8), 0 30px 80px rgba(0, 0, 0, 0.65), inset 0 0 30px rgba(255, 40, 80, 0.2); border-color: #ff6b84; }
+}
+.fail-fx::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  box-shadow: inset 0 0 0 4px rgba(255, 40, 70, 0.55), inset 0 0 120px 30px rgba(255, 20, 60, 0.28);
+}
+#modal-fail.open .fail-fx::after { animation: fail-edge 1.4s ease-out both; }
+@keyframes fail-edge {
+  0% { opacity: 0; }
+  12% { opacity: 1; box-shadow: inset 0 0 0 10px rgba(255, 40, 70, 0.9), inset 0 0 180px 60px rgba(255, 20, 60, 0.55); }
+  100% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) { #modal-fail .fail-fx { display: block; } #modal-fail .fail-fx > * { display: none; } }
+
+/* fail screen, fell into a river: no ghost or haunted house; a river runs
+   along the bottom of the scene and the car nose-dives into it */
+.fail-stage.is-water .fs-ghost, .fail-stage.is-water .fs-house { display: none; }
+.fail-stage.is-water .fs-mist {
+  z-index: 3; bottom: 0; height: 62px; filter: none; border-top: 3px solid rgba(255, 255, 255, 0.75);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 30px, rgba(255, 255, 255, 0.35) 30px 52px, transparent 52px 90px) 0 18px / 180px 3px no-repeat,
+    linear-gradient(180deg, rgba(98, 196, 240, 0.92), rgba(30, 110, 180, 0.96) 60%, #14457e);
+}
+#modal-fail.open .fail-stage.is-water .fs-mist { animation: river-flow 2.4s linear infinite; }
+@keyframes river-flow { from { background-position: 0 18px, 0 0; } to { background-position: -180px 18px, 0 0; } }
+.fail-stage.is-water .fs-car { left: 50%; margin-left: -100px; bottom: 28px; }
+#modal-fail.open .fail-stage.is-water .fs-car { animation: car-sink 1.1s cubic-bezier(.3, .2, .3, 1) 0.3s both, car-bob 2.2s ease-in-out 1.4s infinite; }
+@keyframes car-sink { from { transform: translateY(-70px) rotate(0deg); } to { transform: translateY(0) rotate(14deg); } }
+@keyframes car-bob { 0%, 100% { transform: rotate(14deg) translateY(0); } 50% { transform: rotate(11deg) translateY(4px); } }
+.fail-stage.is-water .fs-shock { left: calc(50% + 40px); }
+.fail-stage.is-water::after {           /* a few bubbles rising from the car */
+  content: ""; position: absolute; left: calc(50% + 20px); bottom: 12px; z-index: 4; width: 8px; height: 8px; border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.8); box-shadow: 14px -10px 0 -1px rgba(255, 255, 255, 0.7), -10px -18px 0 0 rgba(255, 255, 255, 0.6);
+  animation: bubbles 1.8s ease-in 1.2s infinite; opacity: 0;
+}
+@keyframes bubbles { 0% { opacity: 0; transform: translateY(0); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-46px); } }
+@media (max-width: 560px) { .fail-stage.is-water .fs-car { margin-left: -80px; } }
+
+/* Reverse: a glossy blue push-button beside Brake, with a label pill below
+   like Brake, Jump and Gas (Brake itself only ever slows and stops) */
+.pedal.pedal-reverse.is-icon, .pedal.pedal-reverse.is-icon.down {
+  --c: #4f7dff; --c-down: #3459c9;
+  width: auto; aspect-ratio: auto; height: auto; padding: 0; gap: 7px;
+  border: 0; border-radius: 16px; background: none; box-shadow: none; transform: none;
+  margin-bottom: clamp(10px, 3vw, 16px);
+}
+.rev-disc {
+  display: grid; place-items: center; width: clamp(54px, 15vw, 64px); aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle at 35% 28%, #a9c2ff, #4f7dff 55%, #2f55c4); border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 6px 0 #22398a, 0 10px 18px rgba(10, 6, 30, 0.35); color: #fff;
+  transition: transform 0.35s cubic-bezier(.3, 1.6, .5, 1), box-shadow 0.35s;
+}
+.rev-disc svg { width: 28px; height: 28px; fill: currentColor; filter: drop-shadow(0 2px 0 rgba(20, 30, 90, 0.5)); }
+.pedal-reverse.is-icon.down .rev-disc { transform: translateY(5px) scale(0.95); box-shadow: 0 1px 0 #22398a, 0 4px 8px rgba(10, 6, 30, 0.3); transition-duration: 0.08s; }
+.pedal-reverse.is-icon.down .pedal-label { background: var(--c-down); transform: scale(0.95); transition-duration: 0.08s; }
+@media (max-width: 760px) { .rev-disc { width: 50px; } .rev-disc svg { width: 24px; height: 24px; } }
+
+/* ---------- Coin pickup: the coin flies to the counter (game.js coinPop) */
+.coin-fly {
+  position: fixed; left: 0; top: 0; z-index: 110; pointer-events: none; will-change: transform;   /* over the game (80), under modals (120) */
+  border-width: 3px;
+  box-shadow: inset 4px -4px 0 rgba(0, 0, 0, 0.12), 0 0 18px 4px rgba(255, 210, 60, 0.75);
+}
+.coin-fly::after { width: 18%; margin-left: -9%; }
+/* it lands: the counter pops and glows, a ring spreads, the coin spins,
+   the number ticks up and a "+1" floats off */
+.hud-coins { position: relative; }
+.hud-coins.got { animation: coin-got 0.55s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.hud-coins.got::after {
+  content: ""; position: absolute; inset: -2px; border-radius: inherit; pointer-events: none;
+  border: 3px solid #ffd84a; animation: coin-ring 0.6s ease-out forwards;
+}
+.hud-coins.got .coin-ico { animation: coin-spin 0.55s ease-out; }
+.hud-coins [data-val].tick { display: inline-block; animation: coin-tick 0.45s cubic-bezier(0.2, 1.4, 0.4, 1); }
+.coin-plus {
+  position: absolute; left: calc(100% + 6px); top: 10px; pointer-events: none; white-space: nowrap;
+  font: 400 20px/1 var(--display); color: #fff3b0;
+  text-shadow: 0 0 8px rgba(255, 200, 60, 0.95), 0 2px 0 rgba(120, 70, 0, 0.6);
+  animation: coin-plus 0.9s ease-out forwards;
+}
+@keyframes coin-got {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.16); background: rgba(70, 48, 10, 0.92); border-color: #ffd84a; box-shadow: 0 0 22px 4px rgba(255, 200, 60, 0.7); }
+  100% { transform: scale(1); }
+}
+@keyframes coin-ring { from { opacity: 0.95; transform: scale(1); } to { opacity: 0; transform: scale(1.35, 1.7); } }
+@keyframes coin-spin { from { transform: rotateY(0) scale(1.25); } to { transform: rotateY(360deg) scale(1); } }
+@keyframes coin-tick {
+  0% { transform: translateY(-45%) scale(1.4); color: #fff; text-shadow: 0 0 12px rgba(255, 220, 90, 1); }
+  100% { transform: none; }
+}
+@keyframes coin-plus {
+  0% { opacity: 0; transform: translateY(6px) scale(0.6); }
+  25% { opacity: 1; transform: translateY(-8px) scale(1.15); }
+  100% { opacity: 0; transform: translateY(-34px) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hud-coins.got, .hud-coins.got::after, .hud-coins.got .coin-ico, .hud-coins [data-val].tick, .coin-plus { animation-duration: 0.01s; }
+}

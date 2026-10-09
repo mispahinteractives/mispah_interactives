@@ -239,6 +239,7 @@
       ensure, engine, rain,
       thunder: (d, v = 1) => { setTimeout(() => noise(1.2 + 0.6 * v, 0.55 * v, 160), d); setTimeout(() => noise(0.5, 0.3 * v, 500), d + 60); },
       coin: () => tone([988, 1319], 0.07, 'square', 0.09),
+      coinLand: () => tone([1568, 2093], 0.05, 'triangle', 0.05),   // a soft ting as it reaches the counter
       land: (s) => { noise(0.3, 0.25 + 0.4 * s, 380); if (s > 0.35) tone([70, 50], 0.12, 'sine', 0.3 * s); },
       caw: () => { tone([540, 430], 0.07, 'sawtooth', 0.025); noise(0.12, 0.05, 1800); },
       creak: () => tone([160, 120], 0.12, 'sawtooth', 0.05),
@@ -247,6 +248,7 @@
       beep: (go) => tone(go ? [880, 1320] : [520], go ? 0.1 : 0.12, 'square', 0.09),
       hit: () => noise(0.12, 0.18, 1200),
       door: () => tone([523, 659, 784, 1047], 0.07, 'triangle', 0.16),
+      splash: () => { noise(0.9, 0.55, 650); setTimeout(() => noise(0.6, 0.3, 1700), 90); tone([180, 110], 0.12, 'sine', 0.12); },
       spooky: () => {
         if (!ctx || muted) return;
         const t0 = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
@@ -319,11 +321,11 @@
     shake: 0, t: 0, lastToastCp: 0
   };
   const cam = { x: W.SPAWN_X, y: -120, z: 1, fx: 0.62, fy: 0.62, look: 0 };
-  const input = { gas: false, brake: false, lean: 0, jump: false };
+  const input = { gas: false, brake: false, lean: 0, jump: false, reverse: false };
   const keys = new Set();
   let padConnected = false;
   window.addEventListener('gamepadconnected', () => { padConnected = true; });
-  const touch = { gas: false, brake: false, jump: false };
+  const touch = { gas: false, brake: false, jump: false, reverse: false };
   let particles = [];
   let canvas, ctx, dpr = 1, Wd = 0, Ht = 0;
   const ui = {};
@@ -378,7 +380,7 @@
   function resetRun(x) {
     W.resetProps();
     W.coins.forEach((c) => { c.taken = false; });
-    state.coins = 0; state.time = 0; state.started = false; state.finished = false; state.failed = false;
+    state.coins = 0; state.coinsShown = 0; state.run = (state.run || 0) + 1; state.time = 0; state.started = false; state.finished = false; state.failed = false; state.sunk = null; state.falling = null; state.slipped = false; state.slowmo = 0; state.sinkDir = null; state.gulped = false;
     W.buildings.forEach((b) => { b.gs = null; });
     W.buildings.forEach((b) => { b.appear = 0; });
     if (ui.spook) ui.spook.classList.remove('show');
@@ -390,14 +392,21 @@
   /* ---------------------------------------------------------------- input */
   function readInput(dt) {
     if (state.mode === 'attract') return autopilot(dt);
-    if (state.countdown > 0) { input.gas = input.brake = input.jump = false; input.lean = 0; return input; }
-    if (state.finished) { input.gas = false; input.brake = true; input.lean = 0; input.jump = false; return input; }
-    // on-screen Brake / Gas / Jump buttons (touch or mouse), and on a PC the
-    // keyboard as well: → / D gas, ← / A brake, Space / ↑ / W jump, ↓ lean
+    if (state.countdown > 0 || state.falling) { input.gas = input.brake = input.jump = input.reverse = false; input.lean = 0; return input; }
+    if (state.finished) { input.gas = false; input.brake = true; input.lean = 0; input.jump = input.reverse = false; return input; }
+    // on-screen Brake / Reverse / Gas / Jump buttons (touch or mouse), and on
+    // a PC the keyboard as well: → / D drives right (gas); ← / A drives left
+    // (a car rolling forward is braked to a stop first, then it reverses; in
+    // the air it drops the nose like the brake); ↑ / W / Space jump; ↓ / S
+    // brake on the ground and lean the nose forward in the air
+    const left = keys.has('ArrowLeft') || keys.has('KeyA');
+    const down = keys.has('ArrowDown') || keys.has('KeyS');
+    const rolling = W.forwardSpeed() > 1.2;
     let gas = touch.gas || keys.has('ArrowRight') || keys.has('KeyD');
-    let brake = touch.brake || keys.has('ArrowLeft') || keys.has('KeyA');
+    let brake = touch.brake || (down && car.grounded) || (left && (!car.grounded || rolling));
     let jump = touch.jump || keys.has('Space') || keys.has('ArrowUp') || keys.has('KeyW');
-    let lean = keys.has('ArrowDown') || keys.has('KeyS') ? 1 : 0;
+    let reverse = touch.reverse || (left && car.grounded && !rolling);
+    let lean = down && !car.grounded ? 1 : 0;
     // polling getGamepads() every frame keeps macOS's game-controller service
     // busy, so only poll once a gamepad has actually been connected
     const pads = padConnected && navigator.getGamepads ? navigator.getGamepads() : [];
@@ -406,12 +415,14 @@
       if (p.buttons[7] && p.buttons[7].value > 0.2) gas = true;
       if (p.buttons[0] && p.buttons[0].pressed) jump = true;
       if ((p.buttons[6] && p.buttons[6].value > 0.2) || (p.buttons[1] && p.buttons[1].pressed)) brake = true;
+      if (p.buttons[2] && p.buttons[2].pressed) reverse = true;
       if (p.axes[0] && Math.abs(p.axes[0]) > 0.3) lean += p.axes[0];
       if (p.buttons[3] && p.buttons[3].pressed && !p._y) enterDoor();
       p._y = p.buttons[3] && p.buttons[3].pressed;
     }
     input.gas = gas; input.brake = brake && !gas; input.lean = clamp(lean, -1, 1); input.jump = jump;
-    if ((gas || brake || jump) && !state.started && !state.finished) state.started = true;
+    input.reverse = reverse && !gas && !brake;           // gas and brake win over reverse
+    if ((gas || brake || jump || input.reverse) && !state.started && !state.finished) state.started = true;
     return input;
   }
 
@@ -436,6 +447,15 @@
   }
 
   /* ------------------------------------------------------------ particles */
+  // a soft, round puff of white water: spray, droplets and foam are all this
+  // sprite, stretched and faded, so splashes have no hard edges
+  const SOFT = (() => {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d'), rg = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(0.35, 'rgba(250,253,255,0.85)');
+    rg.addColorStop(0.7, 'rgba(232,246,255,0.32)'); rg.addColorStop(1, 'rgba(225,242,255,0)');
+    g.fillStyle = rg; g.fillRect(0, 0, 64, 64); return c;
+  })();
   function puff(x, y, vx, vy, size, life, color, kind) {
     if (particles.length > 420) return;
     particles.push({ x, y, vx, vy, size, life, max: life, color, kind: kind || 'smoke', rot: Math.random() * TAU, vr: (Math.random() - 0.5) * 0.3 });
@@ -523,6 +543,18 @@
       else if (p.kind === 'confetti') { p.vx *= 0.99; p.vy += 0.12 * k; }
       else if (p.kind === 'flame') { p.vx *= 0.9; p.vy = p.vy * 0.9 - 0.08 * k; p.size *= Math.pow(0.93, k); }
       else if (p.kind === 'ring') { p.size += p.vr * k; p.vr *= Math.pow(0.9, k); }
+      else if (p.kind === 'drop') {                        // a water droplet: arcs up and falls back in
+        p.vx *= Math.pow(0.99, k); p.vy += 0.34 * k;
+        if (p.vy > 0 && p.y > p.floor) { p.life = 0; if (Math.random() < 0.2) particles.push({ x: p.x, y: p.floor + 1, vx: 0, vy: 0, size: 3, life: 500, max: 500, color: '#fff', kind: 'ripple', rot: 0, vr: 0.9 }); }
+      }
+      else if (p.kind === 'spray') {                       // a puff of spray: thrown up, spreads, falls back and melts in
+        p.vx *= Math.pow(0.985, k); p.vy = p.vy * Math.pow(0.992, k) + 0.24 * k; p.size += p.grow * k;
+        if (p.vy > 0 && p.y > p.floor) p.life = Math.min(p.life, 160);
+      }
+      else if (p.kind === 'foam') { p.size += p.vr * k; p.vr *= Math.pow(0.96, k); }
+      else if (p.kind === 'glint') { /* stays where the coin was */ }
+      else if (p.kind === 'ripple') { p.size += p.vr * k; p.vr *= Math.pow(0.975, k); }
+      else if (p.kind === 'bubble') { p.vy = Math.max(p.vy - 0.03 * k, -1.6); p.x += Math.sin((p.life + p.rot) * 0.02) * 0.3 * k; if (p.y < p.floor) { p.life = 0; if (Math.random() < 0.5) particles.push({ x: p.x, y: p.floor, vx: 0, vy: 0, size: p.size, life: 500, max: 500, color: '#fff', kind: 'ripple', rot: 0, vr: 0.7 }); } }
       else { p.vx *= 0.95; p.vy += 0.06 * k; }
     }
     particles = particles.filter((p) => p.life > 0);
@@ -576,10 +608,9 @@
         if (near) {
           coin.taken = true; state.coins++;
           Sound.coin();
-          burst(coin.x, coin.y, 14, ['#ffd84a', '#fff3b0', '#ffb300'], 'spark', 4);
+          coinPop(coin);
           const total = store.get('coins', 0) + 1; store.set('coins', total);
           emit('stats', { coins: total });
-          ui.coins.classList.remove('bump'); void ui.coins.offsetWidth; ui.coins.classList.add('bump');
         }
       }
       // checkpoints
@@ -602,13 +633,65 @@
       if (door !== state.door) { state.door = door; showDoorPrompt(door); }
       // finish
       if (!state.finished && x > W.FINISH_X) finish();
+      // into a river: the car falls (real gravity), splashes when it reaches
+      // the water, sinks, and the run is over
+      if (!state.finished && !state.falling) { const r = W.inRiver(); if (r) startFall(r); }
+      if (state.falling && !state.sunk) updateFall(dt);
       // flipped: put the car back on its wheels at the last checkpoint
       if (car.flipTime > 1800) { toast('FLIPPED! BACK ON YOUR WHEELS'); spawnAt(state.checkpoint, true); }
     } else {
-      if (x > W.FINISH_X + 250 || car.flipTime > 2500) resetRun();
+      if (x > W.FINISH_X + 250 || car.flipTime > 2500 || W.inRiver()) resetRun();
     }
 
     if (car.chassis) emitCarParticles(dt);
+    // a car that fell into a river sinks slowly instead of dropping away
+    if (state.sunk && car.chassis) {
+      const B = window.Matter.Body, k = dt / 16.67, c = car.chassis, wy = riverWaterY(state.sunk);
+      state.sinkT += dt;
+      // first it bobs, about half under; after ~1.4s it slips down to rest
+      // on the riverbed. The dive is checked by the water straight away.
+      const settle = clamp((state.sinkT - 1400) / 1600, 0, 1);
+      const targetY = wy + 2 + settle * 96 + Math.sin(state.sinkT * 0.007) * 5 * (1 - settle);
+      if (settle < 0.5 && Math.random() < 0.35 * k) {                     // foam churning round it at the waterline
+        particles.push({ x: c.position.x + (Math.random() - 0.5) * 120, y: wy + 1, vx: 0, vy: 0, size: 12, life: 900, max: 900, color: '#fff', kind: 'foam', rot: 0, vr: 0.7 });
+      }
+      const vy = clamp((targetY - c.position.y) * 0.09, -2, 2);          // a firm, well-damped float
+      // it floats free of the broken deck and drifts out into open water
+      // between the banks (where the banks meet the surface)
+      const r = state.sunk, half = Math.abs(car.wheels[1].position.x - car.wheels[0].position.x) / 2 + car.rWheel;
+      let lo = r.x0 + BANK_RUN + half * 0.75, hi = r.x1 - BANK_RUN - half * 0.75;
+      if (lo > hi) lo = hi = (r.x0 + r.x1) / 2;
+      const drift = clamp((clamp(c.position.x, lo, hi) - c.position.x) * 0.002, -0.14, 0.14);
+      B.setVelocity(c, { x: c.velocity.x * Math.pow(0.95, k) + drift * k, y: c.velocity.y + (vy - c.velocity.y) * 0.3 * k });
+      // nose-heavy: it floats tipped toward the end that went in first,
+      // rocking gently on the swell, and levels out a little on the bottom
+      if (state.sinkDir == null) state.sinkDir = Math.atan2(Math.sin(c.angle), Math.cos(c.angle)) < -0.05 ? -1 : 1;
+      const tilt = Math.atan2(Math.sin(c.angle), Math.cos(c.angle));
+      const want = state.sinkDir * (0.3 - settle * 0.12) + Math.sin(state.sinkT * 0.0045) * 0.09 * (1 - settle * 0.7);
+      const w = clamp(c.angularVelocity * Math.pow(0.88, k) + (want - tilt) * 0.004 * k, -0.04, 0.04);
+      B.setAngularVelocity(c, w);
+      // the wheels move with the body as one piece (and stop spinning)
+      for (const wh of car.wheels) {
+        const rx = wh.position.x - c.position.x, ry = wh.position.y - c.position.y;
+        B.setVelocity(wh, { x: c.velocity.x - w * ry, y: c.velocity.y + w * rx });
+        B.setAngularVelocity(wh, wh.angularVelocity * Math.pow(0.9, k));
+      }
+      if (settle < 0.4 && Math.random() < 0.05 * k) {                    // little ripples off the bobbing car
+        particles.push({ x: c.position.x + (Math.random() - 0.5) * 80, y: wy + 1, vx: 0, vy: 0, size: 10, life: 1100, max: 1100, color: '#fff', kind: 'ripple', rot: 0, vr: 1.2 });
+      }
+      if (!state.gulped && settle > 0.08) {                               // going under: a gulp of air
+        state.gulped = true;
+        for (let i = 0; i < 26; i++) {
+          particles.push({ x: c.position.x + (Math.random() - 0.5) * 110, y: c.position.y + (Math.random() - 0.5) * 30, vx: (Math.random() - 0.5) * 0.4, vy: -(0.6 + Math.random() * 1.2),
+            size: 2 + Math.random() * 5, life: 2400, max: 2400, color: 'rgba(240,250,255,1)', kind: 'bubble', rot: Math.random() * 100, vr: 0, floor: wy + 2 });
+        }
+      }
+      // bubbles rising from the car and popping at the surface
+      if (state.sinkT > 350 && Math.random() < (0.18 + settle * 0.3) * k) {
+        particles.push({ x: c.position.x + (Math.random() - 0.5) * 90, y: Math.max(wy + 8, c.position.y + (Math.random() - 0.5) * 30), vx: 0, vy: -0.5,
+          size: 2 + Math.random() * 3, life: 2200, max: 2200, color: 'rgba(240,250,255,1)', kind: 'bubble', rot: Math.random() * 100, vr: 0, floor: wy + 2 });
+      }
+    }
     if (state.theme === 'rain') {
       const half = Wd / cam.z;
       rainTick(dt, cam.x - half * cam.fx, cam.x + half * (1 - cam.fx));
@@ -629,9 +712,13 @@
     cam.fx = lerp(cam.fx, f.fx, 0.04 * k); cam.fy = lerp(cam.fy, f.fy, 0.04 * k);
     cam.look = lerp(cam.look, clamp(vel.x * 14, -200, 320), 0.03 * k);
     cam.x = lerp(cam.x, c.position.x + cam.look, 0.12 * k);
-    cam.y = lerp(cam.y, c.position.y + clamp(vel.y * 6, -120, 160), 0.08 * k);
+    // falling into a river, the camera holds the bridge and the water surface
+    // in frame (and closes in a little) instead of chasing the car down
+    const river = state.falling || state.sunk;
+    const followY = river ? Math.min(c.position.y, riverWaterY(river) - 70) : c.position.y + clamp(vel.y * 6, -120, 160);
+    cam.y = lerp(cam.y, followY, (river ? 0.06 : 0.08) * k);
     const speed = Math.hypot(vel.x, vel.y);
-    const target = baseZoom() * (1 - clamp(speed / 26, 0, 1) * 0.14);
+    const target = river ? baseZoom() * 1.08 : baseZoom() * (1 - clamp(speed / 26, 0, 1) * 0.14);
     cam.z = lerp(cam.z || target, target, 0.03 * k);
     state.shake *= Math.pow(0.88, k);
     cam.punch = (cam.punch || 0) * Math.pow(0.86, k);
@@ -674,11 +761,17 @@
     drawScenery(x0, x1);
     drawBuildings(x0, x1);
     drawTerrain(x0, x1);
+    drawBridges(x0, x1);
     drawRamps(x0, x1);
     drawProps(x0, x1);
     drawCoins(x0, x1);
     drawParticles('back');
-    drawCar();
+    const into = state.sunk || state.falling;
+    if (into) {                                              // falling into a river: the car goes in between the
+      if (into.joined) drawCar();                            // two water layers (inside the banks of a hill river)
+      else { ctx.save(); riverClip(into); ctx.clip(); drawCar(); ctx.restore(); }
+      drawRiverWater(into, true, x0, x1);
+    } else drawCar();
     drawParticles('front');
     drawForeground(x0, x1);
     if (state.night) drawNight();
@@ -997,16 +1090,25 @@
     const f = v.light ? spriteLocal(v.light[0], v.light[1])
       : spriteLocal(v.bodySize[0] - 12, v.bodySize[1] * (car.key === 'truck' ? 0.58 : 0.62));
     const p = localToWorld(f.x, f.y);
+    // in a river the lamps flicker and short out as they go under the water
+    let on = 1;
+    if (state.sunk) on = p.y > riverWaterY(state.sunk) + 4 ? 0 : clamp(1 - state.sinkT / 900, 0, 1) * (Math.random() < 0.3 ? 0.3 : 1);
+    if (on <= 0) return;
     const len = 460, spread = 0.2;
     const ax = Math.cos(c.angle), ay = Math.sin(c.angle);
     const g = ctx.createLinearGradient(p.x, p.y, p.x + ax * len, p.y + ay * len);
     g.addColorStop(0, 'rgba(255,242,200,0.42)'); g.addColorStop(1, 'rgba(255,242,200,0)');
-    ctx.fillStyle = g;
+    ctx.fillStyle = g; ctx.globalAlpha = on;
     ctx.beginPath(); ctx.moveTo(p.x, p.y - 4);
     ctx.lineTo(p.x + Math.cos(c.angle - spread) * len, p.y + Math.sin(c.angle - spread) * len);
     ctx.lineTo(p.x + Math.cos(c.angle + spread * 0.6) * len, p.y + Math.sin(c.angle + spread * 0.6) * len);
-    ctx.lineTo(p.x, p.y + 4); ctx.closePath(); ctx.fill();
-    drawGlow(p.x, p.y, 40, '255,244,210', 0.8, 0.05);
+    ctx.lineTo(p.x, p.y + 4); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+    drawGlow(p.x, p.y, 40, '255,244,210', 0.8 * on, 0.05);
+    // white reversing lights at the back while reversing
+    if (state.mode === 'play' && input.reverse) {
+      const rl = spriteLocal(14, v.bodySize[1] * (car.key === 'truck' ? 0.58 : 0.62)), q = localToWorld(rl.x, rl.y);
+      drawGlow(q.x, q.y, 34, '235,245,255', 0.85, 0.05);
+    }
     // exhaust glow when the flames are going
     if (car.throttle > 0.55) {
       const ex = spriteLocal(v.exhaust[0], v.exhaust[1]), e = localToWorld(ex.x, ex.y);
@@ -1164,7 +1266,7 @@
     // a fallback while the images load
     if (!drawMountains(0.14, ['mountain_2', 'mountain_3'], 560, -40, 0.4, '169,195,216', 1))
       drawRange(0.14, 560, 260, 520, '#b3c2d8', '#dde6f2', 180, 1);
-    if (!drawMountains(0.3, ['mountain_1', 'mountain_4'], 470, 50, 0.14, '150,168,166', 2))
+    if (!drawMountains(0.3, ['mountain_1', 'mountain_4'], 470, 50, 0.14, '150,168,166', 2, true))
       drawRange(0.3, 430, 170, 330, '#94a6c2', null, 120, 2);
     // Town skyline behind Main Street: background_house1.png, hazed toward
     // the sky colour so it reads as distant, tiled (every other copy
@@ -1228,15 +1330,18 @@
     g.fillRect(0, 0, c.width, c.height);
     return (hazeCache[id] = c);
   }
-  function drawMountains(f, keys, spacing, baseOff, haze, fill, seed) {
+  function drawMountains(f, keys, spacing, baseOff, haze, fill, seed, lake) {
     const pics = keys.map((k) => hazed(k, haze));
     if (pics.some((p) => !p)) return false;
     const z = cam.z, base = layerY(baseOff, f);
     // misty valley under the range: the mountain colour fading into haze
-    const mist = ctx.createLinearGradient(0, base - 2, 0, base + 160 * z);
-    mist.addColorStop(0, `rgba(${fill},1)`); mist.addColorStop(1, 'rgba(200,226,244,1)');
-    ctx.fillStyle = mist;
-    ctx.fillRect(0, base - 2, Wd, Ht - base + 2);
+    // (under the near range it's the far water instead, drawn after the range)
+    if (!lake) {
+      const mist = ctx.createLinearGradient(0, base - 2, 0, base + 160 * z);
+      mist.addColorStop(0, `rgba(${fill},1)`); mist.addColorStop(1, 'rgba(200,226,244,1)');
+      ctx.fillStyle = mist;
+      ctx.fillRect(0, base - 2, Wd, Ht - base + 2);
+    }
     const i0 = Math.floor((cam.x * f - cam.fx * Wd / z) / spacing) - 2;
     const i1 = i0 + Math.ceil(Wd / z / spacing) + 4;
     for (let i = i0; i <= i1; i++) {
@@ -1251,7 +1356,34 @@
       else ctx.drawImage(tile, sx, base - h * z, w * z, h * z);
       ctx.restore();
     }
+    if (lake) drawLake(f, base);
     return true;
+  }
+  // The far water behind the road, at the foot of the near range: the same
+  // water as the sea in front (its colours, bright waterline and ripples
+  // drifting to and fro), scrolled with the range and scaled for distance.
+  function drawLake(f, base) {
+    const z = cam.z, t = state.t / 1000, k = 0.6 * z;      // ripples sit closer together far away
+    const wave = (x) => base + (Math.sin((x / z + cam.x * f) * 0.012 + t * 1.5) * 2.4 + Math.sin((x / z + cam.x * f) * 0.031 - t * 2.2) * 1.2) * z;
+    ctx.beginPath(); ctx.moveTo(-24, Ht + 2);
+    for (let x = -24; x <= Wd + 24; x += 24) ctx.lineTo(x, wave(x));
+    ctx.lineTo(Wd + 24, Ht + 2); ctx.closePath();
+    const g = ctx.createLinearGradient(0, base - 6 * z, 0, base + 300 * z);
+    g.addColorStop(0, 'rgba(92,190,236,1)'); g.addColorStop(0.35, 'rgba(44,140,205,1)'); g.addColorStop(1, '#16508f');
+    ctx.fillStyle = g; ctx.fill();
+    ctx.beginPath();
+    for (let x = -24; x <= Wd + 24; x += 24) ctx[x === -24 ? 'moveTo' : 'lineTo'](x, wave(x) + 1.5 * z);
+    ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = Math.max(1.5, 3 * z); ctx.lineCap = 'round'; ctx.stroke();
+    const anchor = layerX(0, f);                            // ripples stay put on the water as the view scrolls
+    for (const [dy, speed, a, w] of [[26, 18, 0.28, 3], [60, -12, 0.2, 2.5], [105, 8, 0.14, 2]]) {
+      const y = base + dy * k;
+      if (y > Ht) break;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(Wd, y);
+      ctx.strokeStyle = `rgba(255,255,255,${a})`; ctx.lineWidth = Math.max(1, w * z * 0.8);
+      ctx.setLineDash([(26 + dy * 0.2) * k, (120 + dy) * k]); ctx.lineDashOffset = -anchor - (t * speed + dy * 7) * k;
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
   }
 
   function drawRange(f, spacing, hMin, hMax, color, snow, baseOff, seed) {
@@ -1290,19 +1422,22 @@
     // Trees (tree.png) everywhere there's room: a grove before the start
     // line, in the gaps between the buildings on Main Street, and all over the
     // hills. They keep clear of buildings and signs so nothing gets covered.
-    const signs = [W.SPAWN_X - 250, W.TOWN_END - 250];
-    const clearOf = (x, gap) => !W.buildings.some((b) => Math.abs(b.x - x) < gap) &&
-      !signs.some((sx) => Math.abs(sx - x) < 130);
+    const signs = [W.SPAWN_X - 250, W.TOWN_END - 250, ...W.rivers.map((r) => r.x0 - 260)];
+    // `signGap` keeps scenery off the START / MOUNTAINS boards. Lamps need more
+    // room (320): their glow and light cone are drawn over everything at night
+    // and would light up a board standing in front of them.
+    const clearOf = (x, gap, signGap = 130) => !W.buildings.some((b) => Math.abs(b.x - x) < gap) &&
+      !signs.some((sx) => Math.abs(sx - x) < signGap);
     for (let x = Math.floor(x0 / 170) * 170; x < x1; x += 170) {
       const i = Math.round(x / 170), gy = vergeAt(x);
       const tx = x + rnd(i) * 80;
       if (x <= 0) {
         if (rnd(i + 11) > 0.25 && clearOf(tx, 0)) drawTree(tx, vergeAt(tx), 0.85 + rnd(i + 4) * 0.5, rnd(i + 5) > 0.5);
       } else if (x < W.TOWN_END - 100) {
-        if (i % 4 === 0 && clearOf(x, 260)) drawLamp(x, gy);
+        if (i % 4 === 0 && clearOf(x, 260, 320)) drawLamp(x, gy);
         else if (rnd(i + 21) > 0.45 && clearOf(tx, 330)) drawTree(tx, vergeAt(tx), 0.75 + rnd(i + 4) * 0.35, rnd(i + 5) > 0.5);
         else if (rnd(i) > 0.72) { const gx = x + rnd(i + 1) * 60; drawGrass('grass_1', gx, vergeAt(gx), 8, rnd(i + 2) > 0.5); }
-      } else if (x > W.TOWN_END + 200 && rnd(i + 11) > 0.35) {
+      } else if (x > W.TOWN_END + 200 && rnd(i + 11) > 0.35 && !nearRiver(tx, 90) && clearOf(tx, 0)) {
         drawTree(tx, vergeAt(tx), 0.8 + rnd(i + 4) * 0.6, rnd(i + 5) > 0.5);
       }
     }
@@ -1311,9 +1446,12 @@
       const k = Math.round(x / 300);
       if ((x <= 0 || x > W.TOWN_END + 100) && rnd(k + 71) > 0.6) {
         const gx = x + rnd(k + 72) * 50;
+        if (nearRiver(gx, 40)) continue;
         drawGrass('grass_1', gx, vergeAt(gx), 8, rnd(k + 73) > 0.5);
       }
     }
+    // a warning before each broken bridge
+    for (const r of W.rivers) { const sx = r.x0 - 260; if (sx > x0 - 200 && sx < x1 + 200) drawSign(sx, vergeAt(sx), 'JUMP THE GAP!'); }
     // "MOUNTAINS -->" sign, like the reference
     const mx = W.TOWN_END - 250;
     if (mx > x0 && mx < x1) drawSign(mx, vergeAt(mx), 'MOUNTAINS  →');
@@ -1967,9 +2105,10 @@
 
   function drawTerrain(x0, x1) {
     const pts = W.points, step = pts[1].x - pts[0].x;
-    const i0 = clamp(Math.floor((x0 - pts[0].x) / step) - 1, 0, pts.length - 1);
-    const i1 = clamp(Math.ceil((x1 - pts[0].x) / step) + 1, 0, pts.length - 1);
-    const bottom = cam.y + (Ht * (1 - cam.fy)) / cam.z + 200;
+    const I0 = clamp(Math.floor((x0 - pts[0].x) / step) - 1, 0, pts.length - 1);
+    const I1 = clamp(Math.ceil((x1 - pts[0].x) / step) + 1, 0, pts.length - 1);
+    let i0 = I0, i1 = I1;
+    const bottom = viewBottom();
     const t = state.t / 1000;
     const trace = (off) => { for (let i = i0; i <= i1; i++) ctx[i === i0 ? 'moveTo' : 'lineTo'](pts[i].x, pts[i].y + off); };
     const band = (top, depth) => {
@@ -1985,6 +2124,19 @@
       if (dash) ctx.setLineDash([]);
     };
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+
+    // Rivers: the gorge and its water first, then the road in pieces between
+    // them (the ground is cut away at each bank).
+    const shownRivers = W.rivers.filter((r) => r.x1 > x0 - 40 && r.x0 < x1 + 40);
+    for (const r of shownRivers) drawRiverBack(r);
+    const segs = [];
+    let from = I0;
+    for (let i = I0; i <= I1; i++) {
+      if (W.rivers.some((r) => pts[i].x > r.x0 && pts[i].x < r.x1)) { if (i - 1 > from) segs.push([from, i - 1]); from = i + 1; }
+    }
+    if (I1 > from) segs.push([from, I1]);
+    for (const [sa, sb] of segs) {
+    i0 = sa; i1 = sb;
 
     // sandy embankment below the road, darker with depth, with strata
     const under = ROAD_NEAR + BASE_D;
@@ -2025,6 +2177,8 @@
       line(ROAD_FAR + ROAD_D * 0.62, 'rgba(190,210,240,0.16)', 12);
       line(ROAD_FAR + ROAD_D * 0.62, 'rgba(230,240,255,0.18)', 2.5);
     }
+    }   // end of a road piece
+    i0 = I0; i1 = I1;
 
     // water at sea level: gentle waves, a foam line and drifting sparkles
     if (SEA < bottom) {
@@ -2036,17 +2190,236 @@
       const wg = ctx.createLinearGradient(0, SEA - 10, 0, SEA + 420);
       wg.addColorStop(0, 'rgba(92,190,236,0.93)'); wg.addColorStop(0.35, 'rgba(44,140,205,0.96)'); wg.addColorStop(1, '#16508f');
       ctx.fillStyle = wg; ctx.fill();
+      waterDetails(wx0, x1 + 24, SEA, wave);
+    }
+    // river water goes on after the sea: a river that is part of the sea only
+    // adds its reflections and ripples; a river up in the hills covers the sea
+    // inside its bowl, so there is only ever one water line
+    for (const r of shownRivers) drawRiverWater(r, false);
+  }
+
+  /* Rivers and their broken bridges (physics.js: W.rivers). Each river has
+     its own water surface a little below the bridge; the gorge shows the far
+     bank in shade, stone abutments at the banks and wooden piers in the
+     water. The bridge is two plank decks with railings: the near one rises
+     into a kicker and both end in splintered planks at the break. */
+  const riverWaterY = (r) => r.water;                 // its own surface, or the sea's (r.joined)
+  const viewBottom = () => cam.y + (Ht * (1 - cam.fy)) / cam.z + 200;
+  const deckTop = (r, x) => (x > r.g0 - r.kickLen && x <= r.g0 ? r.y - r.kick * (x - (r.g0 - r.kickLen)) / r.kickLen : r.y);
+  const nearRiver = (x, pad) => W.rivers.some((r) => x > r.x0 - pad && x < r.x1 + pad);
+  // The river as one natural scene: earth banks slope down into the water on
+  // both sides, the water is a single body that flows steadily downstream
+  // (waves, highlights and streaks all drift the same way), the bridge and
+  // its piers are reflected faintly, the current ripples round the piers,
+  // and a reedy far bank sits behind it.
+  const BANK_RUN = 110;                                   // how far each bank slopes out under the bridge
+  function drawRiverBack(r) {
+    const wy = riverWaterY(r), t = state.t / 1000, top = r.y + ROAD_NEAR + BASE_D - 2;
+    // far bank behind the water: a soft grassy slope with reeds
+    const fb = (x) => wy - 26 + Math.sin(x * 0.02) * 4;
+    ctx.beginPath(); ctx.moveTo(r.x0, wy + 4);
+    for (let x = r.x0; x <= r.x1; x += 20) ctx.lineTo(x, fb(x));
+    ctx.lineTo(r.x1, wy + 4); ctx.closePath();
+    const fg = ctx.createLinearGradient(0, wy - 30, 0, wy);
+    fg.addColorStop(0, '#4f8a3e'); fg.addColorStop(1, '#2f5a2c');
+    ctx.fillStyle = fg; ctx.fill();
+    ctx.strokeStyle = '#3d6f33'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+    for (let x = r.x0 + 30; x < r.x1 - 20; x += 23) {
+      const sway = Math.sin(t * 1.4 + x * 0.05) * 3, h = 16 + rnd(x) * 18;
+      ctx.beginPath(); ctx.moveTo(x, fb(x) + 4); ctx.quadraticCurveTo(x + sway * 0.5, fb(x) - h * 0.5, x + sway, fb(x) - h); ctx.stroke();
+    }
+    // wooden piers (drawn before the water, so their feet are under it)
+    outline(3);
+    for (const px of riverPiers(r)) {
+      ctx.fillStyle = '#5a3a20'; ctx.fillRect(px - 9, r.y + 40, 18, wy - r.y + 60); ctx.strokeRect(px - 9, r.y + 40, 18, wy - r.y + 60);
+      ctx.strokeStyle = '#5a3a20'; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.moveTo(px, r.y + 46); ctx.lineTo(px - 40, r.y + 44); ctx.moveTo(px, r.y + 46); ctx.lineTo(px + 40, r.y + 44); ctx.stroke();
+    }
+    // the near and far banks: earth sloping from under the road down into the
+    // river and on under the water, so the riverbed is a bowl (no straight
+    // edges); shaded exactly like the embankment beside it, so there's no seam
+    const bottom = viewBottom();
+    for (const dir of [1, -1]) {
+      const bx = dir > 0 ? r.x0 : r.x1;
       ctx.beginPath();
-      for (let x = wx0; x <= x1 + 24; x += 24) ctx[x === wx0 ? 'moveTo' : 'lineTo'](x, wave(x) + 2);
-      ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 3.5; ctx.stroke();
-      ctx.lineCap = 'round';
-      for (const [dy, speed, a, w] of [[26, 18, 0.28, 3], [60, -12, 0.2, 2.5], [105, 8, 0.14, 2]]) {
-        ctx.beginPath(); ctx.moveTo(wx0, SEA + dy); ctx.lineTo(x1 + 24, SEA + dy);
-        ctx.strokeStyle = `rgba(255,255,255,${a})`; ctx.lineWidth = w;
-        ctx.setLineDash([26 + dy * 0.2, 120 + dy]); ctx.lineDashOffset = wx0 - t * speed - dy * 7;   // anchored to the world, then drifting
-        ctx.stroke();
+      ctx.moveTo(bx - dir * 3, top);
+      bankCurve(r, dir, top, wy, bottom);
+      ctx.lineTo(bx - dir * 3, bottom); ctx.closePath();
+      ctx.fillStyle = sandTex(); ctx.fill();
+      const sg = ctx.createLinearGradient(0, cam.y - 150, 0, SEA + 60);
+      sg.addColorStop(0, 'rgba(120,80,40,0)'); sg.addColorStop(1, 'rgba(120,80,40,0.38)');
+      ctx.fillStyle = sg; ctx.fill();
+      // wet, darker earth just where the bank meets the water
+      ctx.save(); ctx.clip();
+      const mx = bx + dir * BANK_RUN, wet = ctx.createRadialGradient(mx, wy, 4, mx, wy, 46);
+      wet.addColorStop(0, 'rgba(60,38,18,0.45)'); wet.addColorStop(1, 'rgba(60,38,18,0)');
+      ctx.fillStyle = wet; ctx.fillRect(mx - 50, wy - 50, 100, 100);
+      ctx.restore();
+      // a few stones on the bank
+      ctx.fillStyle = '#8c8a96';
+      for (let k = 0; k < 4; k++) { const sx = bx + dir * (24 + k * 22), sy = top + 14 + k * ((wy - top) / 5); ctx.beginPath(); ctx.ellipse(sx, sy, 9 - k, 6 - k * 0.6, 0, 0, TAU); ctx.fill(); }
+    }
+  }
+  const riverPiers = (r) => [(r.x0 + r.g0) / 2 + 10, (r.g1 + r.x1) / 2 - 10];
+  // One bank's profile, from just under the road down into the riverbed: it
+  // meets the water BANK_RUN out from the bank and keeps sloping below it.
+  // Used for both the earth and the edge of the water, so they always match.
+  function bankCurve(r, dir, top, wy, bottom) {
+    const bx = dir > 0 ? r.x0 : r.x1, meet = bx + dir * BANK_RUN;
+    ctx.bezierCurveTo(bx + dir * BANK_RUN * 0.35, top + 8, bx + dir * BANK_RUN * 0.6, wy - 26, meet, wy);
+    ctx.bezierCurveTo(meet + dir * 40, wy + 30, meet + dir * 70, wy + 110, meet + dir * 90, bottom);
+  }
+  // everything above the water, plus the bowl below it (the same banks as
+  // drawRiverWater): what a sinking car can be seen through
+  function riverClip(r) {
+    const wy = riverWaterY(r), a = r.x0 + BANK_RUN, b = r.x1 - BANK_RUN, bottom = viewBottom();
+    ctx.beginPath(); ctx.moveTo(r.x0 - 2000, wy - 5000); ctx.lineTo(r.x1 + 2000, wy - 5000); ctx.lineTo(r.x1 + 2000, wy);
+    ctx.lineTo(b + 6, wy); ctx.bezierCurveTo(b - 40, wy + 30, b - 70, wy + 110, b - 90, bottom);
+    ctx.lineTo(a + 90, bottom); ctx.bezierCurveTo(a + 70, wy + 110, a + 40, wy + 30, a - 6, wy);
+    ctx.lineTo(r.x0 - 2000, wy); ctx.closePath();
+  }
+  // River water is drawn in two layers. The back layer (drawTerrain, behind
+  // the car) is the water filling the bowl. The front layer goes on after
+  // the car while it falls or sinks into that river: the same colours,
+  // see-through at the surface and nearly opaque a little below it, so the
+  // car sinks into the water and fades from view. The reflections, ripples
+  // and surface sheen go on whichever layer is on top. The surface is calm:
+  // only a slow, gentle swell (a river that is part of the sea follows the
+  // sea's own waves).
+    const SEA_COLS = [[0, 92, 190, 236, 0.93], [0.35, 44, 140, 205, 0.96], [1, 22, 80, 143, 1]];
+  const FRONT_ALPHA = [[0, 0.42], [14, 0.7], [44, 0.88], [110, 0.95], [400, 0.98]];   // depth (px) → opacity
+  function colAt(cols, f) {
+    let i = 1; while (i < cols.length - 1 && cols[i][0] < f) i++;
+    const [f0, ...c0] = cols[i - 1], [f1, ...c1] = cols[i], u = clamp((f - f0) / (f1 - f0 || 1), 0, 1);
+    return c0.map((v, j) => v + (c1[j] - v) * u);
+  }
+  const riverInPlay = (r) => state.falling === r || state.sunk === r;
+  // The look of all water, the sea's and the rivers': a bright waterline and
+  // soft ripples in three depths drifting to and fro (anchored to the world)
+  function waterDetails(wx0, wx1, wy, wave) {
+    ctx.beginPath();
+    for (let x = wx0; x <= wx1; x += 24) ctx[x === wx0 ? 'moveTo' : 'lineTo'](x, wave(x) + 2);
+    ctx.lineTo(wx1, wave(wx1) + 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.stroke();
+    const t = state.t / 1000, a0 = Math.floor(wx0 / 24) * 24;
+    for (const [dy, speed, a, w] of [[26, 18, 0.28, 3], [60, -12, 0.2, 2.5], [105, 8, 0.14, 2]]) {
+      ctx.beginPath(); ctx.moveTo(a0, wy + dy); ctx.lineTo(wx1, wy + dy);
+      ctx.strokeStyle = `rgba(255,255,255,${a})`; ctx.lineWidth = w;
+      ctx.setLineDash([26 + dy * 0.2, 120 + dy]); ctx.lineDashOffset = a0 - t * speed - dy * 7;
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+  function drawRiverWater(r, front, vx0, vx1) {
+    const wy = riverWaterY(r), t = state.t / 1000, bottom = viewBottom();
+    const a = r.x0 + BANK_RUN, b = r.x1 - BANK_RUN;          // where the banks meet the water
+    const wave = r.joined
+      ? (x) => SEA + Math.sin(x * 0.012 + t * 1.5) * 5 + Math.sin(x * 0.031 - t * 2.2) * 2.5
+      : (x) => wy + Math.sin(x * 0.018 - t * 1.6) * 0.9 + Math.sin(x * 0.047 - t * 2.3) * 0.4;
+    const top = wy - 10, span = 430;                       // the sea's colours, from the river's own surface
+    // a river that is part of the sea: the front layer covers the whole sea
+    // in view (the car can sink anywhere in it); otherwise the bowl
+    const open = r.joined && front, l = open ? vx0 : a, rr = open ? vx1 : b;
+    const shape = () => {
+      ctx.beginPath(); ctx.moveTo(l - 6, wave(l));
+      for (let x = l; x <= rr; x += 8) ctx.lineTo(x, wave(x));
+      ctx.lineTo(rr + 6, wave(rr));
+      if (open) { ctx.lineTo(rr + 6, bottom); ctx.lineTo(l - 6, bottom); }
+      else {                                               // down the far bank, along the bottom, up the near bank
+        ctx.bezierCurveTo(b - 40, wy + 30, b - 70, wy + 110, b - 90, bottom);
+        ctx.lineTo(a + 90, bottom);
+        ctx.bezierCurveTo(a + 70, wy + 110, a + 40, wy + 30, a - 6, wave(a));
       }
-      ctx.setLineDash([]);
+      ctx.closePath();
+    };
+    ctx.save(); shape();
+    const g = ctx.createLinearGradient(0, top, 0, top + span);
+    if (front) {
+      for (const [d, al] of FRONT_ALPHA) {
+        const f = Math.min(1, (d + 10) / span), [cr, cg, cb] = colAt(SEA_COLS, f);
+        g.addColorStop(f, `rgba(${cr | 0},${cg | 0},${cb | 0},${al})`);
+        if (f >= 1) break;
+      }
+      ctx.fillStyle = g; ctx.fill();
+    } else {
+      if (!r.joined) {                                     // (the sea already painted a joined river's water)
+        for (const [f, cr, cg, cb, al] of SEA_COLS) g.addColorStop(f, `rgba(${cr},${cg},${cb},${al})`);
+        ctx.fillStyle = g; ctx.fill();
+      }
+      if (riverInPlay(r)) { ctx.restore(); return; }       // the front layer adds the rest
+    }
+    ctx.save(); ctx.clip();
+    // reflection of the bridge deck and piers, gently broken up
+    ctx.fillStyle = 'rgba(40,24,10,0.2)';
+    for (const [d0, d1] of [[r.x0, r.g0], [r.g1, r.x1]]) {
+      for (let x = d0; x < d1; x += 6) ctx.fillRect(x + Math.sin(x * 0.2 + t * 2.4) * 1.2, wy + 5, 6, 9 + Math.sin(x * 0.11 - t * 2) * 2);
+    }
+    for (const px of riverPiers(r)) ctx.fillRect(px - 8 + Math.sin(t * 2) * 1.2, wy + 2, 16, 34);
+    // the current folds round each pier: a soft curl on the downstream side
+    for (const px of riverPiers(r)) {
+      const k = (t * 1.2) % 1;
+      ctx.strokeStyle = `rgba(255,255,255,${0.4 * (1 - k)})`; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.ellipse(px + 10 + k * 26, wy + 3, 8 + k * 16, 2 + k * 1.5, 0, 0, TAU); ctx.stroke();
+    }
+    ctx.restore();
+    // the waterline and ripples, just like the sea's (the sea draws its own,
+    // but the front layer must draw them again over the car)
+    if (!r.joined || front) {
+      ctx.save(); if (!open) { shape(); ctx.clip(); }
+      waterDetails(l - 6, rr + 6, wy, wave);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+  // Yellow arrows on the run-up and the near half of each bridge mark the
+  // boost strip (physics.js): they pulse, and flash bright while it's pushing.
+  function drawBoostArrows(r) {
+    const hot = car.boosting && car.chassis && car.chassis.position.x > r.x0 - 460 && car.chassis.position.x < r.g0 + 40;
+    const t = state.t / 1000;
+    for (let x = r.x0 - 400, k = 0; x < r.g0 - 30; x += 64, k++) {
+      const y = (x >= r.x0 - 20 ? deckTop(r, x) : W.heightAt(x)) + ROAD_FAR + ROAD_D * 0.55;
+      const pulse = 0.55 + 0.45 * Math.sin(t * 7 - k * 0.8);
+      ctx.save(); ctx.translate(x, y); ctx.scale(1, 0.55);
+      ctx.globalAlpha = hot ? 0.95 : 0.35 + 0.35 * pulse;
+      ctx.fillStyle = hot ? '#fff3a0' : '#ffc83d';
+      if (hot) { ctx.shadowColor = '#ffd23f'; ctx.shadowBlur = 14; }
+      ctx.beginPath(); ctx.moveTo(-10, -12); ctx.lineTo(4, 0); ctx.lineTo(-10, 12); ctx.lineTo(-3, 12); ctx.lineTo(11, 0); ctx.lineTo(-3, -12); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+  }
+  function drawBridges(x0, x1) {
+    for (const r of W.rivers) {
+      if (r.x1 + 60 < x0 || r.x0 - 460 > x1) continue;
+      for (const [a, b, near] of [[r.x0 - 20, r.g0, true], [r.g1, r.x1 + 20, false]]) {
+        const xs = []; for (let x = a; x < b; x += 10) xs.push(x); xs.push(b);
+        // railing on the far side: posts, then the rail
+        outline(3); ctx.fillStyle = '#6b4426';
+        for (let x = a + 14; x < b - 8; x += 62) { const y = deckTop(r, x) + ROAD_FAR; ctx.fillRect(x - 4, y - 46, 8, 48); ctx.strokeRect(x - 4, y - 46, 8, 48); }
+        ctx.strokeStyle = '#7d5332'; ctx.lineWidth = 7; ctx.lineCap = 'round';
+        ctx.beginPath(); xs.forEach((x, k) => ctx[k ? 'lineTo' : 'moveTo'](x, deckTop(r, x) + ROAD_FAR - 42)); ctx.stroke();
+        ctx.beginPath(); xs.forEach((x, k) => ctx[k ? 'lineTo' : 'moveTo'](x, deckTop(r, x) + ROAD_FAR - 20)); ctx.stroke();
+        // plank deck (the surface band) and the beam under it
+        ctx.beginPath(); xs.forEach((x, k) => ctx[k ? 'lineTo' : 'moveTo'](x, deckTop(r, x) + ROAD_FAR));
+        for (let k = xs.length - 1; k >= 0; k--) ctx.lineTo(xs[k], deckTop(r, xs[k]) + ROAD_NEAR);
+        ctx.closePath(); ctx.fillStyle = '#b07d4c'; ctx.fill();
+        ctx.beginPath(); xs.forEach((x, k) => ctx[k ? 'lineTo' : 'moveTo'](x, deckTop(r, x) + ROAD_NEAR));
+        for (let k = xs.length - 1; k >= 0; k--) ctx.lineTo(xs[k], deckTop(r, xs[k]) + ROAD_NEAR + 22);
+        ctx.closePath(); ctx.fillStyle = '#6b4426'; ctx.fill(); outline(3); ctx.stroke();
+        ctx.strokeStyle = 'rgba(70,40,18,0.45)'; ctx.lineWidth = 2;
+        for (let x = a + 11; x < b - 4; x += 22) { const y = deckTop(r, x); ctx.beginPath(); ctx.moveTo(x, y + ROAD_FAR + 2); ctx.lineTo(x, y + ROAD_NEAR - 2); ctx.stroke(); }
+        ctx.strokeStyle = '#d6a46a'; ctx.lineWidth = 3;
+        ctx.beginPath(); xs.forEach((x, k) => ctx[k ? 'lineTo' : 'moveTo'](x, deckTop(r, x) + ROAD_FAR + 2)); ctx.stroke();
+        // splintered planks at the break
+        const ex = near ? b : a, dir = near ? 1 : -1, ey = deckTop(r, ex);
+        ctx.fillStyle = '#b07d4c'; outline(2);
+        ctx.beginPath(); ctx.moveTo(ex, ey + ROAD_FAR);
+        [[10, 6], [3, 13], [14, 21], [4, 29], [11, 37], [2, ROAD_D + 4]].forEach(([dx, dy]) => ctx.lineTo(ex + dir * dx, ey + ROAD_FAR + dy));
+        ctx.lineTo(ex, ey + ROAD_NEAR + 20); ctx.closePath(); ctx.fill(); ctx.stroke();
+        // the broken rail end hangs down
+        ctx.strokeStyle = '#7d5332'; ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.moveTo(ex - dir * 6, ey + ROAD_FAR - 42); ctx.lineTo(ex + dir * 14, ey + ROAD_FAR - 8); ctx.stroke();
+      }
+      drawBoostArrows(r);                       // on top of the road and the planks
     }
   }
 
@@ -2089,7 +2462,8 @@
 
   function drawParticles(layer) {
     for (const p of particles) {
-      const front = p.kind === 'spark' || p.kind === 'confetti' || p.kind === 'flame' || p.kind === 'ring';
+      const front = p.kind === 'spark' || p.kind === 'confetti' || p.kind === 'flame' || p.kind === 'ring' || p.kind === 'drop' || p.kind === 'foam' ||
+        p.kind === 'ripple' || p.kind === 'bubble' || p.kind === 'glint' || (p.kind === 'spray' && !p.back);
       if ((layer === 'front') !== front) continue;
       const a = clamp(p.life / p.max, 0, 1);
       if (p.kind === 'confetti') {
@@ -2100,6 +2474,50 @@
       if (p.kind === 'ring') {
         ctx.globalAlpha = a * 0.7; ctx.strokeStyle = p.color; ctx.lineWidth = 4 * a + 1;
         ctx.beginPath(); ctx.ellipse(p.x, p.y, p.size, p.size * 0.28, 0, 0, TAU); ctx.stroke();
+        continue;
+      }
+      if (p.kind === 'drop') {                            // a soft droplet, stretched along its flight
+        const sp = Math.hypot(p.vx, p.vy), len = p.size * 2 + sp * 1.4;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(Math.atan2(p.vy, p.vx));
+        ctx.globalAlpha = Math.min(1, a * 1.6) * 0.9;
+        ctx.drawImage(SOFT, -len / 2, -p.size, len, p.size * 2);
+        ctx.restore(); continue;
+      }
+      if (p.kind === 'spray') {                           // overlapping soft puffs make one smooth splash
+        const sp = Math.hypot(p.vx, p.vy), st = 1 + Math.min(0.6, sp * 0.05);
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(Math.atan2(p.vy, p.vx));
+        ctx.globalAlpha = Math.min(1, a * 1.8) * p.alpha;
+        ctx.drawImage(SOFT, -p.size * st, -p.size, p.size * 2 * st, p.size * 2);
+        ctx.restore(); continue;
+      }
+      if (p.kind === 'foam') {                            // white water spreading on the surface
+        ctx.globalAlpha = Math.min(1, a * 1.4) * 0.85;
+        ctx.drawImage(SOFT, p.x - p.size, p.y - p.size * 0.2, p.size * 2, p.size * 0.4);
+        continue;
+      }
+      if (p.kind === 'glint') {                           // a coin taken: a gold ring and a four-point flash
+        const age = 1 - a;
+        ctx.globalAlpha = a * 0.9; ctx.strokeStyle = p.color; ctx.lineWidth = 1 + 4 * a;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size + age * 46, 0, TAU); ctx.stroke();
+        drawGlow(p.x, p.y, 70 * (0.6 + a * 0.6), '255,224,120', a * 0.9, 0.1);
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot + age * 0.8);
+        ctx.globalAlpha = Math.min(1, a * 1.6); ctx.fillStyle = '#fffbe6';
+        const L = 18 + age * 34, w = 3.2 * a + 0.8;
+        for (let i = 0; i < 2; i++) {
+          ctx.beginPath(); ctx.moveTo(-L, 0); ctx.lineTo(0, -w); ctx.lineTo(L, 0); ctx.lineTo(0, w); ctx.closePath(); ctx.fill();
+          ctx.rotate(Math.PI / 2);
+        }
+        ctx.restore(); ctx.globalAlpha = 1;
+        continue;
+      }
+      if (p.kind === 'ripple') {                          // a faint ring spreading on the water
+        ctx.globalAlpha = a * 0.45; ctx.strokeStyle = p.color; ctx.lineWidth = 1 + a;
+        ctx.beginPath(); ctx.ellipse(p.x, p.y, p.size, p.size * 0.22, 0, 0, TAU); ctx.stroke();
+        continue;
+      }
+      if (p.kind === 'bubble') {
+        ctx.globalAlpha = Math.min(1, a * 2) * 0.8; ctx.strokeStyle = p.color; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, TAU); ctx.stroke();
         continue;
       }
       if (p.kind === 'flame') {
@@ -2205,14 +2623,60 @@
   function updateHud() {
     const speed = Math.abs(W.forwardSpeed()) * 60 / 75 * 3.6;      // px/frame → km/h at 75px per metre
     const frac = clamp((car.chassis.position.x - W.SPAWN_X) / (W.FINISH_X - W.SPAWN_X), 0, 1);
-    const key = state.coins + '|' + Math.floor(state.time / 100) + '|' + Math.round(speed) + '|' + Math.round(frac * 400);
+    const key = state.coinsShown + '|' + Math.floor(state.time / 100) + '|' + Math.round(speed) + '|' + Math.round(frac * 400);
     if (key === hudCache) return;
     hudCache = key;
-    ui.coinsVal.textContent = state.coins + '/' + W.coins.length;
+    ui.coinsVal.textContent = Math.min(state.coins, state.coinsShown || 0) + '/' + W.coins.length;
     ui.time.textContent = fmtTime(state.time);
     ui.speed.textContent = Math.round(speed);
     ui.speed.parentElement.classList.toggle('redline', W.forwardSpeed() > car.v.maxSpeed * 0.78);
     ui.progress.style.setProperty('--p', frac);
+  }
+
+  /* Coin pickup: the coin flashes and bursts where it was, then a coin flies
+     on a curve up to the coin counter, flipping as it goes. When it lands
+     the counter pulses and glows, the number ticks up and a "+1" floats
+     off. The counter shows state.coinsShown, which catches up with
+     state.coins as the coins land (a coin from a run that has since been
+     reset doesn't count). */
+  let coinsFlying = 0;
+  function coinPop(coin) {
+    burst(coin.x, coin.y, 16, ['#ffd84a', '#fff3b0', '#ffb300'], 'spark', 4.5);
+    particles.push({ x: coin.x, y: coin.y, vx: 0, vy: 0, size: 24, life: 460, max: 460, color: '#ffe27a', kind: 'glint', rot: Math.random(), vr: 0 });
+    const run = state.run, ico = ui.coins.querySelector('.coin-ico');
+    const to = ico && ico.getBoundingClientRect();
+    if (!to || !to.width || coinsFlying > 10 || !document.body.animate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { coinLanded(run); return; }
+    const cz = cam.z * (1 + (cam.punch || 0)), rc = canvas.getBoundingClientRect();
+    const sx = rc.left + cam.fx * Wd + (coin.x - cam.x) * cz, sy = rc.top + cam.fy * Ht + (coin.y - cam.y) * cz;
+    const tx = to.left + to.width / 2, ty = to.top + to.height / 2;
+    const size = clamp(50 * cz, 28, 58), end = to.width / size;
+    const el = document.createElement('i');
+    el.className = 'coin-ico coin-fly'; el.setAttribute('aria-hidden', 'true');
+    el.style.width = el.style.height = size + 'px';
+    document.body.appendChild(el); coinsFlying++;
+    // a curve that lifts the coin up off the road first, then sweeps it
+    // into the counter; it pops a little bigger, then shrinks to fit
+    const qx = sx + (tx - sx) * 0.12, qy = ty + 12;
+    const frames = [];
+    for (let i = 0; i <= 16; i++) {
+      const u = i / 16, x = (1 - u) * (1 - u) * sx + 2 * u * (1 - u) * qx + u * u * tx, y = (1 - u) * (1 - u) * sy + 2 * u * (1 - u) * qy + u * u * ty;
+      const sc = u < 0.15 ? 1 + (u / 0.15) * 0.35 : 1.35 + (end - 1.35) * ((u - 0.15) / 0.85);
+      frames.push({ transform: `translate(${x - size / 2}px, ${y - size / 2}px) scale(${sc}) rotateY(${u * 720}deg)`, opacity: u > 0.92 ? 0.85 : 1 });
+    }
+    const anim = el.animate(frames, { duration: 680, easing: 'cubic-bezier(0.3, 0.15, 0.55, 1)' });
+    anim.onfinish = anim.oncancel = () => { el.remove(); coinsFlying--; coinLanded(run); };
+  }
+  function coinLanded(run) {
+    if (run !== state.run || state.mode !== 'play') return;
+    state.coinsShown = Math.min(state.coins, (state.coinsShown || 0) + 1);
+    hudCache = ''; updateHud();
+    Sound.coinLand();
+    const pill = ui.coins;
+    pill.classList.remove('got'); void pill.offsetWidth; pill.classList.add('got');
+    ui.coinsVal.classList.remove('tick'); void ui.coinsVal.offsetWidth; ui.coinsVal.classList.add('tick');
+    const plus = document.createElement('span');
+    plus.className = 'coin-plus'; plus.textContent = '+1'; plus.setAttribute('aria-hidden', 'true');
+    pill.appendChild(plus); setTimeout(() => plus.remove(), 950);
   }
 
   function showDoorPrompt(b) {
@@ -2235,7 +2699,7 @@
     requestAnimationFrame(() => el.classList.add('open'));
     const f = el.querySelector('[data-autofocus]') || el.querySelector('button, a');
     if (f) setTimeout(() => f.focus({ preventScroll: true }), 60);
-    keys.clear(); touch.gas = touch.brake = touch.jump = false;
+    keys.clear(); touch.gas = touch.brake = touch.jump = touch.reverse = false;
   }
   function closeModal(el) {
     if (ui.startSeq) ui.startSeq.classList.remove('hold');
@@ -2347,22 +2811,105 @@
   // along the course you got, and your time and coins.
   const FAIL_TEXT = {
     house: { title: 'Spooked!', reason: 'That was a haunted house. Only doors with a game sign lead to a game. Watch for the bats!' },
-    ghost: { title: 'Caught!', reason: 'A ghost got you! Don\'t jump into the roof ghosts, and wait while a ghost stands at the door.' }
+    ghost: { title: 'Caught!', reason: 'A ghost got you! Don\'t jump into the roof ghosts, and wait while a ghost stands at the door.' },
+    water: { title: 'Splash!', reason: 'You fell into the river! Hit the broken bridge at full speed, or press Jump right at the break, to clear the gap.' }
   };
-  function spooked(b, how) {
-    const txt = FAIL_TEXT[how === 'ghost' ? 'ghost' : 'house'];
-    state.finished = true; state.failed = true;
+  // Into the river: spray, a splash, and the car sinks (see update) before
+  // the fail screen opens.
+  // Missed the bridge: the car falls into the river under real gravity
+  // (it can still clip the broken edge or the bank on the way down). A car
+  // left hanging nose-first on the broken edge is tipped over the edge, and
+  // if it still hasn't dropped after a moment it slips off the planks.
+  function startFall(r) {
+    state.falling = r; state.fallT = 0; state.finished = true; state.failed = true;
     state.door = null; ui.prompt.hidden = true;
+    const B = window.Matter.Body, c = car.chassis;
+    if (Math.abs(W.forwardSpeed()) < 2) {                  // hanging at the edge: tip it in
+      const dir = c.position.x < (r.g0 + r.g1) / 2 ? 1 : -1;
+      for (const part of [c, ...car.wheels]) B.setVelocity(part, { x: part.velocity.x + dir * 1.4, y: part.velocity.y + 1.2 });
+      B.setAngularVelocity(c, c.angularVelocity + dir * 0.03);
+    }
+    Sound.whoosh();
+  }
+  function updateFall(dt) {
+    const r = state.falling, c = car.chassis, k = dt / 16.67;
+    state.fallT += dt;
+    // it pitches nose-first but doesn't cartwheel: past ~65 degrees the spin dies away
+    const tilt = Math.atan2(Math.sin(c.angle), Math.cos(c.angle));
+    if (Math.abs(tilt) > 1.15 && Math.sign(c.angularVelocity) === Math.sign(tilt)) window.Matter.Body.setAngularVelocity(c, c.angularVelocity * Math.pow(0.7, k));
+    // still caught on the planks after a moment: let it slip off
+    if (state.fallT > 450 && c.velocity.y < 0.6 && !state.slipped) {
+      state.slipped = true;
+      for (const part of [c, ...c.parts, ...car.wheels]) part.collisionFilter = { ...part.collisionFilter, mask: 0 };
+    }
+    const lowest = Math.max(c.position.y, ...car.wheels.map((w) => w.position.y + car.rWheel));
+    if (lowest > riverWaterY(r) - 4 || state.fallT > 4000) fellInRiver(r);
+  }
+  // The car hits the water: a moment of slow motion and a splash sized by
+  // the impact, all soft puffs of spray: a crown thrown up on both sides and
+  // a column where it went in that fall back and melt into the water, fine
+  // droplets, white water and faint ripples spreading on the surface, and a
+  // little mist. Then the car bobs nose-down, half under, before it
+  // slips down to the riverbed (see the sinking in update).
+  function fellInRiver(r) {
+    state.sunk = r; state.sinkT = 0; state.slowmo = 420;
+    const c = car.chassis, wy = riverWaterY(r);
+    // the splash is always a big moment, and bigger the harder it hits; it
+    // starts where the car meets the water (usually the nose)
+    const impact = clamp(0.9 + Math.hypot(c.velocity.x, c.velocity.y) / 20, 0.9, 1.5);
+    const first = car.wheels.reduce((a, w) => (w.position.y > a.position.y ? w : a), car.wheels[0]);
+    const cx = (first.position.x * 2 + c.position.x) / 3;
+    // the water checks the dive hard on impact, and from here on the water
+    // holds the car (it no longer catches on the broken deck)
+    for (const part of [c, ...car.wheels]) window.Matter.Body.setVelocity(part, { x: part.velocity.x * 0.6, y: part.velocity.y * 0.45 });
+    for (const part of [c, ...c.parts, ...car.wheels]) part.collisionFilter = { ...part.collisionFilter, mask: 0 };
+    const dir = Math.sign(c.velocity.x) || 1;
+    const spray = (x, vx, vy, size, life, back) => particles.push({ x, y: wy - 2, vx, vy, size, grow: 0.15 + Math.random() * 0.25, life, max: life,
+      color: '#fff', kind: 'spray', rot: 0, vr: 0, floor: wy + 4, back, alpha: 0.68 + Math.random() * 0.3 });
+    // the crown: two walls of spray thrown up and out on either side, the
+    // forward one a little bigger (the car's momentum)
+    for (let i = 0; i < Math.round(48 * impact); i++) {
+      const side = i % 2 ? 1 : -1, ang = side * (0.16 + Math.random() * 0.62), sp = (4.5 + Math.random() * 6) * impact * (side === dir ? 1.12 : 0.92);
+      spray(cx + side * (8 + Math.random() * 46), Math.sin(ang) * sp, -Math.cos(ang) * sp, 7 + Math.random() * 11, 900 + Math.random() * 700, Math.random() < 0.35);
+    }
+    // a column of spray straight up where it went in
+    for (let i = 0; i < Math.round(16 * impact); i++) {
+      spray(cx + (Math.random() - 0.5) * 34, (Math.random() - 0.5) * 1.2, -(7.5 + Math.random() * 6.5) * impact, 6 + Math.random() * 9, 1100 + Math.random() * 600, Math.random() < 0.3);
+    }
+    // fine droplets flung out of the spray
+    for (let i = 0; i < Math.round(34 * impact); i++) {
+      const side = Math.random() < 0.5 ? -1 : 1, ang = side * (0.2 + Math.random() * 0.8), sp = (5 + Math.random() * 7) * impact;
+      particles.push({ x: cx + side * Math.random() * 50, y: wy - 2, vx: Math.sin(ang) * sp, vy: -Math.cos(ang) * sp, size: 1.6 + Math.random() * 1.8,
+        life: 2200, max: 2200, color: '#fff', kind: 'drop', rot: 0, vr: 0, floor: wy + 2 });
+    }
+    // white water spreading out on the surface, soft ripples and a little mist
+    for (let i = 0; i < 3; i++) particles.push({ x: cx + (i - 1) * 36, y: wy + 1, vx: 0, vy: 0, size: 24, life: 2000, max: 2000, color: '#fff', kind: 'foam', rot: 0, vr: 1.5 + i * 0.4 });
+    for (let i = 0; i < 3; i++) particles.push({ x: cx, y: wy + 1, vx: 0, vy: 0, size: 20 + i * 14, life: 1400 + i * 350, max: 1400 + i * 350, color: '#fff', kind: 'ripple', rot: 0, vr: 2.2 + i * 0.4 });
+    for (let i = 0; i < 6; i++) puff(cx + (Math.random() - 0.5) * 120, wy - 20 - Math.random() * 40, (Math.random() - 0.5) * 0.8, -0.4, 16 + Math.random() * 14, 1000, 'rgba(236,246,255,0.5)', 'smoke');
+    Sound.splash();
+    state.shake = 5 + 7 * impact;
+    runOver('water', null, 2400);                       // the fail screen once it has gone under
+  }
+  function spooked(b, how) {
     Sound.spooky();
     state.shake = 14;
-    const ghost = img['ghost_' + (((b.variant - 1) % 4) + 1)], house = img['wrong_house_' + (((b.variant - 1) % 6) + 1)];
     ui.spook.classList.remove('show'); void ui.spook.offsetWidth; ui.spook.classList.add('show');
     for (let i = 0; i < 40; i++) {
       puff(b.x + (Math.random() - 0.5) * 200, W.heightAt(b.x) - 80 - Math.random() * 120,
         (Math.random() - 0.5) * 5, -Math.random() * 3, 10 + Math.random() * 12, 1200 + Math.random() * 800,
         ['#6e4a9e', '#4b2d73', '#9b7fd1'][i % 3], 'smoke');
     }
+    runOver(how === 'ghost' ? 'ghost' : 'house', b);
+  }
+  // The run is over (haunted house, ghost or river): fill in the fail screen
+  // and open it after a moment.
+  function runOver(how, b, delay) {
+    const txt = FAIL_TEXT[how];
+    state.finished = true; state.failed = true;
+    state.door = null; ui.prompt.hidden = true;
+    const ghost = b && img['ghost_' + (((b.variant - 1) % 4) + 1)], house = b && img['wrong_house_' + (((b.variant - 1) % 6) + 1)];
     const m = ui.modalFail;
+    $('.fail-stage', m).classList.toggle('is-water', how === 'water');
     $('[data-fail-level]', m).textContent = 'Level ' + state.level + ' · Run over';
     const title = $('#fail-title', m);
     title.setAttribute('aria-label', txt.title);
@@ -2376,7 +2923,7 @@
     $('[data-fail-progress-text]', m).textContent = Math.round(frac * 100) + '%';
     $('[data-fail-time]', m).textContent = fmtTime(state.time);
     $('[data-fail-coins]', m).textContent = state.coins + '/' + W.coins.length;
-    setTimeout(() => { if (state.mode === 'play' && state.failed) openModal(m); }, 1500);
+    setTimeout(() => { if (state.mode === 'play' && state.failed) openModal(m); }, delay || 1500);
   }
 
   function openLevels() {
@@ -2431,9 +2978,9 @@
     title.setAttribute('aria-label', word);
     title.innerHTML = '<span aria-hidden="true">' + [...word].map((ch, i) => `<b style="--i:${i}">${ch}</b>`).join('') + '</span>';
     // each star: an empty socket, and for earned stars a gold star (rim,
-    // gradient face, gloss) that spins into it over a turning light burst
+    // gradient face) that spins into it over a turning light burst
     const STAR_SVG = '<svg class="ws-slot" viewBox="0 0 100 100"><use href="#ws-star" class="slot-rim"/><use href="#ws-star" class="slot-face"/></svg>' +
-      '<svg class="ws-gold" viewBox="0 0 100 100"><use href="#ws-star" class="gold-rim"/><use href="#ws-star" class="gold-face"/><use href="#ws-gloss" class="gold-gloss"/></svg>';
+      '<svg class="ws-gold" viewBox="0 0 100 100"><use href="#ws-star" class="gold-rim"/><use href="#ws-star" class="gold-face"/></svg>';
     $('[data-finish-stars]', m).innerHTML = [1, 2, 3].map((i) =>
       `<span class="win-star${i <= stars ? ' on' : ''}" style="--d:${0.7 + i * 0.22}s"><span class="ws-rays"></span>${STAR_SVG}<span class="ws-glint"></span></span>`).join('');
     $('[data-finish-stars]', m).setAttribute('aria-label', stars + ' of 3 stars');
@@ -2555,7 +3102,7 @@
       else if (e.code === 'Digit4') setVehicle('skull');
     });
     window.addEventListener('keyup', (e) => keys.delete(e.code));
-    window.addEventListener('blur', () => { keys.clear(); touch.gas = touch.brake = touch.jump = false; });
+    window.addEventListener('blur', () => { keys.clear(); touch.gas = touch.brake = touch.jump = touch.reverse = false; });
 
     // touch pedals: pointer capture keeps a held pedal pressed while the
     // thumb slides a little
@@ -2674,7 +3221,10 @@
     // drops to a lighter render resolution instead of stuttering
     if (state.active && !document.hidden && (!behind || COARSE)) watchFrameRate(gap, now); else settleUntil = now + 1500;
     if (!state.active || document.hidden) return;
-    if (!state.paused) update(dt);
+    // a moment of slow motion as the car hits the water
+    const play = state.slowmo > 0 ? dt * 0.32 : dt;
+    if (state.slowmo > 0) state.slowmo -= dt;
+    if (!state.paused) update(play);
     else updateParticles(dt);
     render();
   }

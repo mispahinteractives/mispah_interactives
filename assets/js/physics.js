@@ -103,6 +103,9 @@
   const STREET = ['garage', 'services', 'animal-cafe', 'wrong-1', 'wrong-2', 'cinemoji', 'wrong-3', 'uno-clash', 'wrong-4', 'wrong-5', 'baggage-out', 'wrong-6',
     'clients', 'demos', 'contact'];
   const DOOR_HALF = 150;
+  // every level has a river crossing; from level 12 there are two
+  const riversFor = (level) => (level >= 12 ? 2 : 1);
+  const SEA_LEVEL = 175;                     // the sea's surface (same as SEA in game.js)
 
   // Collision categories. Props bounce off the wheels (which bat them away)
   // and each other, but pass the chassis: otherwise small cans slip under a
@@ -120,7 +123,7 @@
      and each feature gets a flat stretch cut into the hills. */
   function makeCourse(level) {
     level = Math.max(1, Math.min(LEVELS, level | 0));
-    const C = { level, buildings: [], speedBumps: [], flats: [], ramps: [], props: [], coins: [], checkpoints: [SPAWN_X] };
+    const C = { level, buildings: [], speedBumps: [], flats: [], ramps: [], props: [], coins: [], checkpoints: [SPAWN_X], rivers: [] };
     let hillLen, amp, f, ph, trendDepth, trendLen;
     if (level === 1) {
       C.buildings = STREET.map((id, i) => ({
@@ -141,7 +144,7 @@
       });
       C.speedBumps = C.buildings.slice(1).map((b) => b.x - TOWN_SPACING / 2);
       C.townEnd = C.buildings[C.buildings.length - 1].x + 900;
-      hillLen = Math.round(7000 + 11000 * d);
+      hillLen = Math.round(7000 + 11000 * d) + riversFor(level) * 1500;   // room for the river crossings
       amp = 0.6 + 0.38 * d;
       const k = 1 + 0.15 * d;
       f = [0.0021 * k, 0.0047 * k, 0.0113 * k];
@@ -195,11 +198,25 @@
       for (let r = 0; r < 2; r++) for (let i = 0; i < 2 - r; i++) C.props.push(['crate', cx + i * 67 + r * 33, r * 66.5]);
       C.props.push(['box', cx + 140]); C.props.push(['suitcase', cx - 130]); C.props.push(['oilcan', cx + 220]);
     };
+    // A river crossing: the ground is cut away between the banks (so the water
+    // shows below) and a broken wooden bridge spans it, with a gap in the
+    // middle that you clear on speed or with a jump. The near half tips up a
+    // little at the break, like a kicker. Banks sit on the 40px ground grid so
+    // the cut is clean. Falling in ends the run (game.js).
+    const river = (cx, width, gap) => {
+      const snap = (x) => START_X + Math.round((x - START_X) / STEP) * STEP;
+      const x0 = snap(cx - width / 2), x1 = snap(cx + width / 2);
+      C.flats.push([x0 - 700, x1 + 320]);      // a long flat run-up, so a car coming over a crest lands before the bridge
+      C.rivers.push({ x0, x1, g0: cx - gap / 2, g1: cx + gap / 2 });
+      C.checkpoints.push(x0 - 420);
+      arc(cx, 3, Math.max(60, gap / 2.6), 150 + gap * 0.2, 16);          // coins over the break
+    };
     const pile = (cx) => { C.props.push(['box', cx], ['box', cx + 85], ['box', cx + 40, 47], ['suitcase', cx + 140], ['oilcan', cx + 200]); };
 
     if (level === 1) {
       C.flats = [[hill(1050), hill(2050)], [hill(3000), hill(3600)], [hill(5300), hill(6400)], [hill(7850), hill(8350)], [hill(10500), C.endX + 400]];
       C.ramps = [[hill(1220), 0.62], [hill(5500), 0.78]];
+      river(hill(4400), 600, 240);              // wider than any car's wheelbase (158-211px), so a slow car drops in
       pile(TOWN_END - 540);
       cans(hill(3260));
       for (let r = 0; r < 2; r++) for (let i = 0; i < 2 - r; i++) C.props.push(['crate', hill(8080) + i * 67 + r * 33, r * 66.5]);
@@ -212,15 +229,16 @@
         hill(300), hill(1000), hill(3000), hill(5300), hill(7800), hill(10500));
     } else {
       const d = (level - 2) / (LEVELS - 2);
-      const nR = 1 + Math.floor(d * 4.99), nH = Math.min(6, Math.floor(level / 3)), nP = 1 + Math.floor(d * 3.99);
+      const nR = 1 + Math.floor(d * 4.99), nH = Math.min(6, Math.floor(level / 3)), nP = 1 + Math.floor(d * 3.99), nB = riversFor(level);
       C.speedBumps.forEach((x) => row(x, 2, 80));
       C.checkpoints.push(...C.buildings.slice(1).map((b) => b.x - 200));
       // interleave the features, then space them evenly along the hills
       const feats = [];
-      for (let i = 0; i < Math.max(nR, nH, nP); i++) {
+      for (let i = 0; i < Math.max(nR, nH, nP, nB); i++) {
         if (i < nR) feats.push('ramp');
         if (i < nH) feats.push('house');
         if (i < nP) feats.push('props');
+        if (i < nB) feats.push('river');
       }
       const span = hillLen - 2200, gap = span / feats.length;
       let houseNo = 0;
@@ -233,6 +251,9 @@
           C.ramps.push([x, sc]);
           arc(x + 460, 3, 85, 250 + (sc - 0.62) * 500, 26);
           C.checkpoints.push(x - 300);
+        } else if (kind === 'river') {
+          // wider rivers and bigger breaks as the levels go on
+          river(x, 520 + 200 * d, 240 + 90 * d);
         } else if (kind === 'house') {
           C.flats.push([x - 330, x + 330]);
           C.buildings.push({ id: 'wrong-' + (houseNo + 1), x, kind: 'wrong', variant: (houseNo % 6) + 1 });
@@ -305,8 +326,10 @@
     for (const p of points) lowest = Math.max(lowest, p.y);
     const floor = lowest + 600;
     const ground = [];
+    const overRiver = (a, b) => C.rivers.some((r) => a.x >= r.x0 && b.x <= r.x1);
     for (let i = 0; i < points.length - 1; i++) {
       const a = points[i], b = points[i + 1];
+      if (overRiver(a, b)) continue;                // the river: no ground, just water below
       const verts = [{ x: a.x, y: a.y }, { x: b.x, y: b.y }, { x: b.x, y: floor }, { x: a.x, y: floor }];
       const c = Vertices.centre(verts);
       ground.push(Bodies.fromVertices(c.x, c.y, [verts], {
@@ -314,6 +337,26 @@
       }));
     }
     // Walls at both ends so nobody drives off the map.
+    // Bridge decks over each river: the near half (flat planks, then a short
+    // kicker rising DECK_KICK at the break) and the far half.
+    const DECK_T = 26, DECK_KICK = 26, KICK_LEN = 110;              // the kicker: about 13 degrees
+    const slab = (verts) => { const c = Vertices.centre(verts); ground.push(Bodies.fromVertices(c.x, c.y, [verts], { isStatic: true, friction: 1, frictionStatic: 4, label: 'ground' })); };
+    for (const r of C.rivers) {
+      const y = heightAt(r.x0), k0 = r.g0 - KICK_LEN;
+      r.y = y; r.kick = DECK_KICK; r.kickLen = KICK_LEN; r.deck = DECK_T;
+      // The river's water surface: its own, ~118px below the bridge, unless
+      // that's anywhere near the sea (game.js draws the sea at SEA_LEVEL), in
+      // which case the river is part of the sea, so there is only one water line.
+      r.water = y + 118 > SEA_LEVEL - 300 ? SEA_LEVEL : y + 118;
+      r.joined = r.water === SEA_LEVEL;
+      // the speed that clears this gap off the kicker (projectile range over
+      // the gap plus a car length's margin, +12%), used by the boost strip
+      const g = engine.gravity.y * 0.001 * (1000 / 60) * (1000 / 60), th = Math.atan2(DECK_KICK, KICK_LEN);
+      r.vmin = Math.sqrt(((r.g1 - r.g0) + 40) * g / Math.sin(2 * th)) * 1.12;
+      slab([{ x: r.x0 - 20, y }, { x: k0, y }, { x: k0, y: y + DECK_T }, { x: r.x0 - 20, y: y + DECK_T }]);
+      slab([{ x: k0, y }, { x: r.g0, y: y - DECK_KICK }, { x: r.g0, y: y + DECK_T }, { x: k0, y: y + DECK_T }]);
+      slab([{ x: r.g1, y }, { x: r.x1 + 20, y }, { x: r.x1 + 20, y: y + DECK_T }, { x: r.g1, y: y + DECK_T }]);
+    }
     ground.push(Bodies.rectangle(START_X - 40, -600, 80, 3000, { isStatic: true, label: 'wall' }));
     ground.push(Bodies.rectangle(END_X + 40, -600, 80, 3000, { isStatic: true, label: 'wall' }));
     Composite.add(world, ground);
@@ -490,6 +533,22 @@
 
       const gas = input.gas ? 1 : 0;
       car.throttle += (gas - car.throttle) * (gas ? 0.045 : 0.12) * k;
+      // Bridge boost strip: holding gas on the approach or the near half of a
+      // broken bridge brings the car up to the speed that clears the gap, so
+      // gas held all the way always gets across; ease off and you drop in.
+      car.boosting = false;
+      if (input.gas && car.grounded) {
+        const bx = c.position.x;
+        for (const r of C.rivers) {
+          if (bx < r.x0 - 420 || bx > r.g0) continue;
+          const v = forwardSpeed();
+          if (v >= r.vmin) break;
+          const dv = Math.min(0.5 * k, r.vmin - v), ax = Math.cos(c.angle) * dv, ay = Math.sin(c.angle) * dv;
+          for (const part of [c, ...car.wheels]) Body.setVelocity(part, { x: part.velocity.x + ax, y: part.velocity.y + ay });
+          car.boosting = true;
+          break;
+        }
+      }
       const fwd = forwardSpeed();
 
       for (const w of car.wheels) {
@@ -504,9 +563,11 @@
           av *= Math.pow(v.brake, k);
           if (Math.abs(av * car.rWheel) < 0.5) av = 0;
         } else if (input.reverse) {
-          // reverse gear: only the attract-mode autopilot uses this, to back
-          // away from something it is stuck against
-          av += (-v.reverseSpeed / car.rWheel - av) * v.accel * 0.6 * k;
+          // reverse gear (the Reverse button, ← / A once the car has
+          // stopped, and the intro autopilot when it's stuck): slows a car
+          // rolling forward, then backs it up at reverseSpeed. Brake never
+          // does this.
+          av += (-v.reverseSpeed / car.rWheel - av) * v.accel * 0.85 * k;
         } else {
           av *= Math.pow(0.994, k);
         }
@@ -677,9 +738,26 @@
       }
     }
 
+    // Into a river? The car is below the deck over the water, or a wheel has
+    // dropped into the break (a slow car would otherwise wedge across it).
+    function inRiver() {
+      const c = car.chassis;
+      if (!c) return null;
+      for (const r of C.rivers) {
+        if (c.position.x > r.x0 - 40 && c.position.x < r.x1 + 40 && c.position.y > r.water - 8) return r;
+        const stopped = Math.abs(forwardSpeed()) < 0.8;
+        for (const w of car.wheels) {
+          if (w.position.x <= r.g0 || w.position.x >= r.g1) continue;
+          const sunk = w.position.y - r.y;
+          if (sunk > car.rWheel + 12 || (stopped && sunk > car.rWheel * 0.4)) return r;   // dropped in, or wedged nose-down
+        }
+      }
+      return null;
+    }
+
     const api = {
       engine, points: drawPoints, ground, ramps, props, coins, checkpoints, events: [],
-      buildings: BUILDINGS, doorHalf: DOOR_HALF, level: C.level, levels: LEVELS,
+      buildings: BUILDINGS, doorHalf: DOOR_HALF, level: C.level, levels: LEVELS, rivers: C.rivers, inRiver,
       car, spawn, step, heightAt, forwardSpeed, resetProps,
       TOWN_END, FINISH_X, END_X, START_X, SPAWN_X
     };

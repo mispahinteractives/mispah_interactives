@@ -12,8 +12,8 @@
 <meta property="og:image" content="assets/img/logo.png">
 <link rel="preload" href="assets/fonts/russo-one-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/exo-2-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/fonts.css?v=20261024a">
-<link rel="stylesheet" href="assets/css/hub.css?v=20261024a">
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261102o">
+<link rel="stylesheet" href="assets/css/hub.css?v=20261102o">
 </head>
 <body>
 <a class="skip" href="#services">Skip to the company stops</a>
@@ -160,6 +160,9 @@
       <button class="pedal is-foot pedal-brake" type="button" data-pedal="brake" aria-label="Brake">
         <img src="assets/img/assets/break.png" alt="" draggable="false"><span class="pedal-label">Brake</span>
       </button>
+      <button class="pedal pedal-reverse is-icon" type="button" data-pedal="reverse" aria-label="Reverse">
+        <span class="rev-disc" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 5l-7 7 7 7v-4.5h9v-5h-9z"/></svg></span><span class="pedal-label">Reverse</span>
+      </button>
     </div>
     <div class="pedal-group right">
       <button class="pedal pedal-jump is-icon" type="button" data-pedal="jump" aria-label="Jump">
@@ -175,8 +178,8 @@
 <!-- ================================================================ ticker -->
 <div class="ticker" aria-hidden="true">
   <div class="ticker-track">
-    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span>20 levels to unlock</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>6 rides in the garage</span><i></i>
-    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span>20 levels to unlock</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>6 rides in the garage</span><i></i>
+    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span>20 levels to unlock</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>4 rides in the garage</span><i></i>
+    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span>20 levels to unlock</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>4 rides in the garage</span><i></i>
   </div>
 </div>
 
@@ -268,12 +271,12 @@
       <div class="touch-demo" aria-hidden="true">
         <span class="td-pedal l">Brake</span><span class="td-phone"></span><span class="td-stack"><span class="td-pedal j"><img src="assets/img/assets/jump_icon.png" alt=""></span><span class="td-pedal r">Gas</span></span>
       </div>
-      <p>Hold <b>Gas</b> to drive, <b>Brake</b> to slow down, and tap <b>Jump</b> to hop. On a phone, use the pedals in the bottom corners. On a PC, click them or use the keyboard. Each race starts on the start lights: wait for the three red lights to turn green. Your car moves on <b>GO!</b></p>
+      <p>Hold <b>Gas</b> to drive, <b>Brake</b> to slow down, <b>Reverse</b> to back up, and tap <b>Jump</b> to hop. On a phone, use the pedals in the bottom corners. On a PC, click them or use the keyboard. Each race starts on the start lights: wait for the three red lights to turn green. Your car moves on <b>GO!</b></p>
       <ul class="keys">
-        <li><span><kbd>→</kbd><kbd>D</kbd></span>Gas</li>
-        <li><span><kbd>←</kbd><kbd>A</kbd></span>Brake</li>
-        <li><span><kbd>Space</kbd><kbd>↑</kbd><kbd>W</kbd></span>Jump</li>
-        <li><span><kbd>↓</kbd><kbd>S</kbd></span>Lean forward</li>
+        <li><span><kbd>→</kbd><kbd>D</kbd></span>Drive right (gas)</li>
+        <li><span><kbd>←</kbd><kbd>A</kbd></span>Drive left (stops, then reverses)</li>
+        <li><span><kbd>↑</kbd><kbd>W</kbd><kbd>Space</kbd></span>Jump</li>
+        <li><span><kbd>↓</kbd><kbd>S</kbd></span>Brake (in the air: lean)</li>
         <li><span><kbd>E</kbd><kbd>Enter</kbd></span>Door or stop</li>
         <li><span><kbd>R</kbd></span>Back to checkpoint</li>
         <li><span><kbd>1</kbd>–<kbd>4</kbd></span>Pick a ride</li>
@@ -499,7 +502,7 @@
     <svg class="win-defs" aria-hidden="true" focusable="false"><defs>
       <linearGradient id="ws-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c2"/><stop offset=".38" stop-color="#ffd23f"/><stop offset=".78" stop-color="#ffa11c"/><stop offset="1" stop-color="#f07a0c"/></linearGradient>
       <linearGradient id="ws-slot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#140e33"/><stop offset="1" stop-color="#2c2266"/></linearGradient>
-      <path id="ws-star" d="M50.0 9.0 L61.8 36.8 L91.8 39.4 L69.0 59.2 L75.9 88.6 L50.0 73.0 L24.1 88.6 L31.0 59.2 L8.2 39.4 L38.2 36.8Z"/><path id="ws-gloss" d="M50.0 22.0 L56.5 37.1 L72.8 38.6 L60.5 49.4 L64.1 65.4 L50.0 57.0 L35.9 65.4 L39.5 49.4 L27.2 38.6 L43.5 37.1Z"/>
+      <path id="ws-star" d="M50.0 9.0 L61.8 36.8 L91.8 39.4 L69.0 59.2 L75.9 88.6 L50.0 73.0 L24.1 88.6 L31.0 59.2 L8.2 39.4 L38.2 36.8Z"/>
     </defs></svg>
     <div class="finish-stars" data-finish-stars role="img" aria-label="Stars"></div>
     <p class="win-rating" data-finish-rating></p>
@@ -527,11 +530,11 @@
 </div>
 
 <script src="assets/js/vendor/matter.min.js"></script>
-<script src="assets/js/physics.js?v=20261024a"></script>
-<script src="assets/js/games.js?v=20261024a"></script>
-<script src="assets/js/site.js?v=20261024a"></script>
-<script src="assets/js/game.js?v=20261024a"></script>
-<script src="assets/js/hub.js?v=20261024a"></script>
-<script src="assets/js/world.js?v=20261024a"></script>
+<script src="assets/js/physics.js?v=20261102o"></script>
+<script src="assets/js/games.js?v=20261102o"></script>
+<script src="assets/js/site.js?v=20261102o"></script>
+<script src="assets/js/game.js?v=20261102o"></script>
+<script src="assets/js/hub.js?v=20261102o"></script>
+<script src="assets/js/world.js?v=20261102o"></script>
 </body>
 </html>
