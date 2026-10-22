@@ -2706,12 +2706,16 @@ html.is-christmas .xmas-lights i {
   background: radial-gradient(circle at 35% 30%, #ffffff 0 14%, var(--c) 46%);
   box-shadow: 0 0 10px 2px var(--c), 0 0 22px 4px color-mix(in srgb, var(--c) 45%, transparent);
   transform: rotate(var(--r)); transform-origin: 50% 0;
-  animation: xmas-bulb var(--t) ease-in-out var(--d) infinite alternate;
 }
+/* only strings on screen twinkle (hub.js marks them .live), and only by
+   fading: cheap for the browser, so the game never stutters */
+html.is-christmas .xmas-lights.live i { animation: xmas-bulb var(--t) ease-in-out var(--d) infinite alternate; }
 html.is-christmas .xmas-lights i::before {                 /* the socket */
   content: ""; position: absolute; left: 2px; top: -4px; width: 6px; height: 5px; border-radius: 2px; background: #2c3a33;
 }
-@keyframes xmas-bulb { from { opacity: 1; filter: brightness(1.15); } to { opacity: 0.45; filter: brightness(0.75); box-shadow: none; } }
+@keyframes xmas-bulb { from { opacity: 1; } to { opacity: 0.35; } }
+/* during a race the page is hidden behind the game: no lights at all there */
+.is-playing .topbar > .xmas-lights, .is-playing .stop > .xmas-lights, .is-playing .foot > .xmas-lights { display: none; }
 html.is-christmas .topbar > .xmas-lights { top: 100%; margin-top: -6px; }
 html.is-christmas .stop > .xmas-lights { position: absolute; top: 0; z-index: 3; }
 html.is-christmas .foot > .xmas-lights { top: 24px; }

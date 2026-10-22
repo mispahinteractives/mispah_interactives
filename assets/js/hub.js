@@ -264,6 +264,12 @@
     const foot = $('.foot');
     if (foot) lights(foot, 'is-foot', 50);
     $$('#modal-finish .finish-panel, #modal-fail .fail-panel').forEach((p) => lights(p, 'is-panel', 18));
+    // twinkle only the strings that are on screen
+    const strings = $$('.xmas-lights');
+    if ('IntersectionObserver' in window && !reduceMotion) {
+      const io = new IntersectionObserver((entries) => entries.forEach((en) => en.target.classList.toggle('live', en.isIntersecting)));
+      strings.forEach((el) => io.observe(el));
+    } else if (!reduceMotion) strings.forEach((el) => el.classList.add('live'));
   })();
 
   /* --------------------------------------- only simulate while on screen */
