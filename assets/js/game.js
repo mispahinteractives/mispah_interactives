@@ -177,9 +177,9 @@
   /* ---------------------------------------------------------------- sound */
   const Sound = (function () {
     let ctx = null, master, osc1, osc2, filt, engGain;
-    let muted = store.get('muted', false);
+    let muted = store.get('muted', false), held = false;
     function ensure() {
-      if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
+      if (ctx) { if (ctx.state === 'suspended' && !held) ctx.resume(); return; }
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
       ctx = new AC();
@@ -235,8 +235,10 @@
       src.buffer = buf; f.type = 'lowpass'; f.frequency.value = cutoff; g.gain.value = vol;
       src.connect(f); f.connect(g); g.connect(master); src.start();
     }
+    // a game is open in the player: all of Monster Hills' sound stops
+    function hold(on) { held = on; if (ctx) { if (on) ctx.suspend(); else ctx.resume(); } }
     return {
-      ensure, engine, rain,
+      ensure, engine, rain, hold,
       thunder: (d, v = 1) => { setTimeout(() => noise(1.2 + 0.6 * v, 0.55 * v, 160), d); setTimeout(() => noise(0.5, 0.3 * v, 500), d + 60); },
       coin: () => tone([988, 1319], 0.07, 'square', 0.09),
       coinLand: () => tone([1568, 2093], 0.05, 'triangle', 0.05),   // a soft ting as it reaches the counter
@@ -1779,7 +1781,8 @@
   }
 
   /* Game buildings: each game has its own house (correct_house_1-4, by door
-     number) and the Garage has correct_house_5. Houses are drawn at scale 1
+     number, or `house` in games.js for a game past the fourth) and the
+     Garage has correct_house_5. Houses are drawn at scale 1
      (never resized) and placed so the door in the picture sits on the door spot; the
      game's lit sign stands on a billboard above the roof. The fractions
      say where the door is in each image. */
@@ -1792,7 +1795,7 @@
     5: { x: 0.384, top: 0.69, bottom: 0.927, w: 0.129 }
   };
   function houseFor(b) {
-    const n = b.kind === 'garage' ? 5 : (gameById[b.id] ? gameById[b.id].door : 0);
+    const g = gameById[b.id], n = b.kind === 'garage' ? 5 : g ? g.house || g.door : 0;
     const house = img['correct_house_' + n];
     return n && ready(house) ? { n, house } : null;
   }
@@ -2724,6 +2727,7 @@
   }
   function closeAllModals() { document.querySelectorAll('.modal.open').forEach(closeModal); }
 
+  let doorGame = null;                                   // the game behind the open door
   function enterDoor() {
     if (state.mode !== 'play' || !state.door || state.paused) return;
     const b = state.door;
@@ -2740,7 +2744,8 @@
     $('[data-door-blurb]', m).textContent = g.blurb;
     const play = $('[data-door-play]', m);
     play.href = g.url;
-    play.setAttribute('aria-label', 'Play ' + g.name + ' (opens in a new tab)');
+    play.setAttribute('aria-label', 'Play ' + g.name);
+    doorGame = g;
     m.style.setProperty('--accent', g.color);
     Sound.door();
     openModal(m);
@@ -3096,7 +3101,7 @@
     const GAME_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'];
     window.addEventListener('keydown', (e) => {
       if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
-      if (state.mode !== 'play') return;
+      if (state.mode !== 'play' || state.held) return;     // (a game is open in the player)
       if (e.code === 'Escape') {
         if (document.querySelector('.modal.open')) closeAllModals(); else exit();
         return;
@@ -3188,9 +3193,13 @@
     document.querySelectorAll('.modal').forEach((m) => {
       m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
     });
-    // opening a game from a door leaves the run paused behind the modal
-    ui.modalDoor.querySelector('[data-door-play]').addEventListener('click', () => {
-      setTimeout(() => closeModal(ui.modalDoor), 300);
+    // Play at a door: the game opens in the player on top of the site, and
+    // the run waits, held, until the player is closed
+    ui.modalDoor.querySelector('[data-door-play]').addEventListener('click', (e) => {
+      if (!window.GVPlayer || !doorGame) return;          // (falls back to the plain link)
+      e.preventDefault();
+      closeModal(ui.modalDoor);
+      window.GVPlayer.open(doorGame);
     });
     // stop panel: open the stop on the website, or run a demo from the pits
     if (ui.modalStop) ui.modalStop.addEventListener('click', (e) => {
@@ -3233,8 +3242,9 @@
     last = now;
     // adaptive quality runs on the intro too, so a phone that can't keep up
     // drops to a lighter render resolution instead of stuttering
-    if (state.active && !document.hidden && (!behind || COARSE)) watchFrameRate(gap, now); else settleUntil = now + 1500;
-    if (!state.active || document.hidden) return;
+    const on = state.active && !state.held && !document.hidden;
+    if (on && (!behind || COARSE)) watchFrameRate(gap, now); else settleUntil = now + 1500;
+    if (!on) return;
     // a moment of slow motion as the car hits the water
     const play = state.slowmo > 0 ? dt * 0.32 : dt;
     if (state.slowmo > 0) state.slowmo -= dt;
@@ -3320,6 +3330,13 @@
     init, start, exit, setVehicle, setTime, vehiclePreview, openLevels,
     get level() { return state.level; }, progress: () => JSON.parse(JSON.stringify(progress)),
     setActive(on) { state.active = on; if (!on) Sound.engine(0, 0, false); },
+    // a game is open in the player (hub.js): freeze the world, silence it and
+    // drop any held controls; on release the next frame starts fresh
+    hold(on) {
+      state.held = !!on; Sound.hold(!!on);
+      keys.clear(); touch.gas = touch.brake = touch.jump = touch.reverse = false;
+      last = 0;
+    },
     // read-only: what a haunted house's ghost is doing ('in' | 'tell' | 'out')
     ghostPhase(id) { const b = W.buildings.find((x) => x.id === id); return b && b.gs ? b.gs.phase : 'in'; },
     ghostInfo(id) { const b = W.buildings.find((x) => x.id === id); return b ? { door: b.gs ? b.gs.phase : 'in', roof: (b.roof || []).map((r) => ({ x: Math.round(r.x), above: Math.round(W.heightAt(r.x) - r.y - r.gh / 2) })) } : null; },

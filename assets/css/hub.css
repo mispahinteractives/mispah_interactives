@@ -514,25 +514,6 @@ kbd {
 .gcard-blurb { margin: 0; color: #dcd6fb; font-size: 15px; flex: 1; }
 .gcard-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 8px; }
 
-/* controls */
-.howto { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.howto-card { padding: 24px; border-radius: 24px; background: var(--panel); border: 2px solid var(--line); }
-.howto-card h3 { margin: 0 0 16px; font: 400 26px/1 var(--display); color: var(--gold); text-transform: uppercase; }
-.keys, .tips { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
-.keys li { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #e3ddff; font-weight: 500; }
-.keys li span { display: flex; gap: 5px; }
-.tips li { color: #dcd6fb; }
-.tips b { color: #fff; }
-.howto-card p { color: #dcd6fb; margin: 14px 0 0; }
-.touch-demo { display: flex; align-items: flex-end; justify-content: center; gap: 12px; min-height: 130px; }
-.td-phone { width: 160px; height: 96px; border-radius: 16px; border: 3px solid #fff; background: linear-gradient(180deg, #5bb8f0, #bfe6fb 60%, #3d3b52 60%); }
-.td-pedal { display: grid; place-items: center; width: 64px; height: 76px; border-radius: 16px; border: 3px solid var(--outline); color: var(--outline); font: 400 14px/1 var(--display); text-transform: uppercase; box-shadow: 0 5px 0 var(--outline); animation: press 1.4s infinite; }
-.td-pedal.l { background: var(--pink); animation-delay: -0.7s; }
-.td-pedal.r { background: var(--mint); }
-.td-pedal.j { width: 56px; height: 44px; background: var(--gold); animation-delay: -0.35s; }
-.td-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-@keyframes press { 50% { transform: translateY(4px) scale(0.97); } }
-
 .foot {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px;
   max-width: 1320px; margin: 40px auto 0; padding: 28px var(--gutter) max(28px, env(safe-area-inset-bottom));
@@ -640,8 +621,6 @@ kbd {
 @media (max-width: 1240px) {
   .card-row { grid-template-columns: repeat(4, minmax(260px, 1fr)); overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 4px 22px; margin: 0 -4px; scrollbar-width: thin; }
   .gcard { scroll-snap-align: start; }
-  .howto { grid-template-columns: 1fr 1fr; }
-  .howto-card:last-child { grid-column: 1 / -1; }
 }
 @media (max-width: 900px) {
   .feature { grid-template-columns: 1fr; }
@@ -679,7 +658,6 @@ kbd {
   .door-prompt { bottom: auto; top: 118px; }
   .toast { top: 30%; }
   .card-row { grid-template-columns: repeat(4, 80%); gap: 20px; }
-  .howto { grid-template-columns: 1fr; }
   .door-panel { grid-template-columns: 1fr; }
   .door-cover { max-height: 200px; border-right: 0; border-bottom: 4px solid var(--accent); overflow: hidden; }
   .door-info { padding: 22px; }
@@ -957,10 +935,6 @@ kbd {
 @media (max-width: 760px) {
   .title span, .title span.t1, .title span.t2 { text-shadow: 0 2px 0 rgba(10, 6, 30, 0.9), 0 6px 16px rgba(0, 0, 0, 0.45) !important; }
 }
-
-/* How to drive: Controls + Pro tips */
-.howto.two { grid-template-columns: 1fr 1.4fr; }
-@media (max-width: 760px) { .howto.two { grid-template-columns: 1fr; } }
 
 /* PC (mouse): all three controls together on the right: Brake, Jump, Gas */
 @media (hover: hover) and (pointer: fine) {
@@ -1634,9 +1608,6 @@ section.stop { max-width: none; padding: clamp(80px, 10vw, 130px) max(var(--gutt
 .pit p { margin: 0; color: #d8d3e6; font-size: 14.5px; flex: 1; }
 .pit-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
 .pit-tag { padding: 5px 9px; border-radius: 8px; background: rgba(255, 138, 61, 0.14); color: #ffb98a; font: 700 11px/1 var(--body); letter-spacing: 0.06em; }
-.manual { display: grid; grid-template-columns: 1fr 1.4fr; gap: 18px; margin-top: 30px; }
-.manual .howto-card { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.1); }
-.manual .howto-card h3 { color: #ff8a3d; }
 
 /* ------------------------------------------- stop 06: finish line HQ */
 .stop-contact { --stop-c: #b98cff; background: radial-gradient(900px 500px at 50% 0%, rgba(185, 140, 255, 0.25), transparent 60%), linear-gradient(180deg, #1a1236, #0f0b24); }
@@ -1659,7 +1630,7 @@ section.stop-contact { padding-top: clamp(100px, 11vw, 150px); }
 }
 @media (max-width: 760px) {
   section.stop { padding: 64px 16px 40px; }
-  .bays, .pits, .billboards, .manual { grid-template-columns: 1fr; }
+  .bays, .pits, .billboards { grid-template-columns: 1fr; }
   .bay { min-height: 210px; }
   .pl-road { grid-template-columns: 1fr; gap: 18px; padding: 0 0 0 54px !important; }
   .pl-road::before { left: 14px; right: auto; top: 0; bottom: 0; width: 12px; height: auto; background: repeating-linear-gradient(180deg, var(--gold) 0 24px, transparent 24px 44px) center / 2px 100% no-repeat, #2b2d3f; }
@@ -2150,12 +2121,6 @@ section.stop-contact { padding-top: clamp(100px, 11vw, 150px); }
   .garage-card kbd { top: 8px; right: 8px; }
 }
 
-/* Driver's manual: the key list runs in two columns where there's room */
-.manual .keys { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 22px; row-gap: 10px; margin-top: 16px; }
-.manual .keys li { font-size: 14px; }
-.manual .keys kbd { white-space: nowrap; }
-@media (max-width: 560px) { .manual .keys { grid-template-columns: 1fr; } }
-
 
 /* ==========================================================================
    FAIL SCREEN: a haunted "run over" scene
@@ -2493,7 +2458,72 @@ section.stop-contact { padding-top: clamp(100px, 11vw, 150px); }
 .rev-disc.jump-disc svg { filter: drop-shadow(0 2px 0 rgba(120, 62, 0, 0.5)); }
 .pedal-jump.is-icon.down .rev-disc.jump-disc { transform: translateY(5px) scale(0.95); box-shadow: 0 1px 0 #94560a, 0 4px 8px rgba(10, 6, 30, 0.3); transition-duration: 0.08s; }
 .pedal-jump.is-icon.down .pedal-label { background: var(--c-down); transform: scale(0.95); transition-duration: 0.08s; }
-/* the manual's controls diagram shows the same button */
-.td-pedal.j { background: none; border: 0; box-shadow: none; width: 48px; height: 56px; }
-.td-pedal.j .rev-disc.jump-disc { width: 44px; border-width: 2px; box-shadow: 0 4px 0 #94560a, 0 6px 10px rgba(10, 6, 30, 0.3); }
-.td-pedal.j .rev-disc svg { width: 20px; height: 20px; }
+
+/* ==========================================================================
+   GAME PLAYER: a game played inside the site (hub.js). A bar on top (logo,
+   genre, Full screen, Close) and the game in a frame filling the rest.
+   Portrait games stand in a phone-shaped screen on wide displays.
+   ========================================================================== */
+html.player-on, html.player-on body { overflow: hidden; overscroll-behavior: none; }
+.game-player {
+  --accent: var(--gold);
+  position: fixed; inset: 0; z-index: 130; display: grid; grid-template-rows: auto 1fr;
+  background: #0b0722;
+  background: radial-gradient(120% 90% at 50% 100%, color-mix(in srgb, var(--accent) 22%, #0b0722), #07051a 70%);
+  opacity: 0; transition: opacity 0.22s ease;
+}
+.game-player.open { opacity: 1; }
+.game-player[hidden] { display: none; }
+.player-bar {
+  display: flex; align-items: center; gap: 14px; min-height: 58px;
+  padding: max(8px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 8px max(14px, env(safe-area-inset-left));
+  background: rgba(16, 11, 42, 0.96); border-bottom: 3px solid var(--accent);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transform: translateY(-100%); transition: transform 0.3s cubic-bezier(.2, 1.2, .4, 1);
+}
+.game-player.open .player-bar { transform: none; }
+.player-logo { height: 40px; width: auto; max-width: 180px; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4)); }
+.player-genre { font: 700 12px/1 var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.player-actions { margin-left: auto; display: flex; gap: 10px; }
+.player-btn {
+  display: inline-flex; align-items: center; gap: 8px; height: 42px; min-width: 42px; padding: 0 12px; justify-content: center;
+  border-radius: 12px; border: 2px solid rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.07); color: #fff;
+  font: 400 15px/1 var(--display); letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer;
+  transition: background-color 0.2s, transform 0.15s;
+}
+.player-btn svg { width: 22px; height: 22px; fill: currentColor; }
+.player-btn:hover { background: rgba(255, 255, 255, 0.14); }
+.player-btn:active { transform: scale(0.95); }
+.player-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.player-close { background: var(--pink); border-color: rgba(255, 255, 255, 0.4); }
+.player-close:hover { background: #ff6b9b; }
+.player-stage { position: relative; display: grid; place-items: center; min-height: 0; overflow: hidden; }
+.player-frame {
+  position: absolute; top: 0; bottom: 0; left: 0; right: 0; margin: 0 auto;
+  width: 100%; height: 100%; border: 0; display: block; background: #000;
+  opacity: 0; transition: opacity 0.35s ease;
+}
+.game-player.loaded .player-frame { opacity: 1; }
+/* a portrait game on a wide screen: a phone-shaped screen in the middle */
+.game-player.is-portrait .player-frame {
+  width: min(100%, calc((100svh - 58px) * 9 / 16)); height: 100%;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08), 0 20px 60px rgba(0, 0, 0, 0.55);
+}
+/* loading: the game's logo with a spinner, until the frame has loaded */
+.player-load { grid-area: 1 / 1; display: grid; justify-items: center; gap: 22px; pointer-events: none; transition: opacity 0.3s; }
+.game-player.loaded .player-load { opacity: 0; }
+.player-load img { width: min(320px, 70vw); height: auto; max-height: 30svh; object-fit: contain; animation: player-bob 1.6s ease-in-out infinite; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45)); }
+.player-spin { width: 38px; height: 38px; border-radius: 50%; border: 4px solid rgba(255, 255, 255, 0.18); border-top-color: var(--accent); animation: player-spin 0.8s linear infinite; }
+@keyframes player-spin { to { transform: rotate(360deg); } }
+@keyframes player-bob { 50% { transform: translateY(-8px) scale(1.03); } }
+@media (max-width: 760px) {
+  .player-bar { min-height: 50px; gap: 10px; }
+  .player-logo { height: 32px; max-width: 130px; }
+  .player-genre { display: none; }
+  .player-btn { height: 38px; min-width: 38px; padding: 0 10px; font-size: 13px; }
+  .game-player.is-portrait .player-frame { width: 100%; box-shadow: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .game-player, .player-bar, .player-frame { transition: none; }
+  .player-load img { animation: none; }
+}

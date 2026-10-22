@@ -96,12 +96,15 @@
   const DOOR_SPACING = 1250;
   const STOPS = ['services', 'clients', 'demos', 'contact'];
   // Levels 2-20 start in a smaller town: two game doors and two company stops,
-  // a different pair of each from level to level, TOWN_SPACING apart.
-  const GAME_IDS = ['animal-cafe', 'cinemoji', 'uno-clash', 'baggage-out'];
-  const PAIRS = [[0, 1], [2, 3], [0, 2], [1, 3], [0, 3], [1, 2]];
+  // a different pair of each from level to level, TOWN_SPACING apart. Every
+  // pair of games appears except Animal Café with Learning Adventure, which
+  // share a house picture.
+  const GAME_IDS = ['animal-cafe', 'cinemoji', 'uno-clash', 'baggage-out', 'learning-adventure'];
+  const GAME_PAIRS = [[0, 1], [2, 3], [1, 4], [0, 2], [3, 4], [1, 3], [2, 4], [0, 3], [1, 2]];
+  const STOP_PAIRS = [[0, 1], [2, 3], [0, 2], [1, 3], [0, 3], [1, 2]];
   const TOWN_SPACING = 1100;
   const STREET = ['garage', 'services', 'animal-cafe', 'wrong-1', 'wrong-2', 'cinemoji', 'wrong-3', 'uno-clash', 'wrong-4', 'wrong-5', 'baggage-out', 'wrong-6',
-    'clients', 'demos', 'contact'];
+    'learning-adventure', 'clients', 'demos', 'contact'];
   const DOOR_HALF = 150;
   // every level has a river crossing; from level 12 there are two
   const riversFor = (level) => (level >= 12 ? 2 : 1);
@@ -137,8 +140,8 @@
     } else {
       const d = (level - 2) / (LEVELS - 2);
       // the town: stop, game, stop, game (in website-map order within each pair)
-      const games = PAIRS[(level - 2) % 6].map((i) => GAME_IDS[i]);
-      const stops = PAIRS[(level + 1) % 6].map((i) => STOPS[i]);
+      const games = GAME_PAIRS[(level - 2) % GAME_PAIRS.length].map((i) => GAME_IDS[i]);
+      const stops = STOP_PAIRS[(level + 1) % STOP_PAIRS.length].map((i) => STOPS[i]);
       [stops[0], games[0], stops[1], games[1]].forEach((id, i) => {
         C.buildings.push({ id, x: FIRST_DOOR + i * TOWN_SPACING, kind: STOPS.includes(id) ? 'stop' : 'game', variant: 0 });
       });

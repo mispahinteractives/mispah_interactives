@@ -6,7 +6,7 @@ The contact email lives in two places: the Contact section of `index.html` and `
 
 **Contact form:** messages are always sent in the background, so the visitor's email app never opens. The path is visitor → website → email API → the studio's inbox, and it works on static hosting such as GitHub Pages.
 
-- **No setup (the default):** with `contactKey` empty in `assets/js/site.js`, the form sends through [FormSubmit](https://formsubmit.co) to `email` in `site.js`. **One-time step:** the very first message sent from the live site triggers an "Activate Form" email to `mispahinteractives@gmail.com`. Click that link once, and every message from then on arrives automatically. Until then, visitors see "The contact form is being switched on".
+- **No setup (the default):** with `contactKey` empty in `assets/js/site.js`, the form sends through [FormSubmit](https://formsubmit.co) to `email` in `site.js`. **One-time step:** the very first message sent from the live site triggers an "Activate Form" email to `mizphagamestudios@gmail.com`. Click that link once, and every message from then on arrives automatically. Until then, visitors see "The contact form is being switched on".
 - **Optional, Web3Forms:** get a free access key at web3forms.com for the same address (250 messages a month) and paste it into `contactKey`. The form then sends through Web3Forms instead. The key is meant to be public in the page; it only lets people send to your inbox.
 
 Each message arrives with the subject "New message from …", and you can reply straight to the visitor. The form checks the name, email and message (at least 10 characters) before sending, shows a "Sending…" spinner, then a "Message sent!" card. A hidden trap field quietly drops spam bots. If sending fails (offline, timeout, server error), the visitor sees a message with a one-click "email us directly" link. The code is in the contact part of `assets/js/hub.js`.
@@ -20,7 +20,7 @@ Each message arrives with the subject "New message from …", and you can reply 
 └── assets/js/
     ├── vendor/matter.min.js   Matter.js 0.20 (physics engine, vendored)
     ├── physics.js        course, props, vehicles, suspension (no DOM; runs in Node)
-    ├── games.js          ← EDIT THIS: the external games (cards + arcade doors)
+    ├── games.js          ← EDIT THIS: the games (cards, arcade doors, in-site player)
     ├── site.js           ← EDIT THIS: stop names, services, process, clients, demos
     ├── game.js           renderer, input, camera, sound, doors, coins, finish
     ├── hub.js            cards, ride previews, stats, reveals, contact form
@@ -39,11 +39,11 @@ The whole site is a road trip through six stops. Each stop is a `<section>` with
 | 02 Services | `#services` | The Workshop | six garage bays (click a door to roll it up) and the build pipeline road |
 | 03 Games | `#games` | Arcade Boulevard | Monster Hills plus the four linked games |
 | 04 Clients | `#clients` | Billboard Highway | one billboard per client |
-| 05 Demos | `#demos` | The Test Track | demo pits that launch the real game in a set-up, plus the driver's manual |
+| 05 Demos | `#demos` | The Test Track | demo pits that launch the real game in a set-up |
 | 06 Contact | `#contact` | Finish Line HQ | contact form and email |
 
 - **World map:** the road in the top bar. Your chosen ride drives along it as you scroll, and clicking a stop "travels" there: a road scene with a green "Next stop" sign covers the page while it moves. On phones the map is the map button in the top bar. With reduced motion turned on, travel jumps straight to the stop.
-- **Stops in the game:** Main Street follows the same map. After the garage (Start) comes the **Services** workshop, then the four game doors and the haunted houses, then the **Clients** billboard, the **Demos** pit garage and **Contact** HQ, then the hills. The stop buildings are drawn in code (`STOP_BUILD` in `game.js`) with a lit stop sign in the stop's colour. Pull up and press E (or tap the prompt) to open the stop's panel: what's at the stop, an "Open …" button that ends the run and travels to that stop on the site, and, at the Test Track, a button for each demo. Each website stop has a "Drive here in the game" button that starts the game parked outside its building.
+- **Stops in the game:** Main Street follows the same map. After the garage (Start) comes the **Services** workshop, then the five game doors and the haunted houses, then the **Clients** billboard, the **Demos** pit garage and **Contact** HQ, then the hills. The stop buildings are drawn in code (`STOP_BUILD` in `game.js`) with a lit stop sign in the stop's colour. Pull up and press E (or tap the prompt) to open the stop's panel: what's at the stop, an "Open …" button that ends the run and travels to that stop on the site, and, at the Test Track, a button for each demo. Each website stop has a "Drive here in the game" button that starts the game parked outside its building.
 - **Next stop signs:** each stop ends with a sign to the next one.
 - **Always the intro first:** every load or refresh opens on the intro screen at the top of the page. Travelling doesn't put the stop in the address bar, a `#stop` in the address is ignored, and the browser's saved scroll position isn't restored.
 - **Clients:** `clients` in `site.js` is empty on purpose, so the highway shows "reserved" billboards rather than invented names. Add real clients as `{ name, logo, project, url }` and each becomes a billboard.
@@ -59,7 +59,9 @@ The whole site is a road trip through six stops. Each stop is a `<section>` with
 
 ## Adding or changing a game
 
-Edit `assets/js/games.js`. Each entry becomes a card in "Select your game" and a building with a door on Main Street. To give a game a door, add its `id` to the `BUILDINGS` list in `physics.js`. The doors are placed `DOOR_SPACING` (1250px) apart, and the town, speed bumps, coins and checkpoints move to fit. The hills are placed relative to the end of the town, so they're never affected.
+Edit `assets/js/games.js`. Each entry becomes a card in "Select your game" and a building with a door on Main Street. To give a game a door, add its `id` to the `STREET` list (Main Street) and `GAME_IDS` / `GAME_PAIRS` (the level towns) in `physics.js`. The doors are placed `DOOR_SPACING` (1250px) apart, and the town, speed bumps, coins and checkpoints move to fit. The hills are placed relative to the end of the town, so they're never affected. There are four game-house pictures (`correct_house_1-4`); a fifth game or later reuses one with `house`, under its own lit sign.
+
+**Games play inside the site.** Every Play button (the game cards, and Play at a door in the game) opens the **game player** (`Player` in `hub.js`, `#player` in `index.html`, styles under "GAME PLAYER" in `hub.css`): a full-screen layer over the page with the game in a frame, and a bar with the game's logo, **Full screen** and **Close**. While it's open, Monster Hills is held (`GVGame.hold()`: frozen and silent) and the page can't scroll. Close or the browser's Back (a swipe back on a phone) closes it (Esc too, unless the game itself has the keyboard), and removing the frame stops the game and its sound. The URL never changes, so a reload still opens on the intro. Each game's `url` must allow being shown in a frame (GitHub Pages does). `shape: 'portrait'` games get a phone-shaped screen on wide displays; `'landscape'` games fill the player. A Ctrl/⌘-click on a card's Play still opens the game in a new tab.
 
 ## Controls
 
@@ -145,8 +147,8 @@ Four rides, shown as two rows of two in the intro picker and in the garage, and 
 
 There are 20 levels (`makeCourse(level)` in `physics.js`):
 
-- **Level 1** is Main Street: the town with all four game doors, all four company stops and the haunted houses, then the hills. It's hand-tuned.
-- **Every other level starts in a small town** with two game doors and two company stops (Services, Clients, Demos or Contact), alternating stop, game, stop, game, with speed bumps and coins between them. The pair of games and the pair of stops change from level to level (`GAME_IDS`, `PAIRS` and `TOWN_SPACING` in `physics.js`), and every game and every stop turns up across the levels.
+- **Level 1** is Main Street: the town with all five game doors, all four company stops and the haunted houses, then the hills. It's hand-tuned.
+- **Every other level starts in a small town** with two game doors and two company stops (Services, Clients, Demos or Contact), alternating stop, game, stop, game, with speed bumps and coins between them. The pair of games and the pair of stops change from level to level (`GAME_IDS`, `GAME_PAIRS`, `STOP_PAIRS` and `TOWN_SPACING` in `physics.js`), and every game and every stop turns up across the levels.
 - **Levels 2–20** are generated from the level number, so each level is always the same course. After the town, the hills get longer (7,000 → 18,000), hillier and bumpier. Ramps grow from 1 to 5, haunted houses (with roof and door ghosts) from 0 to 6, and knock-over props from 1 to 4 stacks, with coin rows and jump arcs placed to match.
 - **River crossings:** every level has a river with a broken wooden bridge (two from level 12 on).
   - **The scene:** earth banks slope down into a bowl-shaped riverbed, and the water is one body that flows downstream. Waves, highlights and ripples drift the same way, the bridge is reflected faintly, the current curls round the wooden piers, and under the bridge you see the far bank: the same earth as the embankment, in shade, rising from the water to a gently rolling top lined with grass (`grass_1.png`, in a few sizes, some mirrored), darker and wet at the waterline, with a few stones. There is only ever **one** water line. A river near sea level (within 300 px) becomes part of the sea, which is drawn along every level: it uses the sea's surface and only adds its reflections and ripples. A river high in the hills keeps its own water and is drawn over the sea inside its bowl (`r.water` / `r.joined` in `physics.js`).

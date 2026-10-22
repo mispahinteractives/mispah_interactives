@@ -53,7 +53,7 @@
         <p class="gcard-genre">${g.genre}</p>
         <p class="gcard-blurb">${g.blurb}</p>
         <div class="gcard-actions">
-          <a class="btn-play sm" href="${g.url}" target="_blank" rel="noopener" aria-label="Play ${g.name} (opens in a new tab)">
+          <a class="btn-play sm" href="${g.url}" data-play="${g.id}" aria-label="Play ${g.name}">
             <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span>Play
           </a>
           <button class="btn-ghost sm" type="button" data-action="drive-to" data-game="${g.id}" title="Start Monster Hills parked outside this game's door">Drive there</button>
@@ -101,6 +101,89 @@
   });
   if (G.vehicle !== 'truck') window.dispatchEvent(new CustomEvent('gv:vehicle', { detail: { key: G.vehicle } }));
 
+  /* --------------------------------------------------------- game player */
+  /* Games play inside the site: a full-screen player opens over the page
+     with the game in a frame, and a bar with its logo, Full screen and
+     Close. Monster Hills is held (frozen and silent) while it's open, the
+     page can't scroll, and Back or Esc closes it. Closing removes the frame,
+     which stops the game and its sound. The URL never changes, so a reload
+     still opens on the intro. Portrait games get a phone-shaped screen on
+     wide displays; landscape games fill the player. */
+  const Player = (function () {
+    const el = $('#player');
+    if (!el) return null;
+    const stage = $('[data-player-stage]', el), load = $('[data-player-load]', el);
+    const full = $('[data-player-full]', el);
+    const canFull = !!(el.requestFullscreen || el.webkitRequestFullscreen);
+    if (!canFull) full.hidden = true;                   // (iPhone Safari can't, and the player is full-screen anyway)
+    let game = null, frame = null, pushed = false, back = null, token = 0;
+
+    function open(g) {
+      if (!g || !g.url) return;
+      if (game) close('swap');                         // another game: swap it in, keep the player and history
+      else back = document.activeElement;
+      game = g; token++;
+      el.style.setProperty('--accent', g.color || '#ffc83d');
+      el.classList.toggle('is-portrait', g.shape !== 'landscape');
+      $('[data-player-logo]', el).src = g.logo; $('[data-player-logo]', el).alt = g.name;
+      $('[data-player-load-logo]', el).src = g.logo;
+      $('[data-player-title]', el).textContent = g.name;
+      $('[data-player-genre]', el).textContent = g.genre || '';
+      frame = document.createElement('iframe');
+      frame.className = 'player-frame';
+      frame.title = g.name;
+      frame.src = g.url;
+      frame.allow = 'autoplay; fullscreen; gamepad; accelerometer; gyroscope; screen-wake-lock';
+      frame.setAttribute('allowfullscreen', '');
+      frame.addEventListener('load', () => { el.classList.add('loaded'); try { frame.focus(); } catch (e) { /* cross-origin */ } });
+      // show the player first: a game that measures its window as it boots
+      // must see its real size, not a hidden (zero-size) frame
+      el.classList.remove('loaded');
+      el.hidden = false;
+      stage.appendChild(frame);
+      requestAnimationFrame(() => el.classList.add('open'));
+      document.documentElement.classList.add('player-on');
+      G.hold(true);
+      // Back (or a swipe back on a phone) closes the game instead of leaving
+      // the site; the URL itself stays the same
+      if (!pushed) { history.pushState({ gvPlayer: true }, ''); pushed = true; }
+      setTimeout(() => $('[data-player-close]', el).focus({ preventScroll: true }), 60);
+    }
+    function close(how) {
+      if (!game) return;
+      game = null;
+      const mine = ++token, f = frame;
+      frame = null;
+      if (how === 'swap') { if (f) f.remove(); return; }
+      if (document.fullscreenElement || document.webkitFullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      el.classList.remove('open');
+      setTimeout(() => { if (f) f.remove(); if (token === mine) { el.hidden = true; el.classList.remove('loaded'); } }, 260);
+      document.documentElement.classList.remove('player-on');
+      G.hold(false);
+      if (pushed && how !== 'history') history.back();
+      pushed = false;
+      if (back && back.focus) back.focus({ preventScroll: true });
+    }
+    $('[data-player-close]', el).addEventListener('click', () => close());
+    full.addEventListener('click', () => {
+      if (document.fullscreenElement || document.webkitFullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      else (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+    });
+    window.addEventListener('popstate', () => { if (game) { pushed = false; close('history'); } });
+    window.addEventListener('keydown', (e) => { if (game && e.code === 'Escape') { e.preventDefault(); close(); } });
+    return { open, close, get game() { return game; } };
+  })();
+  window.GVPlayer = Player;
+  // every Play button on the page opens its game in the player
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('[data-play]');
+    if (!a || !Player || e.metaKey || e.ctrlKey || e.shiftKey || e.button > 0) return;   // (a modified click still opens a tab)
+    const g = GAMES.find((x) => x.id === a.dataset.play);
+    if (!g) return;
+    e.preventDefault();
+    Player.open(g);
+  });
+
   /* --------------------------------------- only simulate while on screen */
   const stage = $('#stage');
   let stageVisible = true;
@@ -117,7 +200,7 @@
   /* Enter / Space starts the game from the hero */
   window.addEventListener('keydown', (e) => {
     if (G.mode !== 'attract' || !stageVisible) return;
-    if (document.querySelector('.modal.open')) return;
+    if (document.querySelector('.modal.open') || (Player && Player.game)) return;
     const t = e.target;
     if (t && t !== document.body && t.id !== 'game-canvas') return;
     if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); G.start(); }
@@ -182,7 +265,7 @@
   // "Activate Form" email to the studio inbox, and after one click every
   // message arrives. If sending fails the visitor gets a one-click email link.
   const SITE = window.GV_SITE || {};
-  const CONTACT_EMAIL = SITE.email || 'mispahinteractives@gmail.com';
+  const CONTACT_EMAIL = SITE.email || 'mizphagamestudios@gmail.com';
   const CONTACT_KEY = (SITE.contactKey || '').trim();
   const SEND_URL = CONTACT_KEY ? 'https://api.web3forms.com/submit' : 'https://formsubmit.co/ajax/' + CONTACT_EMAIL;
   const form = $('#contact-form'), status = $('#contact-status'), sent = $('#contact-sent');

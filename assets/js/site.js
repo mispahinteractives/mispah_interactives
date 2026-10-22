@@ -5,7 +5,7 @@
    here; the page builds the stops from this file.
    ========================================================================== */
 window.GV_SITE = {
-  email: 'mispahinteractives@gmail.com',
+  email: 'mizphagamestudios@gmail.com',
 
   // Contact form: messages are always sent in the background (the visitor's
   // email app never opens). While this is empty they go through FormSubmit
