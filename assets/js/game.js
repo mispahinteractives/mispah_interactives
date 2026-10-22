@@ -19,7 +19,7 @@
     'wrong_house_1', 'wrong_house_2', 'wrong_house_3', 'wrong_house_4',
     'ghost_1', 'ghost_2', 'ghost_3', 'ghost_4', 'ghost_5', 'background_house1',
     'wrong_house_5', 'wrong_house_6', 'correct_house_1', 'correct_house_2', 'correct_house_3', 'correct_house_4', 'correct_house_5',
-    'mountain_2', 'mountain_3', 'grass_1', 'crow_1', 'tree_2', 'christmas_tree'];
+    'mountain_2', 'mountain_3', 'grass_1', 'crow_1', 'tree_2', 'christmas_tree', 'snow_house'];
   const FONT = '"Russo One", "Exo 2", system-ui, sans-serif';
   const TAU = Math.PI * 2;
 
@@ -1062,13 +1062,56 @@
      waddle on the sea ice in little groups, and now and then one goes by on
      its belly. The broken bridges get icicles and snow on the rails. */
   const frozen = () => state.theme === 'christmas';
-  const ICE_COLS = [[0, 238, 249, 255, 0.98], [0.1, 200, 232, 249, 0.98], [0.38, 140, 194, 233, 0.98], [1, 52, 102, 160, 1]];
-  // snow thinning into ice: clear at the top (pure snow), icy blue lower down
-  function iceFade(top, span) {
-    const g = ctx.createLinearGradient(0, top, 0, top + span);
-    g.addColorStop(0, 'rgba(206,232,250,0)'); g.addColorStop(0.2, 'rgba(198,228,249,0.22)');
-    g.addColorStop(0.5, 'rgba(160,206,240,0.62)'); g.addColorStop(1, 'rgba(96,150,206,0.92)');
-    return g;
+  const ICE_COLS = [[0, 200, 224, 243, 1], [0.12, 184, 215, 240, 1], [0.4, 132, 186, 228, 0.98], [1, 52, 102, 160, 1]];
+  // the snowy ground running a little way onto the ice and fading out: the
+  // same snow texture, laid in thin bands that get fainter, so there's no seam
+  function shoreSnow(wx0, wx1, wy) {
+    const band = 6;
+    for (let k = 0; k < 9; k++) {
+      ctx.globalAlpha = Math.pow(1 - k / 9, 1.6);
+      ctx.fillStyle = frostTex(); ctx.fillRect(wx0, wy - 12 + (k ? 12 + (k - 1) * band : 0), wx1 - wx0, k ? band : 12);
+    }
+    ctx.globalAlpha = 1;
+    // a few soft drifts reaching out from the shore
+    for (let c = Math.floor(wx0 / 190) * 190; c < wx1; c += 190) {
+      const k = Math.round(c / 190);
+      if (rnd(k * 1.9 + 51) < 0.45) continue;
+      const w = 60 + rnd(k + 52) * 110, x = c + rnd(k + 53) * 120;
+      ctx.globalAlpha = 0.9; ctx.drawImage(SOFT, x - w, wy - 6, w * 2, 22 + rnd(k + 54) * 14);
+    }
+    ctx.globalAlpha = 1;
+  }
+  // snow lying on the icy ground under the road: a soft drift along its top
+  // edge here and there, and patches scattered at random further down
+  function groundSnow(gx0, gx1, under) {
+    for (let c = Math.floor(gx0 / 230) * 230; c < gx1; c += 230) {
+      const k = Math.round(c / 230);
+      const x = c + rnd(k * 1.3 + 81) * 160, top = W.heightAt(x) + under;
+      if (rnd(k * 2.1 + 82) > 0.35) {                      // a drift under the road's edge
+        const w = 70 + rnd(k + 83) * 120;
+        ctx.globalAlpha = 0.95; ctx.drawImage(SOFT, x - w, top - 8, w * 2, 30 + rnd(k + 84) * 16);
+      }
+      if (rnd(k * 3.3 + 85) > 0.5) {                       // a patch further down
+        const w = 50 + rnd(k + 86) * 100, h = 12 + rnd(k + 87) * 10, y = top + 50 + rnd(k + 88) * 150;
+        ctx.globalAlpha = 0.9; ctx.drawImage(SOFT, x + 60 - w, y - h, w * 2, h * 2);
+        ctx.globalAlpha = 0.75; ctx.drawImage(SOFT, x + 60 - w * 0.5, y - h * 1.2, w, h * 1.5);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  // soft patches of snow lying on the ice, scattered at random (anchored to
+  // the world), flatter and smaller further out
+  function snowPatches(wx0, wx1, wy, bottom) {
+    for (let c = Math.floor(wx0 / 260) * 260; c < wx1; c += 260) {
+      const k = Math.round(c / 260);
+      if (rnd(k * 2.7 + 61) < 0.5) continue;
+      const depth = 40 + rnd(k + 62) * Math.min(170, bottom - wy - 40), far = depth / 210;
+      const w = (70 + rnd(k + 63) * 120) * (1 - far * 0.3), h = (14 + rnd(k + 64) * 10) * (1 - far * 0.35);
+      const x = c + rnd(k + 65) * 200, y = wy + depth;
+      ctx.globalAlpha = 0.95; ctx.drawImage(SOFT, x - w, y - h, w * 2, h * 2);
+      ctx.globalAlpha = 0.85; ctx.drawImage(SOFT, x - w * 0.55 + rnd(k + 66) * w * 0.4, y - h * 1.15, w * 1.1, h * 1.5);
+    }
+    ctx.globalAlpha = 1;
   }
   function iceGradient(top, span, cols) {
     const g = ctx.createLinearGradient(0, top, 0, top + span);
@@ -1726,6 +1769,12 @@
     // the grove before it and in gaps between the buildings on Main Street
     const xmas = state.theme === 'christmas', startMan = W.SPAWN_X + 190;
     const byStartMan = (x) => xmas && Math.abs(x - startMan) < 120;
+    // Christmas: a few snowy cottages (snow_house.png) at scattered spots in
+    // the hills, drawn first so they stand behind; the trees and snowmen
+    // make room around them
+    const cottages = xmas ? cottagesIn(x0 - 400, x1 + 400, clearOf) : [];
+    const byCottage = (x) => cottages.some((c) => Math.abs(x - c) < 230);
+    cottages.forEach((c) => drawCottage(c, vergeAt(c)));
     for (let x = Math.floor(x0 / 170) * 170; x < x1; x += 170) {
       const i = Math.round(x / 170), gy = vergeAt(x);
       const tx = x + rnd(i) * 80;
@@ -1733,10 +1782,14 @@
         if (rnd(i + 11) > 0.25 && clearOf(tx, 0)) drawTree(tx, vergeAt(tx), 0.85 + rnd(i + 4) * 0.5, rnd(i + 5) > 0.5);
         else if (xmas && rnd(i + 34) > 0.3 && clearOf(tx, 0)) drawSnowman(tx, vergeAt(tx), 0.95 + rnd(i + 35) * 0.25);
       } else if (x < W.TOWN_END - 100) {
-        if (i % 4 === 0 && clearOf(x, 260, 320)) drawLamp(x, gy);
+        if (byCottage(x) && byCottage(tx)) continue;     // (room for a cottage)
+        if (i % 4 === 0 && clearOf(x, 260, 320) && !byCottage(x)) drawLamp(x, gy);
+        else if (byCottage(tx)) continue;
         else if (rnd(i + 21) > 0.45 && clearOf(tx, 330) && !byStartMan(tx)) drawTree(tx, vergeAt(tx), 0.75 + rnd(i + 4) * 0.35, rnd(i + 5) > 0.5);
         else if (xmas && !byStartMan(tx) && rnd(i + 33) > 0.5 && clearOf(tx, 300)) drawSnowman(tx, vergeAt(tx), 0.95 + rnd(i + 36) * 0.2);
         else if (rnd(i) > 0.72) { const gx = x + rnd(i + 1) * 60; drawGrass('grass_1', gx, vergeAt(gx), 8, rnd(i + 2) > 0.5); }
+      } else if (byCottage(tx)) {
+        // (room for a cottage)
       } else if (x > W.TOWN_END + 200 && rnd(i + 11) > 0.35 && !nearRiver(tx, 90) && clearOf(tx, 0)) {
         drawTree(tx, vergeAt(tx), 0.8 + rnd(i + 4) * 0.6, rnd(i + 5) > 0.5);
       } else if (state.theme === 'christmas' && x > W.TOWN_END + 200 && rnd(i + 31) > 0.55 && !nearRiver(tx, 120) && clearOf(tx, 0) &&
@@ -1764,6 +1817,45 @@
     // finish arch
     if (W.FINISH_X > x0 - 300 && W.FINISH_X < x1 + 300) drawFinish(W.FINISH_X);
     if (W.END_X > x0 - 100 && W.END_X < x1 + 100) drawBarrier(W.END_X);
+  }
+
+  // where the cottages stand: about one per 2600px of hills, at a random spot
+  // in that stretch, now and then none; never by a river, ramp, sign, the
+  // finish or another cottage
+  const COTTAGE_CELL = 2600;
+  function cottagesIn(a, b, clearOf) {
+    const out = [];
+    // Main Street: in the gaps between buildings, the one after the Garage
+    // always and others now and then
+    const bs = W.buildings;
+    for (let i = 0; i + 1 < bs.length; i++) {
+      const m = (bs[i].x + bs[i + 1].x) / 2;
+      if (bs[i + 1].x - bs[i].x < 1000 || m > W.TOWN_END) continue;
+      if (i > 0 && rnd(m * 0.013 + W.level * 3.1) < 0.6) continue;
+      if (m >= a && m <= b) out.push(m);
+    }
+    for (let c = Math.floor(a / COTTAGE_CELL) * COTTAGE_CELL; c < b; c += COTTAGE_CELL) {
+      const k = Math.round(c / COTTAGE_CELL);
+      const lv = W.level * 13.7;                       // each level has its own spots
+      if (rnd(k * 2.3 + 91 + lv) < 0.25) continue;
+      for (let tries = 0; tries < 4; tries++) {          // the first clear spot of a few (the same wherever the camera is)
+        const x = c + 300 + rnd(k * 1.7 + 92 + lv + tries * 5.1) * (COTTAGE_CELL - 600);
+        if (x < W.TOWN_END + 500 || x > W.FINISH_X - 600) break;
+        if (nearRiver(x, 320) || !clearOf(x, 0, 330) || W.ramps.some((r) => x > r.x - 380 && x < r.x + r.w + 380)) continue;
+        if (x >= a && x <= b) out.push(x);
+        break;
+      }
+    }
+    return out;
+  }
+  // a snowy Christmas cottage; its snowy base sinks into the snowy ground,
+  // and at night its windows glow warm
+  function drawCottage(x, gy) {
+    const t = img.snow_house;
+    if (!ready(t)) return;
+    const h = 300, w = h * t.naturalWidth / t.naturalHeight, top = gy + 22 - h * 0.97;
+    ctx.drawImage(hq(t, w, h), x - w / 2, top, w, h);
+    addLight(x + w * 0.05, top + h * 0.55, 190, '255,196,110', 0.4);
   }
 
   function outline(w) { ctx.lineWidth = w || 4; ctx.strokeStyle = '#1b2033'; ctx.lineJoin = 'round'; }
@@ -2414,7 +2506,15 @@
     { c: 'rgba(196,220,245,0.8)', n: 14, r: 7, flat: 0.4 },
     { c: 'rgba(225,238,252,0.9)', n: 16, r: 5, flat: 0.6 }
   ]);
-  const groundTex = () => (state.theme === 'christmas' ? snowTex() : sandTex());
+  // Christmas ground: frosty ice the colour of the frozen water where they
+  // meet (so ground and water are one icy landscape), with frost specks
+  const frostTex = () => texture('frost', 200, '#c8e0f3', [
+    { c: 'rgba(255,255,255,0.75)', n: 120, r: 1.2 },
+    { c: 'rgba(150,190,228,0.3)', n: 80, r: 1.8 },
+    { c: 'rgba(240,248,255,0.7)', n: 14, r: 9, flat: 0.25 },
+    { c: 'rgba(190,218,242,0.6)', n: 12, r: 6, flat: 0.4 }
+  ]);
+  const groundTex = () => (state.theme === 'christmas' ? frostTex() : sandTex());
   const groundShade = (a) => (state.theme === 'christmas' ? `rgba(70,110,170,${a})` : `rgba(120,80,40,${a})`);
   const gravelTex = () => texture('gravel', 80, '#8b8175', [
     { c: 'rgba(60,52,44,0.55)', n: 70, r: 2.2 },
@@ -2466,11 +2566,8 @@
       shade.addColorStop(0, groundShade(0)); shade.addColorStop(1, groundShade(0.38));
       ctx.fillStyle = shade; ctx.fill();
     }
-    if (state.theme === 'christmas') {                    // snow drifts instead of strata
-      line(under + 70, 'rgba(255,255,255,0.7)', 10);
-      line(under + 78, 'rgba(160,192,228,0.4)', 3);
-      line(under + 150, 'rgba(255,255,255,0.55)', 8);
-      line(under + 157, 'rgba(160,192,228,0.32)', 3);
+    if (state.theme === 'christmas') {                    // snow lying here and there on the icy ground
+      ctx.save(); ctx.clip(); groundSnow(pts[i0].x, pts[i1].x, under); ctx.restore();
     } else {
       line(under + 70, 'rgba(160,112,62,0.35)', 12);
       line(under + 130, 'rgba(150,104,58,0.28)', 7);
@@ -2529,12 +2626,15 @@
       let wg = ctx.createLinearGradient(0, SEA - 10, 0, SEA + 420);
       wg.addColorStop(0, 'rgba(92,190,236,0.93)'); wg.addColorStop(0.35, 'rgba(44,140,205,0.96)'); wg.addColorStop(1, '#16508f');
       if (ice) {
-        // one frozen landscape: the very same snow as the ground runs on out
-        // over the sea, and the blue ice shows through it gradually further
-        // out, with its cracks and shimmer only out on the open ice
-        ctx.fillStyle = snowTex(); ctx.fill();
-        ctx.fillStyle = iceFade(SEA, 320); ctx.fill();
-        ctx.save(); ctx.clip(); iceDetails(wx0, x1 + 24, SEA + 60, bottom - SEA - 60); ctx.restore();
+        // icy water, with the snow only here and there: a snowy fringe along
+        // the shore that fades into the ice (so the snowy ground flows onto
+        // it with no line), and soft drifts scattered at random on the ice
+        ctx.fillStyle = iceGradient(SEA - 10, 430); ctx.fill();
+        ctx.save(); ctx.clip();
+        shoreSnow(wx0, x1 + 24, SEA);
+        iceDetails(wx0, x1 + 24, SEA + 30, bottom - SEA - 30);
+        snowPatches(wx0, x1 + 24, SEA, bottom);
+        ctx.restore();
         drawPenguins(wx0, x1 + 24);
       } else {
         ctx.fillStyle = wg; ctx.fill();
@@ -2703,10 +2803,7 @@
     };
     ctx.save(); shape();
     const g = ctx.createLinearGradient(0, top, 0, top + span);
-    if (front && ice) {                                   // under the snowy ice: the car is only glimpsed
-      ctx.globalAlpha = 0.8; ctx.fillStyle = snowTex(); ctx.fill(); ctx.globalAlpha = 1;
-      ctx.fillStyle = iceFade(wy, 260); ctx.fill();
-    } else if (front) {
+    if (front) {
       for (const [d, al] of FRONT_ALPHA) {
         const f = Math.min(1, (d + 10) / span), [cr, cg, cb] = colAt(COLS, f);
         g.addColorStop(f, `rgba(${cr | 0},${cg | 0},${cb | 0},${al})`);
@@ -2714,9 +2811,8 @@
       }
       ctx.fillStyle = g; ctx.fill();
     } else {
-      if (!r.joined && ice) {                              // snow over the river ice, like the sea
-        ctx.fillStyle = snowTex(); ctx.fill();
-        ctx.fillStyle = iceFade(wy, 260); ctx.fill();
+      if (!r.joined && ice) {                              // river ice, like the sea's
+        ctx.fillStyle = iceGradient(wy - 10, 430); ctx.fill();
       } else if (!r.joined) {                              // (the sea already painted a joined river's water)
         for (const [f, cr, cg, cb, al] of COLS) g.addColorStop(f, `rgba(${cr},${cg},${cb},${al})`);
         ctx.fillStyle = g; ctx.fill();
@@ -2724,7 +2820,13 @@
       if (riverInPlay(r)) { ctx.restore(); return; }       // the front layer adds the rest
     }
     if (ice) {                                            // frozen: cracks, shimmer, sparkles and a snowy rim
-      if (!r.joined || front) { ctx.save(); ctx.clip(); iceDetails(l - 6, rr + 6, wy + 50, bottom - wy - 50); ctx.restore(); }
+      if (!r.joined || front) {
+        ctx.save(); ctx.clip();
+        if (!front) shoreSnow(l - 6, rr + 6, wy);
+        iceDetails(l - 6, rr + 6, wy + 30, bottom - wy - 30);
+        if (!front) snowPatches(l - 6, rr + 6, wy, bottom);
+        ctx.restore();
+      }
       ctx.restore();
       return;
     }
