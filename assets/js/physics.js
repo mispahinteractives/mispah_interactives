@@ -88,8 +88,8 @@
   const LEVELS = 20;
 
   // Level 1 is Main Street: the town with the doors, DOOR_SPACING apart, then
-  // the hills. It follows the website's world map: Start (the garage),
-  // Services, the games, Clients, Demos, Contact. `kind: 'game'` doors open a
+  // the hills. It follows the website's world map: Start (the garage), the
+  // games, Services, Clients, Demos, Contact. `kind: 'game'` doors open a
   // game, `garage` opens vehicle select, `stop` is one of the company stops
   // (site.js), `wrong` is a haunted house (entering fails the run).
   const FIRST_DOOR = 950;
@@ -99,12 +99,12 @@
   // a different pair of each from level to level, TOWN_SPACING apart. Every
   // pair of games appears except Animal Café with Learning Adventure, which
   // share a house picture.
-  const GAME_IDS = ['animal-cafe', 'cinemoji', 'uno-clash', 'baggage-out', 'learning-adventure'];
-  const GAME_PAIRS = [[0, 1], [2, 3], [1, 4], [0, 2], [3, 4], [1, 3], [2, 4], [0, 3], [1, 2]];
+  const GAME_IDS = ['animal-cafe', 'cinemoji', 'baggage-out', 'learning-adventure', 'uno-clash'];
+  const GAME_PAIRS = [[0, 1], [2, 4], [1, 3], [0, 2], [3, 4], [1, 4], [2, 3], [0, 4], [1, 2]];
   const STOP_PAIRS = [[0, 1], [2, 3], [0, 2], [1, 3], [0, 3], [1, 2]];
   const TOWN_SPACING = 1100;
-  const STREET = ['garage', 'services', 'animal-cafe', 'wrong-1', 'wrong-2', 'cinemoji', 'wrong-3', 'uno-clash', 'wrong-4', 'wrong-5', 'baggage-out', 'wrong-6',
-    'learning-adventure', 'clients', 'demos', 'contact'];
+  const STREET = ['garage', 'animal-cafe', 'wrong-1', 'wrong-2', 'cinemoji', 'wrong-3', 'baggage-out', 'wrong-4', 'wrong-5', 'learning-adventure', 'wrong-6',
+    'uno-clash', 'services', 'clients', 'demos', 'contact'];
   const DOOR_HALF = 150;
   // every level has a river crossing; from level 12 there are two
   const riversFor = (level) => (level >= 12 ? 2 : 1);

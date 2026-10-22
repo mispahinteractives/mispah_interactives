@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="is-night">
+<html lang="en" class="is-christmas">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -12,8 +12,8 @@
 <meta property="og:image" content="assets/img/logo.png">
 <link rel="preload" href="assets/fonts/russo-one-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/exo-2-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/fonts.css?v=20261103b">
-<link rel="stylesheet" href="assets/css/hub.css?v=20261103b">
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261103q">
+<link rel="stylesheet" href="assets/css/hub.css?v=20261103q">
 </head>
 <body>
 <a class="skip" href="#services">Skip to the company stops</a>
@@ -72,8 +72,9 @@
           <span class="setup-label">Pick your ride</span>
           <div class="time-toggle" role="group" aria-label="Theme">
         <button type="button" data-time="morning" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Morning</button>
-        <button type="button" data-time="night" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>Night</button>
+        <button type="button" data-time="night" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>Night</button>
         <button type="button" data-time="rain" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 15a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.8 7.5 3.8 3.8 0 0 1 17.5 15z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Rain</button>
+        <button type="button" data-time="christmas" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5l1 2.1 2.3.3-1.7 1.6.4 2.3L12 6.7l-2 1.1.4-2.3-1.7-1.6 2.3-.3zM12 8l4 5h-2l4.5 5.5h-13L10 13H8z"/><path d="M10.8 18.5h2.4V22h-2.4z"/></svg>Christmas</button>
       </div>
         </div>
         <div class="ride-picker" role="group" aria-label="Choose your ride">
@@ -112,10 +113,11 @@
       <button class="icon-btn" type="button" data-action="respawn" aria-label="Back to last checkpoint" title="Reset (R)">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2.1-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M4 3.5v5h5z"/></svg>
       </button>
-      <button class="icon-btn time-btn" type="button" data-action="toggle-time" aria-label="Switch to morning" title="Morning / Night / Rain (N)">
+      <button class="icon-btn time-btn" type="button" data-action="toggle-time" aria-label="Switch to morning" title="Morning / Night / Rain / Christmas (N)">
         <svg class="ico-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <svg class="ico-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
         <svg class="ico-rain" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 15a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.8 7.5 3.8 3.8 0 0 1 17.5 15z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <svg class="ico-xmas" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5l1 2.1 2.3.3-1.7 1.6.4 2.3L12 6.7l-2 1.1.4-2.3-1.7-1.6 2.3-.3zM12 8l4 5h-2l4.5 5.5h-13L10 13H8z"/><path d="M10.8 18.5h2.4V22h-2.4z"/></svg>
       </button>
       <button class="icon-btn" type="button" data-action="garage" aria-label="Change ride" title="Garage (1, 2, 3)">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 14l2-5h9l3 3h3a1 1 0 0 1 1 1v2H3z"/><circle cx="7.5" cy="16.5" r="2.5"/><circle cx="17" cy="16.5" r="2.5"/></svg>
@@ -176,38 +178,21 @@
 </section>
 
 <!-- ================================================================ ticker -->
+<div class="ticker-wrap">
 <div class="ticker" aria-hidden="true">
   <div class="ticker-track">
     <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span>20 levels to unlock</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>4 rides in the garage</span><i></i>
     <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span>20 levels to unlock</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>4 rides in the garage</span><i></i>
   </div>
 </div>
+</div>
 
 <!-- ========================================================= game select -->
-<!-- ====================================================== stop 02: services -->
-<section id="services" class="stop stop-services" aria-labelledby="services-title">
-  <div class="stop-env" aria-hidden="true">
-    <span class="env-lamp l1"></span><span class="env-lamp l2"></span><span class="env-lamp l3"></span>
-    <span class="env-neon">Workshop</span>
-    <span class="env-floor"></span>
-  </div>
-  <header class="stop-head reveal">
-    <p class="stop-tag"><span class="stop-no">02</span>The Workshop</p>
-    <h2 id="services-title">Services</h2>
-    <p class="stop-lede">Every bay in the workshop is something we build. Roll up a door to look inside.</p>
-  </header>
-  <div class="bays" id="bays"></div>
-  <div class="pipeline reveal">
-    <h3>The build pipeline</h3>
-    <div class="pl-road" id="pipeline"><div class="pl-car" aria-hidden="true"></div></div>
-  </div>
-</section>
-
-<!-- ========================================================= stop 03: games -->
+<!-- ========================================================= stop 02: games -->
 <section id="games" class="select stop stop-games" aria-labelledby="games-title">
   <div class="stop-env" aria-hidden="true"><span class="env-marquee"></span></div>
   <header class="stop-head reveal">
-    <p class="stop-tag"><span class="stop-no">03</span>Arcade Boulevard</p>
+    <p class="stop-tag"><span class="stop-no">02</span>Arcade Boulevard</p>
     <h2 id="games-title">Our games</h2>
     <p class="stop-lede">Every door on the boulevard is a game we made. Drive up in Monster Hills, or jump straight in.</p>
   </header>
@@ -229,7 +214,7 @@
       <h3 id="feature-title">Monster Hills</h3>
       <p>A physics truck game with working suspension. The body squats, pitches and bounces over every bump. Collect <span data-coin-total>44</span> coins, clear two jumps, and knock down the can pyramid on your way to the flag.</p>
       <ul class="chips">
-        <li>20 levels</li><li>Matter.js physics</li><li>6 rides</li><li>Buttons · Keyboard</li>
+        <li>20 levels</li><li>Matter.js physics</li><li>4 rides</li><li>Buttons · Keyboard</li>
       </ul>
       <div class="feature-actions">
         <button class="btn-play" type="button" data-action="play">
@@ -244,6 +229,26 @@
 
   <div class="card-row" id="card-row"></div>
 </section>
+
+<!-- ====================================================== stop 03: services -->
+<section id="services" class="stop stop-services" aria-labelledby="services-title">
+  <div class="stop-env" aria-hidden="true">
+    <span class="env-lamp l1"></span><span class="env-lamp l2"></span><span class="env-lamp l3"></span>
+    <span class="env-neon">Workshop</span>
+    <span class="env-floor"></span>
+  </div>
+  <header class="stop-head reveal">
+    <p class="stop-tag"><span class="stop-no">03</span>The Workshop</p>
+    <h2 id="services-title">Services</h2>
+    <p class="stop-lede">Every bay in the workshop is something we build. Roll up a door to look inside.</p>
+  </header>
+  <div class="bays" id="bays"></div>
+  <div class="pipeline reveal">
+    <h3>The build pipeline</h3>
+    <div class="pl-road" id="pipeline"><div class="pl-car" aria-hidden="true"></div></div>
+  </div>
+</section>
+
 
 <!-- ======================================================= stop 04: clients -->
 <section id="clients" class="stop stop-clients" aria-labelledby="clients-title">
@@ -515,11 +520,11 @@
 </div>
 
 <script src="assets/js/vendor/matter.min.js"></script>
-<script src="assets/js/physics.js?v=20261103b"></script>
-<script src="assets/js/games.js?v=20261103b"></script>
-<script src="assets/js/site.js?v=20261103b"></script>
-<script src="assets/js/game.js?v=20261103b"></script>
-<script src="assets/js/hub.js?v=20261103b"></script>
-<script src="assets/js/world.js?v=20261103b"></script>
+<script src="assets/js/physics.js?v=20261103q"></script>
+<script src="assets/js/games.js?v=20261103q"></script>
+<script src="assets/js/site.js?v=20261103q"></script>
+<script src="assets/js/game.js?v=20261103q"></script>
+<script src="assets/js/hub.js?v=20261103q"></script>
+<script src="assets/js/world.js?v=20261103q"></script>
 </body>
 </html>

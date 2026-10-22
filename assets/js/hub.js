@@ -77,6 +77,58 @@
     }
   });
 
+  /* Phones and small tablets: the cards become a swipe carousel (CSS). One
+     card at a time sits in the middle, the next ones peek in at the sides,
+     and a swipe snaps to the next game. The centred card is the active one
+     (full size and lit); under the rail, arrows, a dot per game in its own
+     colour and a "2 / 5" counter show where you are and jump to a game. */
+  const cards = $$('.gcard', row);
+  const nav = document.createElement('div');
+  nav.className = 'rail-nav';
+  nav.innerHTML = `
+    <button class="rail-arrow" type="button" data-rail="-1" aria-label="Previous game"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.4 5.4 14 4l-8 8 8 8 1.4-1.4L8.8 12z"/></svg></button>
+    <div class="rail-dots"></div>
+    <span class="rail-count" aria-live="polite"></span>
+    <button class="rail-arrow" type="button" data-rail="1" aria-label="Next game"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 5.4 10 4l8 8-8 8-1.4-1.4 6.6-6.6z"/></svg></button>`;
+  row.after(nav);
+  const dots = $('.rail-dots', nav), count = $('.rail-count', nav);
+  cards.forEach((c, i) => {
+    const d = document.createElement('button');
+    d.type = 'button'; d.className = 'rail-dot';
+    d.style.setProperty('--accent', GAMES[i].color);
+    d.setAttribute('aria-label', 'Show ' + GAMES[i].name);
+    d.addEventListener('click', () => goTo(i));
+    dots.appendChild(d);
+  });
+  let active = -1;
+  function setActive(i) {
+    if (i === active) return;
+    active = i;
+    cards.forEach((c, k) => c.classList.toggle('is-active', k === i));
+    $$('.rail-dot', dots).forEach((d, k) => d.setAttribute('aria-current', k === i ? 'true' : 'false'));
+    count.textContent = (i + 1) + ' / ' + cards.length;
+    $$('.rail-arrow', nav).forEach((b) => { b.disabled = (b.dataset.rail < 0 && i === 0) || (b.dataset.rail > 0 && i === cards.length - 1); });
+  }
+  function goTo(i) {
+    const c = cards[Math.max(0, Math.min(cards.length - 1, i))];
+    if (c) row.scrollTo({ left: c.offsetLeft - (row.clientWidth - c.offsetWidth) / 2, behavior: reduceMotion ? 'auto' : 'smooth' });
+  }
+  // the active card is whichever is nearest the middle of the rail
+  let ticking = false;
+  row.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      ticking = false;
+      const mid = row.scrollLeft + row.clientWidth / 2;
+      let best = 0, bd = Infinity;
+      cards.forEach((c, k) => { const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid); if (d < bd) { bd = d; best = k; } });
+      setActive(best);
+    });
+  }, { passive: true });
+  nav.addEventListener('click', (e) => { const b = e.target.closest('[data-rail]'); if (b) goTo(active + Number(b.dataset.rail)); });
+  setActive(0);
+
   // coin count in the page text always matches the course
   $$('[data-coin-total]').forEach((el) => { el.textContent = G.coinsTotal; });
 
@@ -183,6 +235,36 @@
     e.preventDefault();
     Player.open(g);
   });
+
+  /* --------------------------------------- Christmas: strings of lights */
+  // Strings of glass bulbs draped in swags: under the top bar, across the
+  // top of every stop, along the footer and across the win and fail cards. Each bulb twinkles at its own
+  // pace. They're always in the page; CSS only shows them while the
+  // Christmas theme is on (html.is-christmas).
+  (function () {
+    const COLORS = ['#ff4b4b', '#ffd34d', '#46d67a', '#5fb2ff', '#ff7ad9', '#ff9a3c'];
+    const PER = 5, GAP = 38, SAG = 12;                   // bulbs per swag, spacing, how far a swag droops
+    function lights(where, cls, n) {
+      const el = document.createElement('div');
+      el.className = 'xmas-lights ' + cls; el.setAttribute('aria-hidden', 'true');
+      for (let i = 0; i < n; i++) {
+        const b = document.createElement('i'), u = ((i % PER) + 0.5) / PER;
+        b.style.setProperty('--c', COLORS[i % COLORS.length]);
+        b.style.setProperty('--y', (Math.sin(Math.PI * u) * SAG).toFixed(1) + 'px');
+        b.style.setProperty('--d', ((i * 0.37) % 1.9).toFixed(2) + 's');
+        b.style.setProperty('--t', (1.2 + ((i * 0.53) % 1.1)).toFixed(2) + 's');
+        b.style.setProperty('--r', ((u - 0.5) * 24).toFixed(0) + 'deg');
+        el.appendChild(b);
+      }
+      where.prepend(el);
+    }
+    const topbar = $('.topbar');
+    if (topbar) lights(topbar, 'is-top', 70);
+    $$('section.stop').forEach((sec) => lights(sec, 'is-stop', 70));
+    const foot = $('.foot');
+    if (foot) lights(foot, 'is-foot', 50);
+    $$('#modal-finish .finish-panel, #modal-fail .fail-panel').forEach((p) => lights(p, 'is-panel', 18));
+  })();
 
   /* --------------------------------------- only simulate while on screen */
   const stage = $('#stage');

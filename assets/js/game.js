@@ -19,7 +19,7 @@
     'wrong_house_1', 'wrong_house_2', 'wrong_house_3', 'wrong_house_4',
     'ghost_1', 'ghost_2', 'ghost_3', 'ghost_4', 'ghost_5', 'background_house1',
     'wrong_house_5', 'wrong_house_6', 'correct_house_1', 'correct_house_2', 'correct_house_3', 'correct_house_4', 'correct_house_5',
-    'mountain_2', 'mountain_3', 'grass_1', 'crow_1', 'tree_2'];
+    'mountain_2', 'mountain_3', 'grass_1', 'crow_1', 'tree_2', 'christmas_tree'];
   const FONT = '"Russo One", "Exo 2", system-ui, sans-serif';
   const TAU = Math.PI * 2;
 
@@ -242,6 +242,8 @@
       thunder: (d, v = 1) => { setTimeout(() => noise(1.2 + 0.6 * v, 0.55 * v, 160), d); setTimeout(() => noise(0.5, 0.3 * v, 500), d + 60); },
       coin: () => tone([988, 1319], 0.07, 'square', 0.09),
       coinLand: () => tone([1568, 2093], 0.05, 'triangle', 0.05),   // a soft ting as it reaches the counter
+      crack: () => { noise(0.18, 0.45, 3200); noise(0.35, 0.25, 900); tone([1900, 1200, 700], 0.035, 'square', 0.04); },   // ice breaking
+      bells: () => { for (let i = 0; i < 4; i++) setTimeout(() => tone([2637, 3136, 2637, 3520], 0.045, 'triangle', 0.022), i * 260); },   // sleigh bells
       land: (s) => { noise(0.3, 0.25 + 0.4 * s, 380); if (s > 0.35) tone([70, 50], 0.12, 'sine', 0.3 * s); },
       caw: () => { tone([540, 430], 0.07, 'sawtooth', 0.025); noise(0.12, 0.05, 1800); },
       creak: () => tone([160, 120], 0.12, 'sawtooth', 0.05),
@@ -313,9 +315,9 @@
     active: true,             // stage on screen
     vehicle: VEHICLES[store.get('vehicle', 'truck')] ? store.get('vehicle', 'truck') : 'truck',
     level: 1,
-    // theme: 'morning' | 'night' | 'rain' (Night is the default). `night`
+    // theme: 'morning' | 'night' | 'rain' | 'christmas' (Christmas is the default). `night`
     // means the lights are on (night and rain); `theme` picks sky and weather.
-    theme: ['morning', 'night', 'rain'].includes(store.get('time', 'night')) ? store.get('time', 'night') : 'night',
+    theme: ['morning', 'night', 'rain', 'christmas'].includes(store.get('theme', 'christmas')) ? store.get('theme', 'christmas') : 'christmas',
     night: false,
     time: 0, started: false, finished: false,
     coins: 0, checkpoint: W.SPAWN_X,
@@ -512,11 +514,11 @@
     car.wheels.forEach((w) => {
       if (now - w.lastContact > 60) return;
       const spin = Math.abs(w.angularVelocity * car.rWheel - W.forwardSpeed());
-      const k = (speed > 7 ? (state.theme === 'rain' ? 0.5 : 0.12) : 0) + (spin > 4 ? 0.5 : 0);
+      const k = (speed > 7 ? (state.theme === 'rain' ? 0.5 : state.theme === 'christmas' ? 0.4 : 0.12) : 0) + (spin > 4 ? 0.5 : 0);
       if (Math.random() < k * dt / 16) {
         puff(w.position.x - Math.sign(vel.x || 1) * car.rWheel * 0.4, w.position.y + car.rWheel * 0.8,
           -vel.x * 0.15 + (Math.random() - 0.5) * 1.5, -1 - Math.random() * 1.5,
-          6 + Math.random() * 7, 600 + Math.random() * 400, state.theme === 'rain' ? 'rgba(210,222,238,0.9)' : '#b89a74', 'dust');
+          6 + Math.random() * 7, 600 + Math.random() * 400, state.theme === 'rain' ? 'rgba(210,222,238,0.9)' : state.theme === 'christmas' ? 'rgba(242,248,255,0.95)' : '#b89a74', 'dust');
       }
     });
   }
@@ -555,6 +557,10 @@
       }
       else if (p.kind === 'foam') { p.size += p.vr * k; p.vr *= Math.pow(0.96, k); }
       else if (p.kind === 'glint') { /* stays where the coin was */ }
+      else if (p.kind === 'shard') {                       // a shard of ice: tumbles up and drops back
+        p.vx *= Math.pow(0.99, k); p.vy += 0.3 * k;
+        if (p.vy > 0 && p.y > p.floor) { p.y = p.floor; p.vx *= 0.3; p.vy = 0; p.vr = 0; p.life = Math.min(p.life, 900); }
+      }
       else if (p.kind === 'ripple') { p.size += p.vr * k; p.vr *= Math.pow(0.975, k); }
       else if (p.kind === 'bubble') { p.vy = Math.max(p.vy - 0.03 * k, -1.6); p.x += Math.sin((p.life + p.rot) * 0.02) * 0.3 * k; if (p.y < p.floor) { p.life = 0; if (Math.random() < 0.5) particles.push({ x: p.x, y: p.floor, vx: 0, vy: 0, size: p.size, life: 500, max: 500, color: '#fff', kind: 'ripple', rot: 0, vr: 0.7 }); } }
       else { p.vx *= 0.95; p.vy += 0.06 * k; }
@@ -698,6 +704,10 @@
       const half = Wd / cam.z;
       rainTick(dt, cam.x - half * cam.fx, cam.x + half * (1 - cam.fx));
     }
+    if (state.theme === 'christmas') {                    // sleigh bells as Santa sets off across the sky
+      const pass = Math.floor(state.t / 1000 / SANTA_EVERY);
+      if (pass !== state.santaPass) { if (state.santaPass != null && state.mode === 'play') Sound.bells(); state.santaPass = pass; }
+    }
     updateParticles(dt);
 
     const rpm = clamp(Math.abs(car.wheels[1].angularVelocity * car.rWheel) / car.v.maxSpeed, 0, 1.2);
@@ -778,6 +788,7 @@
     drawForeground(x0, x1);
     if (state.night) drawNight();
     if (state.theme === 'rain') drawRain();
+    if (state.theme === 'christmas') drawSnow();
     drawSpeedFx();
     drawSky();
   }
@@ -985,6 +996,281 @@
     if (big) state.reflash = 90 + Math.random() * 70;               // the second flicker of a big strike
     Sound.thunder(big ? 120 + Math.random() * 380 : 900 + Math.random() * 1300, big ? 1 : 0.32);
   }
+  /* ------------------------------------------------------------ Christmas
+     A snowy Christmas night: snow falling in three depths (soft flakes that
+     sway as they fall; the near ones bigger and faster), a snow bank along
+     the road, snowy pine trees with baubles, twinkling lights and a star,
+     snowmen in the hills, candy-cane street lamps with a wreath and lights,
+     and every 26 seconds Santa's sleigh crossing the moon, with Rudolph's
+     nose glowing, a trail of glitter and sleigh bells. */
+  const XMAS = ['255,72,72', '72,214,118', '255,208,84', '96,176,255', '255,128,214'];
+  const FLAKES = Array.from({ length: 240 }, (_, i) => ({ x: rnd(i * 3.1 + 5), y: rnd(i * 5.7 + 1), s: rnd(i * 2.9 + 4), layer: i % 3, ph: rnd(i * 1.3 + 9) * TAU }));
+  function drawSnow() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const t = state.t / 1000, sc = clamp(Math.min(Wd, Ht) / 800, 0.55, 1);
+    const n = Math.round(FLAKES.length * clamp(Wd * Ht / (1440 * 900), 0.5, 1));
+    for (let i = 0; i < n; i++) {
+      const f = FLAKES[i], depth = [0.45, 0.75, 1.2][f.layer];
+      const size = (1.1 + f.s * 2.1) * depth * (0.7 + 0.3 * sc) * (f.layer === 2 ? 1.5 : 1);
+      const y = ((f.y * (Ht + 40) + t * (26 + f.s * 30) * depth) % (Ht + 40)) - 20;
+      const drift = cam.x * cam.z * 0.3 * depth;
+      const x = (((f.x * (Wd + 80) + Math.sin(t * 0.9 + f.ph) * 16 * depth - drift) % (Wd + 80)) + Wd + 80) % (Wd + 80) - 40;
+      ctx.globalAlpha = 0.45 + 0.4 * depth / 1.2;
+      ctx.drawImage(SOFT, x - size * 1.6, y - size * 1.6, size * 3.2, size * 3.2);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function xmasStar(x, y, r, glow) {
+    if (glow) addLight(x, y, r * 4.2, '255,224,120', 0.65);
+    ctx.fillStyle = '#ffd34d'; ctx.strokeStyle = '#8a5a00'; ctx.lineWidth = Math.max(1, r * 0.18);
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r; ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  // christmas_tree.png (trimmed to the tree): planted by its trunk, with
+  // glints twinkling on its baubles and a glowing star on top
+  const XTREE = { base: 0.516, top: 0.006, glints: [[0.516, 0.136], [0.382, 0.388], [0.565, 0.547], [0.162, 0.676], [0.385, 0.687],
+    [0.788, 0.709], [0.585, 0.224], [0.47, 0.359], [0.654, 0.596], [0.28, 0.738]] };
+  function drawXmasTree(x, gy, s, flip) {
+    const t = img.christmas_tree;
+    if (!ready(t)) { drawPine(x, gy, s, flip); return; }
+    const h = TREE_H * s * 1.12, w = h * t.naturalWidth / t.naturalHeight, top = gy + 6 * s - h, m = flip ? -1 : 1;
+    ctx.save(); ctx.translate(x, 0); ctx.scale(m, 1);
+    ctx.drawImage(hq(t, w, h), -w * XTREE.base, top, w, h);
+    ctx.restore();
+    const tt = state.t / 1000;
+    XTREE.glints.forEach(([fx, fy], i) => {
+      const gx = x + m * (fx - XTREE.base) * w, gyy = top + fy * h, tw = Math.sin(tt * 2.2 + i * 1.9 + x * 0.01);
+      if (tw > 0.25) sparkle(gx - 3 * s, gyy - 3 * s, 7 * s * tw, tw);
+      if (i % 2 === 0) addLight(gx, gyy, 20 * s, i % 4 ? '255,215,90' : '255,90,90', 0.3 + 0.25 * Math.max(0, tw));
+    });
+    xmasStar(x + m * (0.487 - XTREE.base) * w, top + XTREE.top * h, 13 * s * (1 + 0.08 * Math.sin(tt * 3 + x)), true);
+  }
+  // a four-point twinkle (ice sparkles, tree glints, glitter)
+  function sparkle(x, y, r, a) {
+    if (a <= 0.02 || r <= 0.3) return;
+    ctx.globalAlpha = Math.min(1, a); ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.moveTo(x - r, y); ctx.lineTo(x - r * 0.16, y - r * 0.16); ctx.lineTo(x, y - r); ctx.lineTo(x + r * 0.16, y - r * 0.16);
+    ctx.lineTo(x + r, y); ctx.lineTo(x + r * 0.16, y + r * 0.16); ctx.lineTo(x, y + r); ctx.lineTo(x - r * 0.16, y + r * 0.16); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  /* The frozen winter water (Christmas): the sea, the rivers and the far
+     lakes freeze over. Frosty blue-white ice, darker with depth, with a
+     snowy rim of soft drifts along the top, cracks in the ice, a light
+     shimmer sweeping slowly across, and sparkles twinkling on it. Penguins
+     waddle on the sea ice in little groups, and now and then one goes by on
+     its belly. The broken bridges get icicles and snow on the rails. */
+  const frozen = () => state.theme === 'christmas';
+  const ICE_COLS = [[0, 238, 249, 255, 0.98], [0.1, 200, 232, 249, 0.98], [0.38, 140, 194, 233, 0.98], [1, 52, 102, 160, 1]];
+  // snow thinning into ice: clear at the top (pure snow), icy blue lower down
+  function iceFade(top, span) {
+    const g = ctx.createLinearGradient(0, top, 0, top + span);
+    g.addColorStop(0, 'rgba(206,232,250,0)'); g.addColorStop(0.2, 'rgba(198,228,249,0.22)');
+    g.addColorStop(0.5, 'rgba(160,206,240,0.62)'); g.addColorStop(1, 'rgba(96,150,206,0.92)');
+    return g;
+  }
+  function iceGradient(top, span, cols) {
+    const g = ctx.createLinearGradient(0, top, 0, top + span);
+    for (const [f, r, gg, b, a] of cols || ICE_COLS) g.addColorStop(f, `rgba(${r},${gg},${b},${a})`);
+    return g;
+  }
+  // cracks, shimmer and sparkles; call it inside a clip to the ice
+  function iceDetails(wx0, wx1, wy, depth, k0) {
+    const t = state.t / 1000, sc = k0 || 1;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (let cx = Math.floor(wx0 / (220 * sc)) * 220 * sc; cx < wx1; cx += 220 * sc) {
+      const k = Math.round(cx / (220 * sc));
+      if (rnd(k * 1.7 + 3) < 0.35) continue;
+      let x = cx + rnd(k + 1) * 150 * sc, y = wy + (12 + rnd(k + 2) * Math.min(90, depth * 0.5)) * sc;
+      const pts = [[x, y]];
+      for (let j = 0; j < 4; j++) { x += (16 + rnd(k * 3 + j) * 24) * sc; y += (rnd(k * 5 + j) - 0.5) * 16 * sc; pts.push([x, y]); }
+      for (const [col, w, dy] of [['rgba(60,120,185,0.35)', 2.4 * sc, 1.2 * sc], ['rgba(255,255,255,0.8)', 1.4 * sc, 0]]) {
+        ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath();
+        pts.forEach(([px, py], i) => ctx[i ? 'lineTo' : 'moveTo'](px, py + dy));
+        ctx.moveTo(pts[2][0], pts[2][1] + dy); ctx.lineTo(pts[2][0] + 13 * sc, pts[2][1] + dy + (rnd(k + 9) > 0.5 ? 12 : -9) * sc);
+        ctx.stroke();
+      }
+    }
+    const span = wx1 - wx0 + 600, bx = wx0 - 300 + ((t * 170) % span);
+    const g = ctx.createLinearGradient(bx - 130 * sc, 0, bx + 130 * sc, 0);
+    g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, 'rgba(255,255,255,0.3)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g; ctx.fillRect(bx - 130 * sc, wy - 10, 260 * sc, depth + 20);
+    for (let sx = Math.floor(wx0 / (70 * sc)) * 70 * sc; sx < wx1; sx += 70 * sc) {
+      const k = Math.round(sx / (70 * sc)), a = Math.sin(t * 2.4 + k * 2.1);
+      if (a < 0.5 || rnd(k + 41) < 0.4) continue;
+      sparkle(sx + rnd(k + 42) * 60 * sc, wy + (6 + rnd(k + 43) * Math.min(120, depth * 0.7)) * sc, (4 + rnd(k + 44) * 4) * sc, (a - 0.5) / 0.5);
+    }
+  }
+  // soft snow drifts along the top edge of the ice
+  function snowRim(wx0, wx1, surf) {
+    ctx.beginPath(); ctx.moveTo(wx0, surf(wx0) + 4);
+    for (let x = Math.floor(wx0 / 16) * 16; x <= wx1 + 16; x += 16) ctx.lineTo(x, surf(x) - 2 - Math.max(0, Math.sin(x * 0.021) * 4.5 + Math.sin(x * 0.057) * 2.5));
+    ctx.lineTo(wx1 + 16, surf(wx1) + 4); ctx.closePath();
+    ctx.fillStyle = '#ffffff'; ctx.fill();
+    ctx.strokeStyle = 'rgba(150,195,232,0.85)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); for (let x = Math.floor(wx0 / 16) * 16; x <= wx1 + 16; x += 16) ctx[x === Math.floor(wx0 / 16) * 16 ? 'moveTo' : 'lineTo'](x, surf(x) + 4); ctx.stroke();
+  }
+  // penguins on the sea ice: little waddling groups, scarves and the odd
+  // Santa hat, and now and then one sliding by on its belly
+  function drawPenguin(x, y, s, lean, flip, hat, slide) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(lean); ctx.scale(flip ? -s : s, s);
+    if (slide) ctx.rotate(-Math.PI / 2 + 0.12);
+    ctx.lineJoin = 'round'; ctx.strokeStyle = '#141a30'; ctx.lineWidth = 2;
+    ctx.fillStyle = '#ff9f1c';
+    if (!slide) { ctx.beginPath(); ctx.ellipse(-5, 0, 5, 2.4, 0, 0, TAU); ctx.ellipse(6, 0, 5, 2.4, 0, 0, TAU); ctx.fill(); }
+    ctx.fillStyle = '#1d2540'; ctx.beginPath(); ctx.ellipse(0, -16, 11, 16, 0, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.ellipse(2.5, -13, 7, 12, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#141a30'; ctx.beginPath(); ctx.moveTo(-8, -20); ctx.quadraticCurveTo(-16, -10, -11, -4); ctx.quadraticCurveTo(-7, -11, -8, -20); ctx.fill();
+    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(3.5, -25, 2.7, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#000000'; ctx.beginPath(); ctx.arc(4.3, -25, 1.3, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#ff9f1c'; ctx.beginPath(); ctx.moveTo(8, -23.5); ctx.lineTo(15, -21.5); ctx.lineTo(8, -19.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#e23b48'; ctx.fillRect(-9.5, -19.5, 19, 3.6); ctx.fillRect(-8, -17, 4, 8);           // scarf
+    if (hat) {                                                                                            // Santa hat
+      ctx.fillStyle = '#e23b48'; ctx.beginPath(); ctx.moveTo(-9, -30); ctx.quadraticCurveTo(0, -46, 10, -31); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(-10, -32, 20, 4); ctx.beginPath(); ctx.arc(-6, -42, 3, 0, TAU); ctx.fill();
+    }
+    ctx.restore();
+  }
+  function drawPenguins(wx0, wx1) {
+    const t = state.t / 1000, cell = 1100;
+    for (let c = Math.floor((wx0 - 200) / cell) * cell; c < wx1 + 200; c += cell) {
+      const k = Math.round(c / cell);
+      if (rnd(k + 61) > 0.35) {
+        const n = 1 + Math.floor(rnd(k + 62) * 3), gx = c + 150 + rnd(k + 63) * 650;
+        for (let i = 0; i < n; i++) {
+          const ph = t * 5 + k + i * 1.3;
+          drawPenguin(gx + i * 34, SEA + 2, 1.25 - i * 0.12, Math.sin(ph) * 0.13, rnd(k * 7 + i) > 0.5, (k + i) % 3 === 0, false);
+        }
+      }
+      if (rnd(k + 71) > 0.55) {                                       // a belly slide across the ice
+        const px = c + ((t * 150 + rnd(k + 72) * cell) % cell);
+        drawPenguin(px, SEA - 9, 1.15, 0, false, k % 2 === 0, true);
+        for (let j = 1; j < 5; j++) sparkle(px - j * 16, SEA - 2 - (j % 2) * 4, 3.2 - j * 0.5, 0.9 - j * 0.18);
+      }
+    }
+  }
+  // icicles under a bridge deck, snow along its rails
+  function bridgeIce(r, a, b) {
+    ctx.fillStyle = 'rgba(226,244,255,0.95)';
+    for (let x = a + 7; x < b - 6; x += 13) {
+      const y = deckTop(r, x) + ROAD_NEAR + 21, L = 8 + rnd(x * 0.37) * 18;
+      ctx.beginPath(); ctx.moveTo(x - 3.5, y); ctx.lineTo(x + 3.5, y); ctx.lineTo(x, y + L); ctx.closePath(); ctx.fill();
+    }
+    ctx.strokeStyle = '#ffffff'; ctx.lineCap = 'round';
+    for (const [dy, w] of [[-46, 5], [-24, 4], [-2, 3]]) {
+      ctx.lineWidth = w; ctx.beginPath();
+      for (let x = a; x <= b; x += 10) ctx[x === a ? 'moveTo' : 'lineTo'](Math.min(x, b), deckTop(r, Math.min(x, b)) + ROAD_FAR + dy);
+      ctx.stroke();
+    }
+  }
+
+  // candy-cane lamp posts, with lights spiralling up and a wreath
+  function xmasLamp(x, gy) {
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x - 4, gy - 190, 8, 190); ctx.clip();
+    ctx.fillStyle = '#e8edf7'; ctx.fillRect(x - 4, gy - 190, 8, 190);
+    ctx.fillStyle = '#d6283b';
+    for (let y = gy - 200; y < gy; y += 22) { ctx.beginPath(); ctx.moveTo(x - 4, y); ctx.lineTo(x + 4, y - 8); ctx.lineTo(x + 4, y + 2); ctx.lineTo(x - 4, y + 10); ctx.closePath(); ctx.fill(); }
+    ctx.restore();
+    outline(2); ctx.strokeRect(x - 4, gy - 190, 8, 190);
+    const t = state.t / 1000;
+    for (let k = 0; k < 7; k++) {
+      const y = gy - 24 - k * 22, lx = x + (k % 2 ? 5 : -5), ci = k % XMAS.length, on = 0.5 + 0.5 * Math.sin(t * 3 + k * 1.7 + x);
+      ctx.fillStyle = `rgba(${XMAS[ci]},${0.6 + 0.4 * on})`; ctx.beginPath(); ctx.arc(lx, y, 3, 0, TAU); ctx.fill();
+      if (k % 2 === 0) addLight(lx, y, 16, XMAS[ci], 0.5 * on);
+    }
+    // wreath with a red bow, just under the lamp arm
+    const wy = gy - 168;
+    ctx.lineWidth = 6; ctx.strokeStyle = '#1f7a45'; ctx.beginPath(); ctx.arc(x, wy, 11, 0, TAU); ctx.stroke();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#2fa35d'; ctx.beginPath(); ctx.arc(x, wy, 11, 0, TAU); ctx.stroke();
+    ctx.fillStyle = '#e23b48';
+    for (const a of [0.4, 1.6, 2.8, 4, 5.2]) { ctx.beginPath(); ctx.arc(x + Math.cos(a) * 11, wy + Math.sin(a) * 11, 2, 0, TAU); ctx.fill(); }
+    ctx.beginPath(); ctx.moveTo(x, wy + 9); ctx.lineTo(x - 8, wy + 4); ctx.lineTo(x - 8, wy + 14); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x, wy + 9); ctx.lineTo(x + 8, wy + 4); ctx.lineTo(x + 8, wy + 14); ctx.closePath(); ctx.fill();
+  }
+  function drawSnowman(x, gy, s) {
+    const R = [26 * s, 19 * s, 14 * s], y0 = gy + 4 * s;
+    let y = y0;
+    outline(3);
+    const ys = R.map((r, i) => { y -= r * (i ? 1.75 : 1); const c = y; y -= r * 0.15; return c; });
+    R.forEach((r, i) => {
+      const g = ctx.createRadialGradient(x - r * 0.35, ys[i] - r * 0.4, r * 0.2, x, ys[i], r);
+      g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#d4e0f0');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, ys[i], r, 0, TAU); ctx.fill(); ctx.stroke();
+    });
+    // stick arms
+    ctx.strokeStyle = '#5a3a20'; ctx.lineWidth = 3 * s;
+    ctx.beginPath(); ctx.moveTo(x - R[1] * 0.9, ys[1]); ctx.lineTo(x - R[1] * 2, ys[1] - 14 * s); ctx.moveTo(x - R[1] * 1.6, ys[1] - 9 * s); ctx.lineTo(x - R[1] * 1.9, ys[1] - 2 * s);
+    ctx.moveTo(x + R[1] * 0.9, ys[1]); ctx.lineTo(x + R[1] * 2, ys[1] - 16 * s); ctx.stroke();
+    // coal buttons, eyes and smile; a carrot nose
+    ctx.fillStyle = '#1b2033';
+    for (const dy of [-0.35, 0.05, 0.45]) { ctx.beginPath(); ctx.arc(x, ys[1] + dy * R[1], 2.4 * s, 0, TAU); ctx.fill(); }
+    for (const dx of [-0.35, 0.35]) { ctx.beginPath(); ctx.arc(x + dx * R[2], ys[2] - R[2] * 0.2, 2.2 * s, 0, TAU); ctx.fill(); }
+    for (let k = 0; k < 5; k++) { const a = Math.PI * (0.25 + k * 0.125); ctx.beginPath(); ctx.arc(x + Math.cos(a) * R[2] * 0.55, ys[2] + Math.sin(a) * R[2] * 0.45, 1.3 * s, 0, TAU); ctx.fill(); }
+    ctx.fillStyle = '#f08a24'; ctx.beginPath(); ctx.moveTo(x, ys[2] - 2 * s); ctx.lineTo(x + 16 * s, ys[2] + 1 * s); ctx.lineTo(x, ys[2] + 3 * s); ctx.closePath(); ctx.fill();
+    // red scarf and a top hat
+    ctx.fillStyle = '#d6283b'; outline(2);
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x - R[2] * 1.05, ys[2] + R[2] * 0.7, R[2] * 2.1, 6 * s, 3 * s) : ctx.rect(x - R[2] * 1.05, ys[2] + R[2] * 0.7, R[2] * 2.1, 6 * s); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.rect(x + R[2] * 0.3, ys[2] + R[2] * 0.85, 6 * s, 14 * s); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#1b2033';
+    ctx.fillRect(x - R[2] * 0.95, ys[2] - R[2] * 0.95, R[2] * 1.9, 3.5 * s);
+    ctx.fillRect(x - R[2] * 0.6, ys[2] - R[2] * 0.95 - 16 * s, R[2] * 1.2, 16 * s);
+    ctx.fillStyle = '#d6283b'; ctx.fillRect(x - R[2] * 0.6, ys[2] - R[2] * 0.95 - 5 * s, R[2] * 1.2, 3.5 * s);
+  }
+  // Santa's sleigh: three reindeer and the sleigh as a silhouette that
+  // crosses the moon, right to left. Drawn inside drawSky (destination-over),
+  // so the first thing drawn is the front-most.
+  const SANTA_EVERY = 26, SANTA_FOR = 11;
+  function drawSanta(mx, my, mr) {
+    const tt = (state.t / 1000) % SANTA_EVERY;
+    if (tt > SANTA_FOR) return;
+    const p = tt / SANTA_FOR, k = clamp(Math.min(Wd, Ht) / 900, 0.55, 1.2);
+    const x = Wd * 1.15 - p * Wd * 1.45, y = my + (p - 0.23) * Ht * 0.16 + Math.sin(p * 18) * 4 * k;
+    const bob = (i) => Math.sin(state.t / 120 + i * 1.3) * 2.5 * k;
+    // Rudolph's nose (front-most), then the glitter trail behind the sleigh
+    const nx = x - 118 * k, ny = y - 10 * k + bob(0);
+    ctx.fillStyle = '#ff3b3b'; ctx.beginPath(); ctx.arc(nx, ny, 2.6 * k, 0, TAU); ctx.fill();
+    drawGlow(nx, ny, 16 * k, '255,70,70', 0.9, 0.1);
+    for (let i = 0; i < 14; i++) {
+      const tx = x + 30 * k + i * 13 * k, ty = y + 6 * k + Math.sin(i * 1.7 + state.t / 200) * 4 * k, a = (1 - i / 14) * (0.5 + 0.5 * Math.sin(state.t / 90 + i * 2));
+      ctx.globalAlpha = a; ctx.fillStyle = '#ffe9a8'; ctx.beginPath(); ctx.arc(tx, ty, (1.6 - i * 0.06) * k, 0, TAU); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    const ink = '#101a3d';
+    ctx.fillStyle = ink; ctx.strokeStyle = ink; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    // the sleigh, with Santa and his sack
+    ctx.beginPath(); ctx.arc(x - 4 * k, y - 14 * k, 6 * k, 0, TAU); ctx.fill();                  // Santa's head
+    ctx.beginPath(); ctx.moveTo(x - 9 * k, y - 18 * k); ctx.lineTo(x + 2 * k, y - 18 * k); ctx.lineTo(x + 8 * k, y - 26 * k); ctx.closePath(); ctx.fill();   // hat
+    ctx.beginPath(); ctx.ellipse(x + 2 * k, y - 4 * k, 9 * k, 8 * k, 0, 0, TAU); ctx.fill();      // body
+    ctx.beginPath(); ctx.ellipse(x + 16 * k, y - 8 * k, 9 * k, 10 * k, 0.3, 0, TAU); ctx.fill();  // sack
+    ctx.beginPath(); ctx.moveTo(x - 16 * k, y - 4 * k); ctx.lineTo(x + 24 * k, y - 4 * k); ctx.quadraticCurveTo(x + 30 * k, y + 6 * k, x + 18 * k, y + 8 * k);
+    ctx.lineTo(x - 12 * k, y + 8 * k); ctx.quadraticCurveTo(x - 20 * k, y + 4 * k, x - 16 * k, y - 4 * k); ctx.fill();                 // the sleigh
+    ctx.lineWidth = 2 * k;
+    ctx.beginPath(); ctx.moveTo(x - 22 * k, y + 14 * k); ctx.quadraticCurveTo(x - 28 * k, y + 8 * k, x - 24 * k, y + 4 * k);
+    ctx.moveTo(x - 22 * k, y + 14 * k); ctx.lineTo(x + 22 * k, y + 14 * k); ctx.moveTo(x - 8 * k, y + 8 * k); ctx.lineTo(x - 8 * k, y + 14 * k);
+    ctx.moveTo(x + 10 * k, y + 8 * k); ctx.lineTo(x + 10 * k, y + 14 * k); ctx.stroke();                                               // runner
+    // reins out to the team
+    ctx.lineWidth = 1.2 * k; ctx.beginPath(); ctx.moveTo(x - 16 * k, y - 2 * k); ctx.lineTo(x - 112 * k, y - 6 * k + bob(0)); ctx.stroke();
+    for (let i = 0; i < 3; i++) {
+      const rx = x - 44 * k - i * 34 * k, ry = y - 4 * k + bob(i), gal = Math.sin(state.t / 110 + i * 1.1);
+      ctx.beginPath(); ctx.ellipse(rx, ry, 11 * k, 5.5 * k, -0.08, 0, TAU); ctx.fill();                                   // body
+      ctx.lineWidth = 3 * k;
+      ctx.beginPath(); ctx.moveTo(rx - 8 * k, ry - 2 * k); ctx.lineTo(rx - 13 * k, ry - 10 * k); ctx.stroke();               // neck
+      ctx.beginPath(); ctx.ellipse(rx - 16 * k, ry - 11 * k, 5 * k, 3 * k, -0.2, 0, TAU); ctx.fill();                    // head
+      ctx.lineWidth = 1.4 * k;
+      ctx.beginPath(); ctx.moveTo(rx - 13 * k, ry - 13 * k); ctx.lineTo(rx - 10 * k, ry - 21 * k); ctx.lineTo(rx - 6 * k, ry - 23 * k);
+      ctx.moveTo(rx - 11 * k, ry - 18 * k); ctx.lineTo(rx - 15 * k, ry - 21 * k); ctx.stroke();                            // antlers
+      ctx.lineWidth = 2 * k;
+      ctx.beginPath();                                                                                          // galloping legs
+      ctx.moveTo(rx - 7 * k, ry + 3 * k); ctx.lineTo(rx - 14 * k - gal * 3 * k, ry + 11 * k);
+      ctx.moveTo(rx - 4 * k, ry + 3 * k); ctx.lineTo(rx - 9 * k + gal * 3 * k, ry + 12 * k);
+      ctx.moveTo(rx + 6 * k, ry + 3 * k); ctx.lineTo(rx + 13 * k + gal * 3 * k, ry + 10 * k);
+      ctx.moveTo(rx + 8 * k, ry + 2 * k); ctx.lineTo(rx + 16 * k - gal * 3 * k, ry + 8 * k);
+      ctx.stroke();
+    }
+  }
+
   function rainTick(dt, x0, x1) {
     const fade = Math.pow(0.9, dt / 16.67);
     state.lightning = (state.lightning || 0) * fade;
@@ -1194,13 +1480,14 @@
   function drawSky() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.globalCompositeOperation = 'destination-over';
-    const theme = state.theme;
-    const cx = Wd * (theme === 'night' ? 0.82 : 0.84), cy = Ht * (theme === 'night' ? 0.17 : 0.16);
-    const r = Math.min(Wd, Ht) * (theme === 'night' ? 0.055 : 0.07);
+    const theme = state.theme, moon = theme === 'night' || theme === 'christmas';
+    const cx = Wd * (moon ? 0.82 : 0.84), cy = Ht * (moon ? 0.17 : 0.16);
+    const r = Math.min(Wd, Ht) * (moon ? 0.055 : 0.07);
+    if (theme === 'christmas') drawSanta(cx, cy, r);          // in front of the moon
     if (theme === 'rain') {
       // no sun: a dim glow behind the overcast
       drawGlow(cx, cy, r * 4, '220,228,240', 0.25, 0.1);
-    } else if (theme === 'night') {
+    } else if (moon) {
       ctx.fillStyle = 'rgba(120,120,100,0.22)';                  // moon craters
       for (const [dx, dy, cr] of [[-0.3, -0.2, 0.22], [0.25, 0.1, 0.16], [-0.05, 0.35, 0.12], [0.35, -0.35, 0.1]]) {
         ctx.beginPath(); ctx.arc(cx + dx * r, cy + dy * r, cr * r, 0, TAU); ctx.fill();
@@ -1223,6 +1510,7 @@
       const g = ctx.createLinearGradient(0, 0, 0, Ht);
       if (theme === 'rain') { g.addColorStop(0, '#3c4658'); g.addColorStop(0.55, '#6b7688'); g.addColorStop(1, '#98a3b3'); }
       else if (theme === 'night') { g.addColorStop(0, '#060d2b'); g.addColorStop(0.55, '#132256'); g.addColorStop(1, '#2a3d7a'); }
+      else if (theme === 'christmas') { g.addColorStop(0, '#071433'); g.addColorStop(0.55, '#15306a'); g.addColorStop(1, '#3f61a0'); }
       else { g.addColorStop(0, '#5bb8f0'); g.addColorStop(0.55, '#a9ddf8'); g.addColorStop(1, '#e3f5ff'); }
       skyCache = { key, g };
     }
@@ -1370,9 +1658,15 @@
     ctx.beginPath(); ctx.moveTo(-24, Ht + 2);
     for (let x = -24; x <= Wd + 24; x += 24) ctx.lineTo(x, wave(x));
     ctx.lineTo(Wd + 24, Ht + 2); ctx.closePath();
-    const g = ctx.createLinearGradient(0, base - 6 * z, 0, base + 300 * z);
+    let g = ctx.createLinearGradient(0, base - 6 * z, 0, base + 300 * z);
     g.addColorStop(0, 'rgba(92,190,236,1)'); g.addColorStop(0.35, 'rgba(44,140,205,1)'); g.addColorStop(1, '#16508f');
+    if (frozen()) g = iceGradient(base - 6 * z, 300 * z, [[0, 228, 244, 255, 1], [0.3, 176, 214, 240, 1], [1, 70, 118, 172, 1]]);
     ctx.fillStyle = g; ctx.fill();
+    if (frozen()) {                                       // cracks and sparkles anchored to the lake as it scrolls
+      const off = layerX(0, f);
+      ctx.save(); ctx.clip(); ctx.translate(off, 0); iceDetails(-off, Wd - off, base, Ht - base, Math.max(0.35, z * f * 2)); ctx.restore();
+      return;
+    }
     ctx.lineCap = 'round';
     const anchor = layerX(0, f);                            // ripples stay put on the water as the view scrolls
     for (const [dy, speed, a, w] of [[26, 18, 0.28, 3], [60, -12, 0.2, 2.5], [105, 8, 0.14, 2]]) {
@@ -1428,19 +1722,29 @@
     // and would light up a board standing in front of them.
     const clearOf = (x, gap, signGap = 130) => !W.buildings.some((b) => Math.abs(b.x - x) < gap) &&
       !signs.some((sx) => Math.abs(sx - x) < signGap);
+    // Christmas: a snowman welcomes you at the start line, and more stand in
+    // the grove before it and in gaps between the buildings on Main Street
+    const xmas = state.theme === 'christmas', startMan = W.SPAWN_X + 190;
+    const byStartMan = (x) => xmas && Math.abs(x - startMan) < 120;
     for (let x = Math.floor(x0 / 170) * 170; x < x1; x += 170) {
       const i = Math.round(x / 170), gy = vergeAt(x);
       const tx = x + rnd(i) * 80;
       if (x <= 0) {
         if (rnd(i + 11) > 0.25 && clearOf(tx, 0)) drawTree(tx, vergeAt(tx), 0.85 + rnd(i + 4) * 0.5, rnd(i + 5) > 0.5);
+        else if (xmas && rnd(i + 34) > 0.3 && clearOf(tx, 0)) drawSnowman(tx, vergeAt(tx), 0.95 + rnd(i + 35) * 0.25);
       } else if (x < W.TOWN_END - 100) {
         if (i % 4 === 0 && clearOf(x, 260, 320)) drawLamp(x, gy);
-        else if (rnd(i + 21) > 0.45 && clearOf(tx, 330)) drawTree(tx, vergeAt(tx), 0.75 + rnd(i + 4) * 0.35, rnd(i + 5) > 0.5);
+        else if (rnd(i + 21) > 0.45 && clearOf(tx, 330) && !byStartMan(tx)) drawTree(tx, vergeAt(tx), 0.75 + rnd(i + 4) * 0.35, rnd(i + 5) > 0.5);
+        else if (xmas && !byStartMan(tx) && rnd(i + 33) > 0.5 && clearOf(tx, 300)) drawSnowman(tx, vergeAt(tx), 0.95 + rnd(i + 36) * 0.2);
         else if (rnd(i) > 0.72) { const gx = x + rnd(i + 1) * 60; drawGrass('grass_1', gx, vergeAt(gx), 8, rnd(i + 2) > 0.5); }
       } else if (x > W.TOWN_END + 200 && rnd(i + 11) > 0.35 && !nearRiver(tx, 90) && clearOf(tx, 0)) {
         drawTree(tx, vergeAt(tx), 0.8 + rnd(i + 4) * 0.6, rnd(i + 5) > 0.5);
+      } else if (state.theme === 'christmas' && x > W.TOWN_END + 200 && rnd(i + 31) > 0.55 && !nearRiver(tx, 120) && clearOf(tx, 0) &&
+        !W.ramps.some((r) => tx > r.x - 140 && tx < r.x + r.w + 140)) {
+        drawSnowman(tx, vergeAt(tx), 0.9 + rnd(i + 32) * 0.3);      // a snowman where there's no tree
       }
     }
+    if (xmas && startMan > x0 - 100 && startMan < x1 + 100) drawSnowman(startMan, vergeAt(startMan), 1.25);
     // an occasional grass clump (grass_1) by the roadside in the hills
     for (let x = Math.floor(x0 / 300) * 300; x < x1; x += 300) {
       const k = Math.round(x / 300);
@@ -1451,7 +1755,7 @@
       }
     }
     // a warning before each broken bridge
-    for (const r of W.rivers) { const sx = r.x0 - 260; if (sx > x0 - 200 && sx < x1 + 200) drawSign(sx, vergeAt(sx), 'JUMP THE GAP!'); }
+    for (const r of W.rivers) { const sx = r.x0 - 260; if (sx > x0 - 200 && sx < x1 + 200) drawSign(sx, vergeAt(sx), frozen() ? 'THIN ICE! JUMP!' : 'JUMP THE GAP!'); }
     // "MOUNTAINS -->" sign, like the reference
     const mx = W.TOWN_END - 250;
     if (mx > x0 && mx < x1) drawSign(mx, vergeAt(mx), 'MOUNTAINS  →');
@@ -1473,11 +1777,13 @@
     ctx.beginPath(); ctx.moveTo(x, gy - 186); ctx.quadraticCurveTo(x + 4, gy - 214, x + 34, gy - 206); ctx.stroke();
     ctx.fillStyle = '#ffe79a';
     ctx.beginPath(); ctx.arc(x + 36, gy - 198, 10, 0, TAU); ctx.fill(); ctx.stroke();
+    if (state.theme === 'christmas') xmasLamp(x, gy);
   }
 
   // Grass sprites at scale 1, standing on the verge. `sink` sets how far the
   // base goes down behind the road edge; `flip` mirrors it for variety.
   function drawGrass(key, x, gy, sink, flip) {
+    if (state.theme === 'christmas') return;            // (under the snow)
     const g = img[key];
     if (!ready(g)) { if (key === 'grass_1') drawBush(x, gy, 1); return; }
     const w = g.naturalWidth, h = g.naturalHeight;
@@ -1507,6 +1813,7 @@
   // about half the trees are apple trees. Each is planted by its trunk base.
   const TREE_ART = { tree: { h: 1, base: TREE_BASE_X }, tree_2: { h: 0.95, base: 0.49 } };
   function drawTree(x, gy, s, flip) {
+    if (state.theme === 'christmas') { drawXmasTree(x, gy, s, flip); return; }
     const key = rnd(Math.round(x) * 0.013 + 7) > 0.5 && ready(img.tree_2) ? 'tree_2' : 'tree';
     const t = img[key], art = TREE_ART[key];
     if (!ready(t)) { drawPine(x, gy, s, flip); return; }
@@ -2099,6 +2406,16 @@
     { c: 'rgba(139,99,58,0.45)', n: 16, r: 5, flat: 0.7 },
     { c: 'rgba(205,165,110,0.9)', n: 16, r: 4, flat: 0.7 }
   ]);
+  // Christmas: packed snow instead of sand (soft blue hollows, bright
+  // crystals and a few wind-blown drifts)
+  const snowTex = () => texture('snow', 200, '#edf4fc', [
+    { c: 'rgba(170,198,230,0.45)', n: 90, r: 2 },
+    { c: 'rgba(255,255,255,0.95)', n: 130, r: 1.3 },
+    { c: 'rgba(196,220,245,0.8)', n: 14, r: 7, flat: 0.4 },
+    { c: 'rgba(225,238,252,0.9)', n: 16, r: 5, flat: 0.6 }
+  ]);
+  const groundTex = () => (state.theme === 'christmas' ? snowTex() : sandTex());
+  const groundShade = (a) => (state.theme === 'christmas' ? `rgba(70,110,170,${a})` : `rgba(120,80,40,${a})`);
   const gravelTex = () => texture('gravel', 80, '#8b8175', [
     { c: 'rgba(60,52,44,0.55)', n: 70, r: 2.2 },
     { c: 'rgba(210,200,185,0.5)', n: 60, r: 1.8 }
@@ -2143,27 +2460,47 @@
     const under = ROAD_NEAR + BASE_D;
     ctx.beginPath(); trace(under - 1);
     ctx.lineTo(pts[i1].x, bottom); ctx.lineTo(pts[i0].x, bottom); ctx.closePath();
-    ctx.fillStyle = sandTex(); ctx.fill();
-    const shade = ctx.createLinearGradient(0, cam.y - 150, 0, SEA + 60);
-    shade.addColorStop(0, 'rgba(120,80,40,0)'); shade.addColorStop(1, 'rgba(120,80,40,0.38)');
-    ctx.fillStyle = shade; ctx.fill();
-    line(under + 70, 'rgba(160,112,62,0.35)', 12);
-    line(under + 130, 'rgba(150,104,58,0.28)', 7);
-    line(under + 190, 'rgba(140,96,54,0.24)', 14);
+    ctx.fillStyle = groundTex(); ctx.fill();
+    if (state.theme !== 'christmas') {                     // (at Christmas the snow runs on over the ice unshaded)
+      const shade = ctx.createLinearGradient(0, cam.y - 150, 0, SEA + 60);
+      shade.addColorStop(0, groundShade(0)); shade.addColorStop(1, groundShade(0.38));
+      ctx.fillStyle = shade; ctx.fill();
+    }
+    if (state.theme === 'christmas') {                    // snow drifts instead of strata
+      line(under + 70, 'rgba(255,255,255,0.7)', 10);
+      line(under + 78, 'rgba(160,192,228,0.4)', 3);
+      line(under + 150, 'rgba(255,255,255,0.55)', 8);
+      line(under + 157, 'rgba(160,192,228,0.32)', 3);
+    } else {
+      line(under + 70, 'rgba(160,112,62,0.35)', 12);
+      line(under + 130, 'rgba(150,104,58,0.28)', 7);
+      line(under + 190, 'rgba(140,96,54,0.24)', 14);
+    }
 
-    // gravel base
+    // gravel base (at Christmas it's under snow, like the ground below)
     band(ROAD_NEAR - 1, BASE_D + 1);
-    ctx.fillStyle = gravelTex(); ctx.fill();
+    ctx.fillStyle = state.theme === 'christmas' ? snowTex() : gravelTex(); ctx.fill();
 
     // asphalt, with its lower edge in shadow
     band(ROAD_FAR, ROAD_D);
     ctx.fillStyle = asphaltTex(); ctx.fill();
     line(ROAD_NEAR - 4, 'rgba(0,0,0,0.28)', 8);
     line(ROAD_NEAR - 0.5, 'rgba(0,0,0,0.35)', 1.5);
+    if (state.theme === 'christmas') {                    // a soft snowy lip along the road's lower edge
+      line(ROAD_NEAR + 2, 'rgba(150,185,225,0.35)', 3);
+      line(ROAD_NEAR + 0.5, '#ffffff', 2.5);
+    }
 
-    // grass verge on the far side, kerb and white edge line along it
-    line(ROAD_FAR - 3, '#5f9d45', 7);
-    line(ROAD_FAR - 5.5, '#8bd064', 2.5);
+    // grass verge on the far side (a snow bank at Christmas), kerb and white
+    // edge line along it
+    if (state.theme === 'christmas') {
+      line(ROAD_FAR - 4, '#c9d8ec', 12);
+      line(ROAD_FAR - 7, '#f4f8ff', 7);
+      line(ROAD_FAR - 9.5, '#ffffff', 2.5);
+    } else {
+      line(ROAD_FAR - 3, '#5f9d45', 7);
+      line(ROAD_FAR - 5.5, '#8bd064', 2.5);
+    }
     line(ROAD_FAR + 1.5, '#b9b7c3', 3.5);
     line(ROAD_FAR + 7, 'rgba(255,255,255,0.7)', 2.5);
     // near edge line, just in front of the wheels
@@ -2183,15 +2520,26 @@
 
     // water at sea level: gentle waves, a foam line and drifting sparkles
     if (SEA < bottom) {
-      const wave = (x) => SEA + Math.sin(x * 0.012 + t * 1.5) * 5 + Math.sin(x * 0.031 - t * 2.2) * 2.5;
+      const ice = frozen();
+      const wave = ice ? () => SEA : (x) => SEA + Math.sin(x * 0.012 + t * 1.5) * 5 + Math.sin(x * 0.031 - t * 2.2) * 2.5;
       const wx0 = Math.floor(x0 / 24) * 24;
       ctx.beginPath(); ctx.moveTo(wx0, bottom);
       for (let x = wx0; x <= x1 + 24; x += 24) ctx.lineTo(x, wave(x));
       ctx.lineTo(x1 + 24, bottom); ctx.closePath();
-      const wg = ctx.createLinearGradient(0, SEA - 10, 0, SEA + 420);
+      let wg = ctx.createLinearGradient(0, SEA - 10, 0, SEA + 420);
       wg.addColorStop(0, 'rgba(92,190,236,0.93)'); wg.addColorStop(0.35, 'rgba(44,140,205,0.96)'); wg.addColorStop(1, '#16508f');
-      ctx.fillStyle = wg; ctx.fill();
-      waterDetails(wx0, x1 + 24, SEA, wave);
+      if (ice) {
+        // one frozen landscape: the very same snow as the ground runs on out
+        // over the sea, and the blue ice shows through it gradually further
+        // out, with its cracks and shimmer only out on the open ice
+        ctx.fillStyle = snowTex(); ctx.fill();
+        ctx.fillStyle = iceFade(SEA, 320); ctx.fill();
+        ctx.save(); ctx.clip(); iceDetails(wx0, x1 + 24, SEA + 60, bottom - SEA - 60); ctx.restore();
+        drawPenguins(wx0, x1 + 24);
+      } else {
+        ctx.fillStyle = wg; ctx.fill();
+        waterDetails(wx0, x1 + 24, SEA, wave);
+      }
     }
     // river water goes on after the sea: a river that is part of the sea only
     // adds its reflections and ripples; a river up in the hills covers the sea
@@ -2225,9 +2573,10 @@
     ctx.beginPath(); ctx.moveTo(r.x0, wy + 6);
     for (let x = r.x0; x <= r.x1; x += 16) ctx.lineTo(x, fb(x));
     ctx.lineTo(r.x1, fb(r.x1)); ctx.lineTo(r.x1, wy + 6); ctx.closePath();
-    ctx.fillStyle = sandTex(); ctx.fill();
+    ctx.fillStyle = groundTex(); ctx.fill();
     const shade = ctx.createLinearGradient(0, wy - rise - 10, 0, wy + 4);
-    shade.addColorStop(0, 'rgba(70,46,22,0.28)'); shade.addColorStop(0.7, 'rgba(62,40,18,0.42)'); shade.addColorStop(1, 'rgba(45,30,14,0.62)');
+    if (frozen()) { shade.addColorStop(0, 'rgba(60,95,150,0.08)'); shade.addColorStop(1, 'rgba(50,85,140,0.24)'); }
+    else { shade.addColorStop(0, 'rgba(70,46,22,0.28)'); shade.addColorStop(0.7, 'rgba(62,40,18,0.42)'); shade.addColorStop(1, 'rgba(45,30,14,0.62)'); }
     ctx.fillStyle = shade; ctx.fill();
     ctx.fillStyle = '#7d7a86';
     for (let x = r.x0 + 40; x < r.x1 - 30; x += 52) {
@@ -2236,7 +2585,8 @@
       ctx.beginPath(); ctx.ellipse(sx, wy - 2, w, w * 0.55, 0, Math.PI, 0); ctx.fill();
     }
     const grass = img.grass_1;
-    if (ready(grass)) {
+    if (frozen()) snowRim(r.x0, r.x1, fb);                  // Christmas: the far bank under snow
+    else if (ready(grass)) {
       for (let x = r.x0 + 20, i = 0; x < r.x1 - 10; x += 58, i++) {
         const sc = [0.55, 0.7, 0.62][i % 3], w = grass.naturalWidth * sc, h = grass.naturalHeight * sc, gx = x + (rnd(x + 7) - 0.5) * 24;
         ctx.save(); ctx.translate(gx, fb(gx) + h * 0.32);
@@ -2262,14 +2612,15 @@
       ctx.moveTo(bx - dir * 3, top);
       bankCurve(r, dir, top, wy, bottom);
       ctx.lineTo(bx - dir * 3, bottom); ctx.closePath();
-      ctx.fillStyle = sandTex(); ctx.fill();
+      ctx.fillStyle = groundTex(); ctx.fill();
       const sg = ctx.createLinearGradient(0, cam.y - 150, 0, SEA + 60);
-      sg.addColorStop(0, 'rgba(120,80,40,0)'); sg.addColorStop(1, 'rgba(120,80,40,0.38)');
+      sg.addColorStop(0, groundShade(0)); sg.addColorStop(1, groundShade(frozen() ? 0.3 : 0.38));
       ctx.fillStyle = sg; ctx.fill();
       // wet, darker earth just where the bank meets the water
       ctx.save(); ctx.clip();
       const mx = bx + dir * BANK_RUN, wet = ctx.createRadialGradient(mx, wy, 4, mx, wy, 46);
-      wet.addColorStop(0, 'rgba(60,38,18,0.45)'); wet.addColorStop(1, 'rgba(60,38,18,0)');
+      if (frozen()) { wet.addColorStop(0, 'rgba(120,175,225,0.45)'); wet.addColorStop(1, 'rgba(120,175,225,0)'); }
+      else { wet.addColorStop(0, 'rgba(60,38,18,0.45)'); wet.addColorStop(1, 'rgba(60,38,18,0)'); }
       ctx.fillStyle = wet; ctx.fillRect(mx - 50, wy - 50, 100, 100);
       ctx.restore();
       // a few stones on the bank
@@ -2330,10 +2681,11 @@
   function drawRiverWater(r, front, vx0, vx1) {
     const wy = riverWaterY(r), t = state.t / 1000, bottom = viewBottom();
     const a = r.x0 + BANK_RUN, b = r.x1 - BANK_RUN;          // where the banks meet the water
-    const wave = r.joined
+    const ice = frozen();
+    const wave = ice ? () => wy : r.joined
       ? (x) => SEA + Math.sin(x * 0.012 + t * 1.5) * 5 + Math.sin(x * 0.031 - t * 2.2) * 2.5
       : (x) => wy + Math.sin(x * 0.018 - t * 1.6) * 0.9 + Math.sin(x * 0.047 - t * 2.3) * 0.4;
-    const top = wy - 10, span = 430;                       // the sea's colours, from the river's own surface
+    const top = wy - 10, span = 430, COLS = ice ? ICE_COLS : SEA_COLS;                       // the sea's colours, from the river's own surface
     // a river that is part of the sea: the front layer covers the whole sea
     // in view (the car can sink anywhere in it); otherwise the bowl
     const open = r.joined && front, l = open ? vx0 : a, rr = open ? vx1 : b;
@@ -2351,19 +2703,30 @@
     };
     ctx.save(); shape();
     const g = ctx.createLinearGradient(0, top, 0, top + span);
-    if (front) {
+    if (front && ice) {                                   // under the snowy ice: the car is only glimpsed
+      ctx.globalAlpha = 0.8; ctx.fillStyle = snowTex(); ctx.fill(); ctx.globalAlpha = 1;
+      ctx.fillStyle = iceFade(wy, 260); ctx.fill();
+    } else if (front) {
       for (const [d, al] of FRONT_ALPHA) {
-        const f = Math.min(1, (d + 10) / span), [cr, cg, cb] = colAt(SEA_COLS, f);
+        const f = Math.min(1, (d + 10) / span), [cr, cg, cb] = colAt(COLS, f);
         g.addColorStop(f, `rgba(${cr | 0},${cg | 0},${cb | 0},${al})`);
         if (f >= 1) break;
       }
       ctx.fillStyle = g; ctx.fill();
     } else {
-      if (!r.joined) {                                     // (the sea already painted a joined river's water)
-        for (const [f, cr, cg, cb, al] of SEA_COLS) g.addColorStop(f, `rgba(${cr},${cg},${cb},${al})`);
+      if (!r.joined && ice) {                              // snow over the river ice, like the sea
+        ctx.fillStyle = snowTex(); ctx.fill();
+        ctx.fillStyle = iceFade(wy, 260); ctx.fill();
+      } else if (!r.joined) {                              // (the sea already painted a joined river's water)
+        for (const [f, cr, cg, cb, al] of COLS) g.addColorStop(f, `rgba(${cr},${cg},${cb},${al})`);
         ctx.fillStyle = g; ctx.fill();
       }
       if (riverInPlay(r)) { ctx.restore(); return; }       // the front layer adds the rest
+    }
+    if (ice) {                                            // frozen: cracks, shimmer, sparkles and a snowy rim
+      if (!r.joined || front) { ctx.save(); ctx.clip(); iceDetails(l - 6, rr + 6, wy + 50, bottom - wy - 50); ctx.restore(); }
+      ctx.restore();
+      return;
     }
     ctx.save(); ctx.clip();
     // reflection of the bridge deck and piers, gently broken up
@@ -2426,6 +2789,7 @@
         for (let x = a + 11; x < b - 4; x += 22) { const y = deckTop(r, x); ctx.beginPath(); ctx.moveTo(x, y + ROAD_FAR + 2); ctx.lineTo(x, y + ROAD_NEAR - 2); ctx.stroke(); }
         ctx.strokeStyle = '#d6a46a'; ctx.lineWidth = 3;
         ctx.beginPath(); xs.forEach((x, k) => ctx[k ? 'lineTo' : 'moveTo'](x, deckTop(r, x) + ROAD_FAR + 2)); ctx.stroke();
+        if (frozen()) bridgeIce(r, a, b);
         // splintered planks at the break
         const ex = near ? b : a, dir = near ? 1 : -1, ey = deckTop(r, ex);
         ctx.fillStyle = '#b07d4c'; outline(2);
@@ -2480,7 +2844,7 @@
   function drawParticles(layer) {
     for (const p of particles) {
       const front = p.kind === 'spark' || p.kind === 'confetti' || p.kind === 'flame' || p.kind === 'ring' || p.kind === 'drop' || p.kind === 'foam' ||
-        p.kind === 'ripple' || p.kind === 'bubble' || p.kind === 'glint' || (p.kind === 'spray' && !p.back);
+        p.kind === 'ripple' || p.kind === 'bubble' || p.kind === 'glint' || p.kind === 'shard' || (p.kind === 'spray' && !p.back);
       if ((layer === 'front') !== front) continue;
       const a = clamp(p.life / p.max, 0, 1);
       if (p.kind === 'confetti') {
@@ -2510,6 +2874,15 @@
       if (p.kind === 'foam') {                            // white water spreading on the surface
         ctx.globalAlpha = Math.min(1, a * 1.4) * 0.85;
         ctx.drawImage(SOFT, p.x - p.size, p.y - p.size * 0.2, p.size * 2, p.size * 0.4);
+        continue;
+      }
+      if (p.kind === 'shard') {                           // an angular shard of ice with a bright edge
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.globalAlpha = Math.min(1, a * 2);
+        const z2 = p.size, q = p.seed;
+        ctx.beginPath(); ctx.moveTo(-z2, -z2 * 0.3); ctx.lineTo(-z2 * 0.2, -z2 * (0.7 + q * 0.3)); ctx.lineTo(z2, -z2 * 0.1); ctx.lineTo(z2 * 0.3, z2 * (0.5 + q * 0.3)); ctx.closePath();
+        ctx.fillStyle = 'rgba(214,238,252,0.92)'; ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.95)'; ctx.lineWidth = 1.4; ctx.stroke();
+        ctx.restore(); ctx.globalAlpha = 1;
         continue;
       }
       if (p.kind === 'glint') {                           // a coin taken: a gold ring and a four-point flash
@@ -2794,18 +3167,19 @@
     openModal(ui.modalGarage);
   }
 
-  // Morning, Night or Rain. Remembered between visits; the page mirrors it
-  // with \`is-night\` / \`is-rain\` classes so the toggles and the featured
-  // card can follow.
-  const THEMES = ['morning', 'night', 'rain'];
+  // Morning, Night, Rain or Christmas. Remembered between visits; the page
+  // mirrors it with \`is-night\` / \`is-rain\` / \`is-christmas\` classes so the
+  // toggles and the featured card can follow.
+  const THEMES = ['morning', 'night', 'rain', 'christmas'];
   function setTime(mode) {
-    state.theme = THEMES.includes(mode) ? mode : 'night';
+    state.theme = THEMES.includes(mode) ? mode : 'christmas';
     state.bolts = []; state.lightning = 0; state.reflash = 0;
     state.night = state.theme !== 'morning';          // lights on
-    store.set('time', state.theme);
+    store.set('theme', state.theme);
     const root = document.documentElement;
     root.classList.toggle('is-night', state.theme === 'night');
     root.classList.toggle('is-rain', state.theme === 'rain');
+    root.classList.toggle('is-christmas', state.theme === 'christmas');
     document.querySelectorAll('[data-time]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.time === state.theme)));
     const next = nextTheme();
     document.querySelectorAll('[data-action="toggle-time"]').forEach((b) => b.setAttribute('aria-label', 'Switch to ' + next));
@@ -2831,6 +3205,7 @@
   const FAIL_TEXT = {
     house: { title: 'Spooked!', reason: 'That was a haunted house. Only doors with a game sign lead to a game. Watch for the bats!' },
     ghost: { title: 'Caught!', reason: 'A ghost got you! Don\'t jump into the roof ghosts, and wait while a ghost stands at the door.' },
+    ice: { title: 'Brrr!', reason: 'You broke through the thin ice! Hit the broken bridge at full speed, or press Jump right at the break, to clear the gap.' },
     water: { title: 'Splash!', reason: 'You fell into the river! Hit the broken bridge at full speed, or press Jump right at the break, to clear the gap.' }
   };
   // Into the river: spray, a splash, and the car sinks (see update) before
@@ -2907,7 +3282,15 @@
     for (let i = 0; i < 6; i++) puff(cx + (Math.random() - 0.5) * 120, wy - 20 - Math.random() * 40, (Math.random() - 0.5) * 0.8, -0.4, 16 + Math.random() * 14, 1000, 'rgba(236,246,255,0.5)', 'smoke');
     Sound.splash();
     state.shake = 5 + 7 * impact;
-    runOver('water', null, 2400);                       // the fail screen once it has gone under
+    if (frozen()) {                                     // through the thin ice: shards of ice fly
+      Sound.crack();
+      for (let i = 0; i < Math.round(26 * impact); i++) {
+        const side = Math.random() < 0.5 ? -1 : 1, sp = (3 + Math.random() * 7) * impact, ang = side * (0.2 + Math.random() * 0.9);
+        particles.push({ x: cx + side * Math.random() * 40, y: wy - 2, vx: Math.sin(ang) * sp, vy: -Math.cos(ang) * sp, size: 5 + Math.random() * 9,
+          life: 2200, max: 2200, color: '#e6f6ff', kind: 'shard', rot: Math.random() * TAU, vr: (Math.random() - 0.5) * 0.3, floor: wy + 4, seed: Math.random() });
+      }
+    }
+    runOver(frozen() ? 'ice' : 'water', null, 2400);    // the fail screen once it has gone under
   }
   function spooked(b, how) {
     Sound.spooky();
@@ -2928,7 +3311,7 @@
     state.door = null; ui.prompt.hidden = true;
     const ghost = b && img['ghost_' + (((b.variant - 1) % 4) + 1)], house = b && img['wrong_house_' + (((b.variant - 1) % 6) + 1)];
     const m = ui.modalFail;
-    $('.fail-stage', m).classList.toggle('is-water', how === 'water');
+    $('.fail-stage', m).classList.toggle('is-water', how === 'water' || how === 'ice');
     $('[data-fail-level]', m).textContent = 'Level ' + state.level + ' · Run over';
     const title = $('#fail-title', m);
     title.setAttribute('aria-label', txt.title);
@@ -3012,7 +3395,11 @@
     $('[data-finish-car]', m).replaceChildren(vehiclePreview(state.vehicle, { driver: true }));
     const result = { time: state.time, coins: state.coins, total: W.coins.length, best: isBest ? state.time : prev, stars };
     emit('best', { vehicle: state.vehicle, time: state.time });
-    setTimeout(() => { if (state.mode === 'play') { openModal(m); playWin(m, result); } }, 1400);
+    setTimeout(() => {
+      if (state.mode !== 'play') return;
+      openModal(m); playWin(m, result);
+      if (state.theme === 'christmas') setTimeout(() => { if (m.classList.contains('open')) Sound.bells(); }, 500);   // sleigh bells
+    }, 1400);
   }
 
   /* The win screen plays in order: backdrop rays and confetti, the title
@@ -3021,16 +3408,19 @@
      motion (all keyed off .modal.open); this adds the confetti, the star
      chimes and the count-ups. */
   const WIN_COLORS = ['#ffc83d', '#ff4f8b', '#37e2a0', '#5b8cff', '#ffffff', '#b98cff'];
+  const XMAS_WIN_COLORS = ['#e23b48', '#2fa35d', '#ffd34d', '#ffffff', '#ff6f7d', '#7fd0ff'];   // Christmas: red, green, gold, white
   function playWin(m, r) {
     const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const conf = $('[data-win-confetti]', m);
     conf.replaceChildren();
     if (!calm) {
+      const xmas = state.theme === 'christmas', cols = xmas ? XMAS_WIN_COLORS : WIN_COLORS;
       for (let i = 0; i < 46; i++) {
         const c = document.createElement('i');
         c.style.cssText = `--x:${Math.random() * 100}%;--sway:${(Math.random() - 0.5) * 160}px;--r:${Math.random() * 720 - 360}deg;` +
-          `--dur:${2.8 + Math.random() * 2.4}s;--delay:${Math.random() * 1.6}s;--c:${WIN_COLORS[i % WIN_COLORS.length]}`;
-        if (i % 3 === 0) c.className = 'round';
+          `--dur:${2.8 + Math.random() * 2.4}s;--delay:${Math.random() * 1.6}s;--c:${cols[i % cols.length]}`;
+        if (xmas && i % 4 === 1) c.className = 'star';          // little gold stars in the Christmas confetti
+        else if (i % 3 === 0) c.className = 'round';
         conf.appendChild(c);
       }
     }

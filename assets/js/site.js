@@ -22,10 +22,10 @@ window.GV_SITE = {
   stops: [
     { id: 'stage',    no: '01', name: 'Start',    place: 'Main Street',       color: '#ffc83d', icon: 'flag',
       blurb: 'Pick a ride and hit the road.' },
-    { id: 'services', no: '02', name: 'Services', place: 'The Workshop',      color: '#37e2a0', icon: 'wrench',
-      blurb: 'Everything we build, from full games to websites, under one roof.' },
-    { id: 'games',    no: '03', name: 'Games',    place: 'Arcade Boulevard',  color: '#ff4f8b', icon: 'pad',
+    { id: 'games',    no: '02', name: 'Games',    place: 'Arcade Boulevard',  color: '#ff4f8b', icon: 'pad',
       blurb: 'Our own games. Every door on the boulevard is one of them.' },
+    { id: 'services', no: '03', name: 'Services', place: 'The Workshop',      color: '#37e2a0', icon: 'wrench',
+      blurb: 'Everything we build, from full games to websites, under one roof.' },
     { id: 'clients',  no: '04', name: 'Clients',  place: 'Billboard Highway', color: '#5b8cff', icon: 'star',
       blurb: 'The partners we build with, up in lights along the highway.' },
     { id: 'demos',    no: '05', name: 'Demos',    place: 'The Test Track',    color: '#ff8a3d', icon: 'bolt',
