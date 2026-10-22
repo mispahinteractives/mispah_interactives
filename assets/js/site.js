@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MIZPAH INTERACTIVES — world content
+   MIZPHA GAMES — world content
    --------------------------------------------------------------------------
    The website is a road trip through six stops. Edit the copy for each stop
    here; the page builds the stops from this file.

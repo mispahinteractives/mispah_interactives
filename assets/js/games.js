@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MIZPAH INTERACTIVES — game catalogue
+   MIZPHA GAMES — game catalogue
    --------------------------------------------------------------------------
    One entry per external game. The same data feeds the game cards on the
    page and the arcade doors on Monster Hills' main street (matched by `id`

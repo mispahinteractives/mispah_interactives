@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MIZPAH INTERACTIVES — page behaviour around the game stage
+   MIZPHA GAMES — page behaviour around the game stage
    --------------------------------------------------------------------------
    Game cards, ride previews, stats, reveals, and pausing the canvas while it
    is scrolled out of view. The game itself is in game.js.
@@ -231,11 +231,11 @@
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(CONTACT_KEY ? {
           access_key: CONTACT_KEY,
-          subject: 'New message from ' + name + ' · Mizpah Interactives website',
-          from_name: 'Mizpah Interactives website',
+          subject: 'New message from ' + name + ' · Mizpha Games website',
+          from_name: 'Mizpha Games website',
           name, email: from, message, botcheck: false
         } : {
-          _subject: 'New message from ' + name + ' · Mizpah Interactives website',
+          _subject: 'New message from ' + name + ' · Mizpha Games website',
           _template: 'table', _captcha: 'false', _honey: '',
           name, email: from, message
         })

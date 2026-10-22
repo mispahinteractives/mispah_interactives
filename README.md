@@ -1,6 +1,6 @@
-# Mizpah Interactives · Monster Hills
+# Mizpha Games · Monster Hills
 
-The Mizpah Interactives website: a game hub built around a playable physics truck game. It's static with no build step. Open `index.html` through any web server (XAMPP: `http://localhost/aim/mispah_interactives/`).
+The Mizpha Games website: a game hub built around a playable physics truck game. It's static with no build step. Open `index.html` through any web server (XAMPP: `http://localhost/aim/mispah_interactives/`).
 
 The contact email lives in two places: the Contact section of `index.html` and `email` in `assets/js/site.js`. The logo is `assets/img/logo.png` (the favicon is `assets/img/logo-icon.png`).
 

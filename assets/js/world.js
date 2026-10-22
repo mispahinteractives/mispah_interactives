@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MIZPAH INTERACTIVES — the website as a game world
+   MIZPHA GAMES — the website as a game world
    --------------------------------------------------------------------------
    The page is a road trip through six stops (site.js). This file builds:
      - the world map in the top bar: a road with the six stops and your car,
