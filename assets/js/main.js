@@ -34,9 +34,6 @@
   // (each icon has a small idle motion of its own, in site.css: the
   // gamepad's buttons blink, the 5 redraws, the phone pings, the screen
   // types, the brush paints, the globe turns)
-  const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.9 6 6.5.8-4.8 4.5 1.2 6.5L12 17.3l-5.8 3.1 1.2-6.5L2.6 9.4l6.5-.8z"/></svg>';
-  // a row of five stars: grey ones with gold ones laid over, cut to the score
-  const stars = (v, cls) => `<span class="stars ${cls || ''}" style="--v:${v}" role="img" aria-label="${v} out of 5 stars"><span class="stars-bg">${STAR.repeat(5)}</span><span class="stars-fg">${STAR.repeat(5)}</span></span>`;
   const SERVICE_ICON = {
     pad: '<rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle class="i-blink" cx="15.5" cy="11.5" r=".6"/><circle class="i-blink i-late" cx="17.5" cy="13.5" r=".6"/>',
     html5: '<path d="M4 3h16l-1.5 16L12 21l-6.5-2z"/><path class="i-redraw" d="M15.5 7.5h-7l.3 3.5h6.4l-.4 4-2.8.9-2.8-.9-.1-1.6"/>',
@@ -51,15 +48,15 @@
 
   /* ------------------------------------------------ the intro game screen */
   // The phone shows our games' screenshots, fading from one game to the
-  // next every few seconds. Every visit starts on a different game. It
-  // pauses while the phone is off screen, the tab is in the background or
-  // the pointer rests on the phone.
+  // next every 2 seconds, round and round. Every visit starts on a different
+  // game. It only rests while the phone is off screen or the tab is in the
+  // background.
   (function phone() {
     const art = $('.hero-art'), tilt = $('#phone'), screen = $('.phone-screen', tilt);
     const shots = $('[data-shots]', screen), dots = $('[data-phone-dots]', art);
     const games = MG.games, n = games.length;
-    const HOLD = 4200;
-    let at = -1, timer = 0, paused = false, seen = true;
+    const HOLD = 2000;
+    let at = -1, timer = 0, seen = true;
     let start = Math.floor(Math.random() * n);
     try {                                                   // a different game on every visit
       const k = 'mg-phone', last = parseInt(localStorage.getItem(k), 10);
@@ -79,7 +76,7 @@
     function show(i) {
       at = i;
       const g = games[i];
-      want(i); want((i + 1) % n);
+      want(i); want((i + 1) % n); want((i + 2) % n);
       art.style.setProperty('--gc', g.color || '#6d3df2');
       imgs.forEach((im, j) => im.classList.toggle('on', j === i));
       $('[data-chip-img]', art).src = g.cover;
@@ -89,14 +86,12 @@
     }
     function next() {
       clearTimeout(timer);
-      if (!paused && seen && !document.hidden) timer = setTimeout(() => show((at + 1) % n), HOLD);
+      if (seen && !document.hidden) timer = setTimeout(() => show((at + 1) % n), HOLD);
     }
     dots.addEventListener('click', (e) => {
       const d = e.target.closest('[data-dot]');
       if (d && +d.dataset.dot !== at) show(+d.dataset.dot);
     });
-    tilt.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') { paused = true; clearTimeout(timer); } });
-    tilt.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') { paused = false; next(); } });
     document.addEventListener('visibilitychange', next);
     if ('IntersectionObserver' in window) {
       new IntersectionObserver(([en]) => { seen = en.isIntersecting; next(); }).observe(art);
@@ -157,14 +152,6 @@
         </div>
       </div>`;
     item.appendChild(card);
-    // under the poster: the game's own rating, and Rate & review
-    item.insertAdjacentHTML('beforeend', `
-      <div class="game-rate" data-gr="${esc(g.id)}">
-        <button type="button" class="gr-score" data-rate-open="${esc(g.id)}" aria-label="${esc(g.name)}: see ratings and reviews">
-          <span data-gr-stars>${stars(0)}</span><b data-gr-avg></b><span class="gr-count" data-gr-count>No ratings yet</span>
-        </button>
-        <button type="button" class="gr-btn" data-rate-open="${esc(g.id)}" aria-label="Rate and review ${esc(g.name)}">${STAR}Rate &amp; review</button>
-      </div>`);
     list.appendChild(item);
   });
 
@@ -382,239 +369,6 @@
     ['games', 'services', 'contact'].forEach((id) => io.observe(document.getElementById(id)));
   }
   $$('[data-year]').forEach((el) => { el.textContent = new Date().getFullYear(); });
-
-  /* ----------------------------------------------- ratings and reviews */
-  // Anyone can rate a game and leave a comment: "Rate & review" under a
-  // game card opens that game's own reviews and form. Reviews live in Supabase (data.js, reviews.url / reviews.key) and are read and
-  // written through its REST API, so everyone sees them straight away; the
-  // database's own rules check every review (see the README). Until
-  // Supabase is set up, a review is emailed to the studio instead.
-  const Reviews = (function () {
-    const cfg = MG.reviews || {};
-    const BASE = (cfg.url || '').trim().replace(/\/+$/, ''), KEY = (cfg.key || '').trim();
-    const LIVE = !!(BASE && KEY);
-    const API = BASE + '/rest/v1/reviews';
-    const AUTH = { apikey: KEY, Authorization: 'Bearer ' + KEY };
-    const WORDS = ['', 'Poor', 'Fair', 'Good', 'Great', 'Amazing'];
-    // what is reviewed: a game, as 'game:<id>'
-    const byId = {};
-    MG.games.forEach((g) => { byId['game:' + g.id] = { name: g.name }; });
-    const hue = (t) => { let h = 0; for (const c of t) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
-    const day = (d) => { try { return new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return ''; } };
-    const score = (rows) => { const n = rows.length; return { n, avg: n ? Math.round(rows.reduce((a, r) => a + r.rating, 0) / n * 10) / 10 : 0 }; };
-
-    /* the store: loaded once, as Our Games comes near */
-    let all = [], state = 'idle', fresh = null;
-    const views = [];
-    const refresh = () => views.forEach((f) => f());
-    async function load() {
-      if (state !== 'idle') return;
-      if (!LIVE) { state = 'ready'; refresh(); return; }
-      state = 'loading'; refresh();
-      try {
-        const res = await fetch(API + '?select=id,created_at,name,target,rating,comment&order=created_at.desc&limit=1000', { headers: AUTH });
-        if (!res.ok) throw new Error(res.status);
-        all = (await res.json()).filter((r) => r && r.rating >= 1 && r.rating <= 5);
-        state = 'ready';
-      } catch (e) { state = 'error'; }
-      refresh();
-    }
-    if ('IntersectionObserver' in window) {
-      const io = new IntersectionObserver((ens) => { if (ens.some((en) => en.isIntersecting)) { io.disconnect(); load(); } }, { rootMargin: '600px 0px' });
-      io.observe($('#games'));
-    } else load();
-
-    function card(r) {
-      const name = String(r.name || 'Player').trim();
-      return `<li class="rv-card${r === fresh ? ' new' : ''}">
-        <div class="rv-head">
-          <span class="rv-avatar" style="--h:${hue(name)}" aria-hidden="true">${esc(name.charAt(0).toUpperCase())}</span>
-          <div class="rv-who"><b>${esc(name)}</b><time datetime="${esc(r.created_at || '')}">${esc(day(r.created_at || Date.now()))}</time></div>
-          ${stars(r.rating)}
-        </div>
-        <p class="rv-text">${esc(r.comment)}</p>
-      </li>`;
-    }
-    const listState = (rows, emptyHtml, shown) =>
-      state === 'loading' ? '<li class="rv-card rv-skel"></li><li class="rv-card rv-skel"></li>'
-        : state === 'error' ? '<li class="rv-empty"><h3>Reviews couldn’t be loaded</h3><p>Please check your connection and try again in a moment.</p></li>'
-          : !rows.length ? emptyHtml : rows.slice(0, shown).map(card).join('');
-
-    /* a game's review form */
-    function makeForm(form, opts) {
-      const p = opts.prefix;
-      form.innerHTML = `
-        <input class="hp" type="checkbox" name="botcheck" tabindex="-1" autocomplete="off" aria-hidden="true">
-        <fieldset class="rv-pick">
-          <legend>Your rating</legend>
-          <div class="rv-pick-stars" data-pick>
-            ${[1, 2, 3, 4, 5].map((v) => `<input type="radio" name="rating" id="${p}-r${v}" value="${v}"><label for="${p}-r${v}" title="${WORDS[v]}">${STAR}<span class="sr">${v} star${v > 1 ? 's' : ''}, ${WORDS[v].toLowerCase()}</span></label>`).join('')}
-          </div>
-          <span class="rv-pick-word" data-word aria-hidden="true">Tap a star</span>
-          <span class="field-err" data-err="rating"></span>
-        </fieldset>
-        <div class="field">
-          <input id="${p}-name" name="name" type="text" autocomplete="given-name" maxlength="60" required placeholder=" ">
-          <label for="${p}-name">Your name</label>
-          <span class="field-err" data-err="name"></span>
-        </div>
-        <div class="field">
-          <textarea id="${p}-comment" name="comment" rows="3" maxlength="600" required placeholder=" "></textarea>
-          <label for="${p}-comment">What did you think of the game?</label>
-          <span class="rv-chars" data-chars>0 / 600</span>
-          <span class="field-err" data-err="comment"></span>
-        </div>
-        <button class="btn btn-dark btn-send" type="submit" data-send><span data-send-label>Post review</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-        <p class="form-status" data-status role="status"></p>`;
-      const status = $('[data-status]', form), send = $('[data-send]', form), sendLabel = $('[data-send-label]', form);
-      const NOTE = LIVE ? 'Your name, rating and review are shown publicly.' : 'Your review is sent to the studio.';
-      status.textContent = NOTE;
-      const pick = $('[data-pick]', form), word = $('[data-word]', form), labels = $$('label', pick), chars = $('[data-chars]', form);
-      const rating = () => +((form.querySelector('input[name="rating"]:checked') || {}).value || 0);
-      const light = (v) => { labels.forEach((l, i) => l.classList.toggle('lit', i < v)); word.textContent = v ? WORDS[v] : 'Tap a star'; };
-      labels.forEach((l, i) => l.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') light(i + 1); }));
-      pick.addEventListener('pointerleave', () => light(rating()));
-      pick.addEventListener('change', () => { light(rating()); check('rating'); });
-      form.elements.comment.addEventListener('input', () => { chars.textContent = form.elements.comment.value.length + ' / 600'; });
-      const target = opts.target;
-      const RULES = {
-        rating: () => rating() ? '' : 'Please choose a star rating.',
-        name: () => form.elements.name.value.trim().length >= 2 ? '' : 'Please enter your name.',
-        comment: () => form.elements.comment.value.trim().length >= 10 ? '' : 'Please write a little more (at least 10 characters).'
-      };
-      const keys = ['rating', 'name', 'comment'];
-      const field = (k) => k === 'rating' ? pick : form.elements[k];
-      // each field names its error message for screen readers
-      keys.forEach((k) => { const e = $(`[data-err="${k}"]`, form); e.id = `${p}-err-${k}`; field(k).setAttribute('aria-describedby', e.id); });
-      function check(k) {
-        const msg = RULES[k]();
-        $(`[data-err="${k}"]`, form).textContent = msg;
-        field(k).setAttribute('aria-invalid', String(!!msg));
-        return !msg;
-      }
-      keys.filter((k) => k !== 'rating').forEach((k) => {
-        form.elements[k].addEventListener('blur', () => { if (form.elements[k].getAttribute('aria-invalid') === 'true' || form.elements[k].value) check(k); });
-        form.elements[k].addEventListener('input', () => { if (form.elements[k].getAttribute('aria-invalid') === 'true') check(k); });
-      });
-      function reset(msg) {
-        form.reset(); light(0); chars.textContent = '0 / 600';
-        keys.forEach((k) => { $(`[data-err="${k}"]`, form).textContent = ''; field(k).removeAttribute('aria-invalid'); });
-        status.classList.remove('err', 'ok');
-        status.textContent = msg || NOTE;
-        if (msg) status.classList.add('ok');
-      }
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (send.disabled) return;
-        const ok = keys.map(check);
-        status.classList.remove('ok');
-        if (ok.includes(false)) {
-          status.textContent = 'Please check the highlighted fields.'; status.classList.add('err');
-          const k = keys[ok.indexOf(false)];
-          (k === 'rating' ? $('input', pick) : form.elements[k]).focus();
-          return;
-        }
-        if (recent().length >= 3) { status.textContent = 'You’ve posted a few reviews today. Please try again tomorrow.'; status.classList.add('err'); return; }
-        const review = { name: form.elements.name.value.trim().slice(0, 60), target: target(), rating: rating(), comment: form.elements.comment.value.trim().slice(0, 600) };
-        if (form.elements.botcheck.checked) { reset('Thanks! Your review has been posted.'); return; }   // a bot: pretend it worked
-        send.disabled = true; sendLabel.textContent = 'Posting…';
-        status.textContent = 'Posting your review…'; status.classList.remove('err');
-        try {
-          await post(review);
-          reset(LIVE ? 'Thanks! Your review is now live.' : 'Thanks! Your review has been sent to the studio.');
-        } catch (err) {
-          status.textContent = 'Sorry, your review couldn’t be posted. Please try again in a moment.'; status.classList.add('err');
-        } finally {
-          send.disabled = false; sendLabel.textContent = 'Post review';
-        }
-      });
-      return { reset, pickFirst: () => $('input', pick) };
-    }
-    // a reviewer (one browser) can post up to three reviews a day
-    const recent = () => { try { return JSON.parse(localStorage.getItem('mg-rv') || '[]').filter((t) => Date.now() - t < 864e5); } catch (e) { return []; } };
-    const remember = () => { try { localStorage.setItem('mg-rv', JSON.stringify(recent().concat(Date.now()))); } catch (e) { /* storage blocked */ } };
-    async function post(review) {
-      if (LIVE) {
-        const res = await fetch(API, { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json', Prefer: 'return=representation' }, AUTH), body: JSON.stringify(review) });
-        if (!res.ok) throw new Error(res.status);
-        const row = (await res.json().catch(() => []))[0] || Object.assign({ created_at: new Date().toISOString() }, review);
-        all.unshift(row); fresh = row;
-        if (state !== 'ready') state = 'ready';
-        refresh();
-      } else {
-        const t = byId[review.target] || { name: review.target };
-        const res = await fetch('https://formsubmit.co/ajax/' + MG.email, {
-          method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({ _subject: `New review: ${review.rating}★ for ${t.name} · Mizpha Games website`, _template: 'table', _captcha: 'false', name: review.name, reviewing: t.name, rating: review.rating + ' / 5', review: review.comment })
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !(data.success === true || data.success === 'true')) throw new Error(res.status);
-      }
-      remember();
-    }
-
-    /* under each game card: its average and number of reviews */
-    views.push(() => {
-      $$('[data-gr]').forEach((el) => {
-        const { n, avg } = score(all.filter((r) => r.target === 'game:' + el.dataset.gr));
-        $('[data-gr-stars]', el).innerHTML = stars(avg);
-        $('[data-gr-avg]', el).textContent = n ? avg.toFixed(1) : '';
-        $('[data-gr-count]', el).textContent = n ? `(${n})` : (state === 'loading' ? 'Loading…' : 'No ratings yet');
-      });
-    });
-
-    /* one game's reviews: opened from Rate & review under its card */
-    const dlg = $('#rvg'), dlgCard = $('.rvg-card', dlg), dlgList = $('[data-rvg-list]', dlg);
-    let game = null, back = null, timer = 0;
-    const gForm = makeForm($('#rvg-form'), { prefix: 'rvg', target: () => game && 'game:' + game.id });
-    views.push(() => {
-      if (!game) return;
-      const rows = all.filter((r) => r.target === 'game:' + game.id);
-      const { n, avg } = score(rows);
-      $('[data-rvg-stars]', dlg).innerHTML = stars(avg, 'stars-lg');
-      $('[data-rvg-avg]', dlg).textContent = n ? avg.toFixed(1) : '';
-      $('[data-rvg-count]', dlg).textContent = n ? `${n} review${n === 1 ? '' : 's'}` : (state === 'loading' ? 'Loading…' : 'No ratings yet');
-      dlgList.innerHTML = listState(rows, `<li class="rv-empty rv-empty-sm"><span class="rv-empty-star">${STAR}</span><p>No reviews of ${esc(game.name)} yet. Be the first!</p></li>`, 50);
-    });
-    function open(g) {
-      game = g; back = document.activeElement;
-      $('[data-rvg-cover]', dlg).src = g.cover;
-      $('[data-rvg-name]', dlg).textContent = g.name;
-      gForm.reset();
-      load(); refresh();
-      clearTimeout(timer);
-      dlg.hidden = false; dlgCard.scrollTop = 0;
-      document.documentElement.classList.add('modal-on');
-      requestAnimationFrame(() => requestAnimationFrame(() => dlg.classList.add('open')));
-      gForm.pickFirst().focus({ preventScroll: true });
-    }
-    function close() {
-      if (dlg.hidden) return;
-      dlg.classList.remove('open');
-      document.documentElement.classList.remove('modal-on');
-      timer = setTimeout(() => { dlg.hidden = true; game = null; }, 350);
-      if (back && back.focus) back.focus({ preventScroll: true });
-    }
-    dlg.addEventListener('click', (e) => { if (e.target === dlg || e.target.closest('[data-rvg-close]')) close(); });
-    window.addEventListener('keydown', (e) => {
-      if (dlg.hidden) return;
-      if (e.key === 'Escape') close();
-      if (e.key === 'Tab') {                                  // keep the keyboard inside the window
-        const f = $$('button, a[href], input:not(.hp):not([type="radio"]), input[type="radio"]:checked, textarea', dlgCard).filter((x) => !x.hidden && x.offsetParent);
-        const radios = $$('input[type="radio"]', dlgCard);
-        if (!radios.some((r) => r.checked)) f.splice(1, 0, radios[0]);
-        if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
-        else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
-      }
-    });
-    document.addEventListener('click', (e) => {
-      const b = e.target.closest('[data-rate-open]');
-      if (!b) return;
-      const g = MG.games.find((x) => x.id === b.dataset.rateOpen);
-      if (g) open(g);
-    });
-    return { open, close };
-  })();
 
   /* ------------------------------------------------------------ contact */
   // Messages go out in the background, so the visitor's email app never

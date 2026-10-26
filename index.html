@@ -13,8 +13,8 @@
 <script>document.documentElement.classList.add('js')</script>
 <link rel="preload" href="assets/fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/plus-jakarta-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/fonts.css?v=20261026y">
-<link rel="stylesheet" href="assets/css/site.css?v=20261026y">
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261027e">
+<link rel="stylesheet" href="assets/css/site.css?v=20261027e">
 </head>
 <body>
 <a class="skip" href="#games">Skip to content</a>
@@ -68,7 +68,7 @@
         <div class="seal" aria-hidden="true">
           <svg viewBox="0 0 200 200"><defs><path id="seal-ring" d="M100,100 m-74,0 a74,74 0 1,1 148,0 a74,74 0 1,1 -148,0"/></defs>
             <text><textPath href="#seal-ring" textLength="462" lengthAdjust="spacing">PLAY · CREATE · DELIGHT ·</textPath></text></svg>
-          <img src="assets/img/logo-icon.png" alt="">
+          <img src="assets/img/logo.png" alt="">
         </div>
       </div>
     </div>
@@ -208,23 +208,6 @@
   </div>
 </div>
 
-<!-- one game's ratings and reviews: "Rate & review" under a game card opens it -->
-<div class="soon rvg" id="rvg" role="dialog" aria-modal="true" aria-labelledby="rvg-title" hidden>
-  <div class="soon-card rvg-card">
-    <button class="soon-x" type="button" data-rvg-close aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-    <header class="rvg-head">
-      <img data-rvg-cover alt="">
-      <div>
-        <p class="kicker">Ratings &amp; reviews</p>
-        <h3 id="rvg-title" data-rvg-name></h3>
-        <div class="rvg-score"><span data-rvg-stars></span><b data-rvg-avg></b><span data-rvg-count></span></div>
-      </div>
-    </header>
-    <form class="rv-form rvg-form" id="rvg-form" novalidate></form>
-    <ol class="rv-list" data-rvg-list aria-live="polite"></ol>
-  </div>
-</div>
-
 <!-- the game player: Play on the web opens the game here, over the page -->
 <div class="player" id="player" role="dialog" aria-modal="true" aria-labelledby="player-title" hidden>
   <div class="player-bar">
@@ -244,7 +227,7 @@
   </div>
 </div>
 
-<script src="assets/js/data.js?v=20261026y"></script>
-<script src="assets/js/main.js?v=20261026y"></script>
+<script src="assets/js/data.js?v=20261027e"></script>
+<script src="assets/js/main.js?v=20261027e"></script>
 </body>
 </html>
