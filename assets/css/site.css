@@ -197,6 +197,9 @@ p { margin: 0; }
    number behind them, and a soft violet light behind the content. */
 .section-feature { padding: clamp(88px, 12vw, 168px) 0; }
 .section-feature > .wrap { width: min(1360px, 100%); }
+/* Our Services: the heading, the tiles and How we work all share one width,
+   so they line up on the same left and right edges */
+#services > .wrap { width: min(calc(1180px + 2 * var(--gutter)), 100%); }
 .section-feature .section-head { position: relative; isolation: isolate; margin-bottom: clamp(44px, 6vw, 84px); }
 .section-feature .section-head::before {
   content: attr(data-num); position: absolute; z-index: -1; right: -0.04em; top: -0.42em; pointer-events: none;
@@ -377,17 +380,18 @@ p { margin: 0; }
   animation: drift-shape var(--t, 12s) ease-in-out infinite alternate; will-change: transform, translate;
 }
 @keyframes drift-shape { from { transform: translate(0, 0) rotate(0deg); } to { transform: translate(var(--fx, 14px), var(--fy, -22px)) rotate(var(--fr, 40deg)); } }
-.fl-ring { left: 5%; top: 8%; width: 54px; height: 54px; border-radius: 50%; border: 2px solid rgba(109, 61, 242, 0.2); --k: -80; --t: 13s; --fr: 0deg; }
-.fl-ring-2 { left: auto; right: 31%; top: 3%; width: 22px; height: 22px; border-color: rgba(240, 140, 0, 0.32); --k: 50; --t: 9s; --fx: -18px; }
+.floaters { --m: calc((100% - 1180px) / 4); }
+.fl-ring { left: calc(var(--m) - 27px); top: 8%; width: 54px; height: 54px; border-radius: 50%; border: 2px solid rgba(109, 61, 242, 0.2); --k: -80; --t: 13s; --fr: 0deg; }
+.fl-ring-2 { left: auto; right: calc(var(--m) - 11px); top: 3%; width: 22px; height: 22px; border-color: rgba(240, 140, 0, 0.32); --k: 50; --t: 9s; --fx: -18px; }
 .fl-plus {
-  right: 8%; top: 7%; width: 26px; height: 26px; opacity: 0.55; --k: 70; --t: 10s; --fr: 90deg;
+  right: calc(var(--m) - 13px); top: 7%; width: 26px; height: 26px; opacity: 0.55; --k: 70; --t: 10s; --fr: 90deg;
   background: linear-gradient(var(--amber), var(--amber)) center / 100% 4px no-repeat, linear-gradient(var(--amber), var(--amber)) center / 4px 100% no-repeat;
 }
-.fl-square { left: 2.5%; top: 45%; width: 34px; height: 34px; border-radius: 10px; border: 2px solid rgba(76, 31, 201, 0.16); --k: 90; --t: 15s; --fr: 60deg; --fx: 10px; }
-.fl-dot { right: 4%; top: 41%; width: 14px; height: 14px; border-radius: 50%; background: linear-gradient(160deg, #a68bff, var(--violet)); opacity: 0.45; --k: -60; --t: 8s; --fy: 26px; }
-.fl-dot-2 { right: auto; top: auto; left: 42%; bottom: 7%; width: 10px; height: 10px; opacity: 0.35; --k: -40; --t: 11s; }
-.fl-play { left: 8%; bottom: 13%; width: 30px; height: 30px; clip-path: polygon(18% 8%, 92% 50%, 18% 92%); background: linear-gradient(160deg, #ffd08a, var(--amber-deep)); opacity: 0.42; --k: 75; --t: 11s; --fr: -30deg; }
-.fl-spark { right: 11%; bottom: 25%; font: 24px/1 var(--sans); color: var(--amber-deep); opacity: 0.55; --k: -95; --t: 7s; --fr: 120deg; }
+.fl-square { left: calc(var(--m) - 17px); top: 45%; width: 34px; height: 34px; border-radius: 10px; border: 2px solid rgba(76, 31, 201, 0.16); --k: 90; --t: 15s; --fr: 60deg; --fx: 10px; }
+.fl-dot { right: calc(var(--m) - 7px); top: 41%; width: 14px; height: 14px; border-radius: 50%; background: linear-gradient(160deg, #a68bff, var(--violet)); opacity: 0.45; --k: -60; --t: 8s; --fy: 26px; }
+.fl-dot-2 { right: auto; top: auto; left: calc(var(--m) - 5px); bottom: 30%; width: 10px; height: 10px; opacity: 0.35; --k: -40; --t: 11s; }
+.fl-play { left: calc(var(--m) - 15px); bottom: 13%; width: 30px; height: 30px; clip-path: polygon(18% 8%, 92% 50%, 18% 92%); background: linear-gradient(160deg, #ffd08a, var(--amber-deep)); opacity: 0.42; --k: 75; --t: 11s; --fr: -30deg; }
+.fl-spark { right: calc(var(--m) - 12px); bottom: 25%; font: 24px/1 var(--sans); color: var(--amber-deep); opacity: 0.55; --k: -95; --t: 7s; --fr: 120deg; }
 /* idle motion only runs while the section is on screen */
 #services:not(.live) :is(.fl, .service-icon svg) { animation-play-state: paused; }
 #services:not(.live) .process-steps li::before { animation-play-state: paused; }
@@ -395,7 +399,7 @@ p { margin: 0; }
 .service p { color: var(--muted); font-size: clamp(15px, 1.2vw, 17px); line-height: 1.6; }
 /* how we work: a timeline */
 /* centred: the title, each step and the line, with equal room either side */
-.process { margin-top: clamp(56px, 7vw, 88px); max-width: 1180px; margin-left: auto; margin-right: auto; text-align: center; }
+.process { margin-top: clamp(56px, 7vw, 88px); text-align: center; }
 .process-title { font-size: clamp(30px, 3.6vw, 44px); margin-bottom: clamp(32px, 4vw, 48px); }
 .process-steps { position: relative; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; counter-reset: step; }
 /* the line runs from the first step to the last and fills, step by step,
@@ -540,6 +544,11 @@ html.modal-on, html.modal-on body { overflow: hidden; }
 .reveal { transition: opacity 0.9s var(--ease) var(--d, 0ms), translate 0.9s var(--ease) var(--d, 0ms), scale 0.9s var(--ease) var(--d, 0ms), transform 0.5s var(--ease), box-shadow 0.5s var(--ease); }
 
 /* ---------- responsive ---------- */
+/* the shapes only float in the empty margins beside the content; on
+   narrower screens there's no margin for them, so they rest */
+@media (max-width: 1359px) {
+  .floaters { display: none; }
+}
 @media (max-width: 1080px) {
   .header-cta { display: none; }
   .services { grid-template-columns: repeat(2, 1fr); }
@@ -605,10 +614,6 @@ html.modal-on, html.modal-on body { overflow: hidden; }
     background: linear-gradient(var(--violet), var(--amber)) top / 100% 0% no-repeat, var(--line-2); transition: background-size 0.9s var(--ease);
   }
   .process-steps li.done::after { background-size: 100% 100%, auto; }
-  .fl-square, .fl-ring-2, .fl-dot-2 { display: none; }
-  .fl-ring { width: 40px; height: 40px; left: auto; right: 6%; top: 22px; }
-  .fl-plus { right: 22%; top: 46px; width: 18px; height: 18px; --k: -20; }
-  .fl-spark { font-size: 20px; }
   .contact { border-radius: 26px; padding: 6px; }
   .contact-panel { border-radius: 20px; padding: 30px 22px; }
   .cl-value { font-size: 17px; }
