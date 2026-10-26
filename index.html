@@ -1,530 +1,217 @@
 <!doctype html>
-<html lang="en" class="is-christmas">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Mizpha Games · Monster Hills</title>
-<meta name="description" content="Mizpha Games: drive the Monster Hills physics truck through an arcade town, enter a door to play Animal Café, Cinemoji, UNO Clash or Baggage Out!, and race the hills to the flag.">
-<meta name="theme-color" content="#0f0b24">
+<title>Mizpha Games · Independent game studio</title>
+<meta name="description" content="Mizpha Games is an independent game studio. We craft mobile, web and HTML5 games, and offer game development, game art, UI/UX and web development services.">
+<meta name="theme-color" content="#ffffff">
 <link rel="icon" type="image/png" href="assets/img/logo-icon.png">
-<meta property="og:title" content="Mizpha Games · Monster Hills">
-<meta property="og:description" content="A playable physics truck game and arcade hub, right in your browser.">
-<meta property="og:image" content="assets/img/logo.png">
-<link rel="preload" href="assets/fonts/russo-one-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="assets/fonts/exo-2-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/fonts.css?v=20261103w">
-<link rel="stylesheet" href="assets/css/hub.css?v=20261103w">
+<meta property="og:title" content="Mizpha Games">
+<meta property="og:description" content="Crafting games people love to play. Game development, art and web services.">
+<meta property="og:image" content="https://mizphagames.com/assets/img/logo.png">
+<script>document.documentElement.classList.add('js')</script>
+<link rel="preload" href="assets/fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/plus-jakarta-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261026i">
+<link rel="stylesheet" href="assets/css/site.css?v=20261026i">
 </head>
 <body>
-<a class="skip" href="#services">Skip to the company stops</a>
+<a class="skip" href="#games">Skip to content</a>
 
-<!-- ================================================================ top bar -->
-<header class="topbar">
-  <a class="brand" href="#top">
-    <img class="brand-logo" src="assets/img/logo.png" alt="Mizpha Games" width="400" height="232">
-  </a>
-  <nav class="worldmap" aria-label="World map">
-    <div class="wm-road" aria-hidden="true"><span class="wm-fill"></span></div>
-    <ol class="wm-stops" id="wm-stops"></ol>
-    <div class="wm-car" aria-hidden="true"></div>
-  </nav>
-  <div class="player">
-    <button class="icon-btn map-btn" type="button" data-action="open-map" aria-label="Open the world map">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 4v13.5M15 6.5V20" stroke="currentColor" stroke-width="2"/></svg>
-    </button>
-    <span class="coin-count" title="Coins collected, all runs">
-      <i class="coin-ico" aria-hidden="true"></i><b id="lifetime-coins">0</b><span class="sr">coins collected</span>
-    </span>
-    <button class="icon-btn" type="button" data-action="mute" aria-label="Mute sound" aria-pressed="false">
-      <svg class="ico-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <svg class="ico-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 9.5l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-    </button>
+<header class="header" id="top">
+  <div class="wrap header-in">
+    <a class="brand" href="#top" aria-label="Mizpha Games, back to top">
+      <img src="assets/img/logo.png" alt="Mizpha Games" width="400" height="232">
+    </a>
+    <nav class="nav" aria-label="Main">
+      <a href="#games">Games</a>
+      <a href="#services">Services</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <a class="header-cta" href="#contact">Start a project <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
   </div>
 </header>
 
-<main id="top">
-
-<!-- ============================================================ game stage -->
-<section id="stage" class="stage" aria-label="Monster Hills">
-  <canvas id="game-canvas" tabindex="-1" aria-label="Monster Hills: a monster truck driving through an arcade town and over hills"></canvas>
-  <div class="stage-scrim" aria-hidden="true"></div>
-
-  <!-- hero overlay, shown while the demo drives itself -->
-  <div class="hero" id="hero">
-    <div class="hero-main">
-      <p class="presents" style="--i:0"><span aria-hidden="true"></span>Stop 01 · Start · Mizpha Games</p>
-      <h1 class="title" style="--i:1">
-        <span class="t1">Monster</span><span class="t2">Hills</span>
-        <span class="title-badge" aria-hidden="true">Physics racer</span>
-      </h1>
-      <p class="lede" style="--i:2">Real suspension, real air. Find the four arcade doors on Main Street, dodge the haunted houses, then race the hills to the flag.</p>
-      <div class="hero-actions" style="--i:3">
-        <button class="btn-play xl" type="button" data-action="play" data-autofocus>
-          <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span>
-          Play now
-          <span class="play-lv" data-level-label>LV 1</span>
-        </button>
-        <button class="btn-ghost btn-levels" type="button" data-action="levels"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 4v13.5M15 6.5V20" stroke="currentColor" stroke-width="2"/></svg>Levels</button>
-        <button class="btn-ghost hide-phone" type="button" data-travel="services">Start the tour ›</button>
-      </div>
-      <div class="hero-setup" style="--i:4">
-        <div class="setup-head">
-          <span class="setup-label">Pick your ride</span>
-          <div class="time-toggle" role="group" aria-label="Theme">
-        <button type="button" data-time="morning" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Morning</button>
-        <button type="button" data-time="night" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>Night</button>
-        <button type="button" data-time="rain" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 15a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.8 7.5 3.8 3.8 0 0 1 17.5 15z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Rain</button>
-        <button type="button" data-time="christmas" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5l1 2.1 2.3.3-1.7 1.6.4 2.3L12 6.7l-2 1.1.4-2.3-1.7-1.6 2.3-.3zM12 8l4 5h-2l4.5 5.5h-13L10 13H8z"/><path d="M10.8 18.5h2.4V22h-2.4z"/></svg>Christmas</button>
-      </div>
+<main>
+  <!-- intro -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="aura" aria-hidden="true"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
+    <div class="wrap hero-in">
+      <div class="hero-text">
+        <p class="pill reveal"><span class="pill-dot" aria-hidden="true"></span>Independent game studio</p>
+        <h1 id="hero-title" class="reveal">Crafting games people <em>love</em> to play.</h1>
+        <p class="lead reveal">We design and build mobile, web and HTML5 games, and help studios and brands bring theirs to life, from the first spark of an idea to launch day.</p>
+        <div class="hero-actions reveal">
+          <a class="btn btn-dark" href="#games">Explore our games <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg></a>
+          <a class="btn btn-ghost" href="#contact">Work with us</a>
         </div>
-        <div class="ride-picker" role="group" aria-label="Choose your ride">
-          <button type="button" data-vehicle="truck" aria-pressed="true"><span class="ride-slot" data-ride="truck"></span><span class="ride-name">Monster Truck</span><span class="ride-tag">Big air</span></button>
-          <button type="button" data-vehicle="beetle" aria-pressed="false"><span class="ride-slot" data-ride="beetle"></span><span class="ride-name">Blue Bubble</span><span class="ride-tag">Nimble</span></button>
-          <button type="button" data-vehicle="sedan" aria-pressed="false"><span class="ride-slot" data-ride="sedan"></span><span class="ride-name">Green Cruiser</span><span class="ride-tag">Steady</span></button>
-          <button type="button" data-vehicle="skull" aria-pressed="false"><span class="ride-slot" data-ride="skull"></span><span class="ride-name">Skull Crusher</span><span class="ride-tag">Spooky</span></button>
+        <ul class="hero-meta reveal" aria-label="At a glance">
+          <li><b data-game-count>6</b><span>original games</span></li>
+          <li><b>3</b><span>platforms we build for</span></li>
+          <li><b>1</b><span>team, idea to launch</span></li>
+        </ul>
+      </div>
+      <div class="hero-art reveal" aria-hidden="true">
+        <div class="stack" id="hero-stack"></div>
+        <div class="seal">
+          <svg viewBox="0 0 200 200"><defs><path id="seal-ring" d="M100,100 m-74,0 a74,74 0 1,1 148,0 a74,74 0 1,1 -148,0"/></defs>
+            <text><textPath href="#seal-ring">PLAY · CREATE · DELIGHT · PLAY · CREATE · DELIGHT ·</textPath></text></svg>
+          <img src="assets/img/logo-icon.png" alt="">
         </div>
       </div>
     </div>
+  </section>
 
-    <div class="hero-doors" style="--i:5">
-      <p class="doors-label"><b>Arcade doors</b><span>on Main Street · skip the haunted ones</span></p>
-      <div class="door-chips" id="door-chips"></div>
-      <ul class="hero-stats" aria-label="Your progress">
-        <li><i class="coin-ico" aria-hidden="true"></i><b data-coin-total>44</b><span>coins to find</span></li>
-        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 9v4l2.5 2M9 3h6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><b data-best-hero>--:--.-</b><span>your best</span></li>
-      </ul>
+  <!-- 01 our games -->
+  <section class="section" id="games" aria-labelledby="games-title">
+    <div class="wrap">
+      <header class="section-head reveal">
+        <p class="kicker"><span>01</span>Our games</p>
+        <div class="section-head-row">
+          <h2 id="games-title">Worlds made to be <em>played</em>.</h2>
+          <p>Every game is designed, drawn and built in-house. Play them right here in your browser, with App Store and Google Play releases on the way.</p>
+        </div>
+      </header>
+      <div class="games" id="games-list"></div>
+      <div class="rail-hint" aria-hidden="true"><span></span>Swipe to see more</div>
     </div>
-    <a class="scroll-cue" href="#games" aria-label="Scroll to games"><span></span></a>
-  </div>
+  </section>
 
-  <!-- in-game HUD -->
-  <div class="hud" id="hud">
-    <div class="hud-left">
-      <div class="hud-pill hud-level"><span data-level-label>LV 1</span></div>
-      <div class="hud-pill hud-coins" id="hud-coins"><i class="coin-ico" aria-hidden="true"></i><span data-val>0/44</span></div>
-      <div class="hud-pill"><span class="lbl">Time</span><span id="hud-time" class="mono">00:00.0</span></div>
-      <div class="hud-pill hud-speed"><span id="hud-speed" class="mono">0</span><span class="lbl">km/h</span></div>
-    </div>
-    <div class="hud-progress" id="hud-progress" aria-hidden="true">
-      <span class="track"><span class="fill"></span><span class="marker"></span></span>
-      <span class="flag"></span>
-    </div>
-    <div class="hud-right">
-      <button class="icon-btn" type="button" data-action="respawn" aria-label="Back to last checkpoint" title="Reset (R)">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2.1-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M4 3.5v5h5z"/></svg>
-      </button>
-      <button class="icon-btn time-btn" type="button" data-action="toggle-time" aria-label="Switch to morning" title="Morning / Night / Rain / Christmas (N)">
-        <svg class="ico-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <svg class="ico-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
-        <svg class="ico-rain" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 15a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.8 7.5 3.8 3.8 0 0 1 17.5 15z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <svg class="ico-xmas" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5l1 2.1 2.3.3-1.7 1.6.4 2.3L12 6.7l-2 1.1.4-2.3-1.7-1.6 2.3-.3zM12 8l4 5h-2l4.5 5.5h-13L10 13H8z"/><path d="M10.8 18.5h2.4V22h-2.4z"/></svg>
-      </button>
-      <button class="icon-btn" type="button" data-action="garage" aria-label="Change ride" title="Garage (1, 2, 3)">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 14l2-5h9l3 3h3a1 1 0 0 1 1 1v2H3z"/><circle cx="7.5" cy="16.5" r="2.5"/><circle cx="17" cy="16.5" r="2.5"/></svg>
-      </button>
-      <button class="icon-btn" type="button" data-action="mute" aria-label="Mute sound" aria-pressed="false" title="Sound (M)">
-        <svg class="ico-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <svg class="ico-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 9.5l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
-      <button class="icon-btn icon-exit" type="button" data-action="exit" aria-label="Exit to the hub" title="Exit (Esc)">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
-      </button>
-    </div>
-  </div>
-
-
-  <button id="door-prompt" class="door-prompt" type="button" data-action="enter-door" hidden>
-    <span class="dp-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 21V4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M3.5 21h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="14.5" cy="12.5" r="1.3"/></svg></span>
-    <span class="dp-text"><span class="dp-verb">Enter door</span><b id="door-prompt-name"></b></span>
-    <span class="dp-key" aria-hidden="true"><span class="dp-key-pc">E</span><span class="dp-key-touch">Tap</span></span>
-  </button>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <div id="start-seq" class="start-seq" aria-hidden="true" data-lights="0">
-    <span class="ss-bar top"></span><span class="ss-bar bottom"></span>
-    <div class="ss-gantry">
-      <span class="ss-cable l"></span><span class="ss-cable r"></span>
-      <div class="ss-lights"><i></i><i></i><i></i></div>
-    </div>
-    <span class="ss-flash"></span>
-    <div class="ss-go"><span class="ss-streaks"></span><b>GO!</b></div>
-  </div>
-  <p class="sr" id="start-live" role="status" aria-live="polite"></p>
-  <div id="spook" class="spook" aria-hidden="true">
-    <img src="assets/img/assets/ghost_1.png" alt="" style="--dx:-34vw;--dy:-26vh;--d:0s">
-    <img src="assets/img/assets/ghost_2.png" alt="" style="--dx:30vw;--dy:-30vh;--d:.08s">
-    <img src="assets/img/assets/ghost_3.png" alt="" style="--dx:-26vw;--dy:24vh;--d:.16s">
-    <img src="assets/img/assets/ghost_4.png" alt="" style="--dx:32vw;--dy:20vh;--d:.12s">
-    <img src="assets/img/assets/ghost_5.png" alt="" style="--dx:2vw;--dy:-34vh;--d:.04s">
-  </div>
-
-  <div class="pedals">
-    <div class="pedal-group">
-      <button class="pedal is-foot pedal-brake" type="button" data-pedal="brake" aria-label="Brake">
-        <img src="assets/img/assets/break.png" alt="" draggable="false"><span class="pedal-label">Brake</span>
-      </button>
-      <button class="pedal pedal-reverse is-icon" type="button" data-pedal="reverse" aria-label="Reverse">
-        <span class="rev-disc" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 5l-7 7 7 7v-4.5h9v-5h-9z"/></svg></span><span class="pedal-label">Reverse</span>
-      </button>
-    </div>
-    <div class="pedal-group right">
-      <button class="pedal pedal-jump is-icon" type="button" data-pedal="jump" aria-label="Jump">
-        <span class="rev-disc jump-disc" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4l7 7h-4.5v9h-5v-9H5z"/></svg></span><span class="pedal-label">Jump</span>
-      </button>
-      <button class="pedal is-foot pedal-gas" type="button" data-pedal="gas" aria-label="Gas">
-        <img src="assets/img/assets/pedal.png" alt="" draggable="false"><span class="pedal-label">Gas</span>
-      </button>
-    </div>
-  </div>
-</section>
-
-<!-- ================================================================ ticker -->
-<div class="ticker-wrap">
-<div class="ticker" aria-hidden="true">
-  <div class="ticker-track">
-    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span>20 levels to unlock</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>4 rides in the garage</span><i></i>
-    <span>Drive into a door to play</span><i></i><span>Beware the haunted houses</span><i></i><span>20 levels to unlock</span><i></i><span><span data-coin-total>44</span> coins hidden on the course</span><i></i><span>Hold gas in the air to flip back</span><i></i><span>Beat your best time</span><i></i><span>4 rides in the garage</span><i></i>
-  </div>
-</div>
-</div>
-
-<!-- ========================================================= game select -->
-<!-- ========================================================= stop 02: games -->
-<section id="games" class="select stop stop-games" aria-labelledby="games-title">
-  <div class="stop-env" aria-hidden="true"><span class="env-marquee"></span></div>
-  <header class="stop-head reveal">
-    <p class="stop-tag"><span class="stop-no">02</span>Arcade Boulevard</p>
-    <h2 id="games-title">Our games</h2>
-    <p class="stop-lede">Every door on the boulevard is a game we made. Drive up in Monster Hills, or jump straight in.</p>
-  </header>
-
-  <article class="feature reveal" aria-labelledby="feature-title">
-    <div class="feature-scene" aria-hidden="true">
-      <span class="fs-sun"></span>
-      <span class="fs-cloud c1"></span><span class="fs-cloud c2"></span>
-      <svg class="fs-hills" viewBox="0 0 800 300" preserveAspectRatio="none">
-        <path class="h1" d="M0 190 L140 70 L260 190 L380 40 L520 190 L640 90 L800 190 V300 H0Z"/>
-        <path class="h2" d="M0 300 V230 C120 205 220 250 340 228 S560 195 680 225 S780 240 800 232 V300Z"/>
-      </svg>
-      <div class="fs-road"></div>
-      <div class="fs-ride" data-ride="truck"></div>
-      <span class="fs-coin k1"></span><span class="fs-coin k2"></span><span class="fs-coin k3"></span>
-    </div>
-    <div class="feature-info">
-      <p class="badge">★ Main game</p>
-      <h3 id="feature-title">Monster Hills</h3>
-      <p>A physics truck game with working suspension. The body squats, pitches and bounces over every bump. Collect <span data-coin-total>44</span> coins, clear two jumps, and knock down the can pyramid on your way to the flag.</p>
-      <ul class="chips">
-        <li>20 levels</li><li>Matter.js physics</li><li>4 rides</li><li>Buttons · Keyboard</li>
-      </ul>
-      <div class="feature-actions">
-        <button class="btn-play" type="button" data-action="play">
-          <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span>
-          Play
-        </button>
-        <button class="btn-ghost" type="button" data-action="garage">Choose ride</button>
-        <p class="best">Best <b data-best-feature>--:--.-</b></p>
+  <!-- 02 our services -->
+  <section class="section section-soft" id="services" aria-labelledby="services-title">
+    <div class="wrap">
+      <header class="section-head reveal">
+        <p class="kicker"><span>02</span>Our services</p>
+        <div class="section-head-row">
+          <h2 id="services-title">Everything a great game <em>needs</em>.</h2>
+          <p>From the first prototype to the final pixel: one studio for games, art, interfaces and the web.</p>
+        </div>
+      </header>
+      <div class="services" id="services-list"></div>
+      <div class="process reveal">
+        <h3 class="process-title">How we work</h3>
+        <ol class="process-steps" id="process-list"></ol>
       </div>
     </div>
-  </article>
+  </section>
 
-  <div class="card-row" id="card-row"></div>
-</section>
+  <!-- 03 contact details -->
+  <section class="section" id="contact" aria-labelledby="contact-title">
+    <div class="wrap">
+      <div class="contact reveal">
+        <div class="contact-panel">
+          <div class="aura aura-dark" aria-hidden="true"><span class="a1"></span><span class="a2"></span></div>
+          <p class="kicker kicker-light"><span>03</span>Contact details</p>
+          <h2 id="contact-title">Let’s build something <em>together</em>.</h2>
+          <p class="contact-intro">Have a game idea, a project, or feedback on our games? We’d love to hear from you.</p>
+          <ul class="contact-list">
+            <li>
+              <span class="cl-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/><path d="M3.5 6.5 12 13l8.5-6.5"/></svg></span>
+              <div><p class="cl-label">Email</p><a class="cl-value" href="mailto:mizphagamestudios@gmail.com">mizphagamestudios@gmail.com</a>
+                <button class="cl-copy" type="button" data-copy="mizphagamestudios@gmail.com">Copy email</button></div>
+            </li>
+            <li>
+              <span class="cl-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span>
+              <div><p class="cl-label">Founder</p><p class="cl-value">Bensath</p></div>
+            </li>
+            <li>
+              <span class="cl-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></span>
+              <div><p class="cl-label">Website</p><a class="cl-value" href="https://mizphagames.com">mizphagames.com</a></div>
+            </li>
+          </ul>
+        </div>
 
-<!-- ====================================================== stop 03: services -->
-<section id="services" class="stop stop-services" aria-labelledby="services-title">
-  <div class="stop-env" aria-hidden="true">
-    <span class="env-lamp l1"></span><span class="env-lamp l2"></span><span class="env-lamp l3"></span>
-    <span class="env-neon">Workshop</span>
-    <span class="env-floor"></span>
-  </div>
-  <header class="stop-head reveal">
-    <p class="stop-tag"><span class="stop-no">03</span>The Workshop</p>
-    <h2 id="services-title">Services</h2>
-    <p class="stop-lede">Every bay in the workshop is something we build. Roll up a door to look inside.</p>
-  </header>
-  <div class="bays" id="bays"></div>
-  <div class="pipeline reveal">
-    <h3>The build pipeline</h3>
-    <div class="pl-road" id="pipeline"><div class="pl-car" aria-hidden="true"></div></div>
-  </div>
-</section>
-
-
-<!-- ======================================================= stop 04: clients -->
-<section id="clients" class="stop stop-clients" aria-labelledby="clients-title">
-  <div class="stop-env" aria-hidden="true"><span class="env-sun"></span><span class="env-hills"></span><span class="env-highway"></span></div>
-  <header class="stop-head reveal">
-    <p class="stop-tag"><span class="stop-no">04</span>Billboard Highway</p>
-    <h2 id="clients-title">Our clients</h2>
-    <p class="stop-lede">The partners we build with, up in lights along the highway.</p>
-  </header>
-  <div class="billboards" id="billboards"></div>
-</section>
-
-<!-- ========================================================= stop 05: demos -->
-<section id="demos" class="stop stop-demos" aria-labelledby="demos-title">
-  <div class="stop-env" aria-hidden="true"><span class="env-kerb top"></span><span class="env-kerb bottom"></span></div>
-  <header class="stop-head reveal">
-    <p class="stop-tag"><span class="stop-no">05</span>The Test Track</p>
-    <h2 id="demos-title">Demos</h2>
-    <p class="stop-lede">Tech demos from our own engine. Each pit runs the real physics game with one feature switched on.</p>
-  </header>
-  <div class="pits" id="pits"></div>
-</section>
-
-<!-- ============================================================= contact -->
-<!-- ====================================================== stop 06: contact -->
-<section id="contact" class="contact stop stop-contact" aria-labelledby="contact-title">
-  <div class="stop-env" aria-hidden="true"><span class="env-checker"></span><span class="env-beam b1"></span><span class="env-beam b2"></span></div>
-  <header class="stop-head reveal">
-    <p class="stop-tag"><span class="stop-no">06</span>Finish Line HQ</p>
-    <h2 id="contact-title">You made it</h2>
-    <p class="stop-lede">Last stop on the road trip. Tell us what you want to build.</p>
-  </header>
-  <div class="contact-card reveal">
-    <div class="contact-intro">
-      <p class="eyebrow">Contact</p>
-      <h3 class="contact-h">Let’s talk</h3>
-      <p>Got a game idea, a project, or feedback on our games? Send us a message and we’ll get back to you.</p>
-      <a class="contact-mail" href="mailto:mizphagamestudios@gmail.com">
-        <span class="contact-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 7l8 6 8-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
-        <span><small>Email us</small>mizphagamestudios@gmail.com</span>
-      </a>
-      <button class="btn-ghost sm contact-copy" type="button" data-copy="mizphagamestudios@gmail.com">Copy email</button>
-      <div class="contact-person">
-        <span class="cp-badge" aria-hidden="true"><span>B</span></span>
-        <span class="cp-text"><span class="cp-role">Founder</span><b>Bensath</b><small>Mizpha Games</small></span>
+        <div class="contact-form-wrap">
+          <form class="contact-form" id="contact-form" novalidate>
+            <!-- spam trap: hidden from people, bots fill it in -->
+            <input class="hp" type="checkbox" name="botcheck" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <h3 class="form-title">Send us a message</h3>
+            <div class="field">
+              <input id="cf-name" name="name" type="text" autocomplete="name" maxlength="80" required placeholder=" " aria-describedby="err-name">
+              <label for="cf-name">Your name</label>
+              <span class="field-err" id="err-name"></span>
+            </div>
+            <div class="field">
+              <input id="cf-email" name="email" type="email" autocomplete="email" maxlength="120" required placeholder=" " aria-describedby="err-email">
+              <label for="cf-email">Your email</label>
+              <span class="field-err" id="err-email"></span>
+            </div>
+            <div class="field">
+              <textarea id="cf-message" name="message" rows="5" maxlength="4000" required placeholder=" " aria-describedby="err-message"></textarea>
+              <label for="cf-message">Tell us about your idea</label>
+              <span class="field-err" id="err-message"></span>
+            </div>
+            <button class="btn btn-dark btn-send" type="submit" data-send><span data-send-label>Send message</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+            <p class="form-status" id="contact-status" role="status"></p>
+          </form>
+          <div class="contact-sent" id="contact-sent" tabindex="-1" hidden>
+            <svg class="cs-check" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="23"/><path d="M15 27l7 7 15-16"/></svg>
+            <h3>Message sent</h3>
+            <p data-sent-text>Thanks! We’ll get back to you soon.</p>
+            <button class="btn btn-ghost" type="button" data-send-another>Send another message</button>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="contact-side">
-      <form class="contact-form" id="contact-form" novalidate>
-        <!-- spam trap: hidden from people, bots fill it in -->
-        <input class="hp" type="checkbox" name="botcheck" tabindex="-1" autocomplete="off" aria-hidden="true">
-        <label>Your name<input name="name" type="text" autocomplete="name" maxlength="80" required aria-describedby="err-name"><span class="field-err" id="err-name"></span></label>
-        <label>Your email<input name="email" type="email" autocomplete="email" maxlength="120" required aria-describedby="err-email"><span class="field-err" id="err-email"></span></label>
-        <label>Message<textarea name="message" rows="4" maxlength="4000" required aria-describedby="err-message"></textarea><span class="field-err" id="err-message"></span></label>
-        <button class="btn-play sm" type="submit" data-send>
-          <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span><span data-send-label>Send message</span>
-        </button>
-        <p class="fine" id="contact-status" role="status"></p>
-      </form>
-      <div class="contact-sent" id="contact-sent" tabindex="-1" hidden>
-        <svg class="cs-check" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="23"/><path d="M15 27l7 7 15-16"/></svg>
-        <h3>Message sent!</h3>
-        <p data-sent-text>Thanks! We’ll get back to you soon.</p>
-        <button class="btn-ghost sm" type="button" data-send-another>Send another message</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<footer class="foot">
-  <a class="foot-brand" href="#top"><img src="assets/img/logo.png" alt="Mizpha Games" width="400" height="232"></a>
-  <p>Mizpha Games · Game development &amp; software technology studio · Founded by <b class="foot-founder">Bensath</b>.<br><a href="mailto:mizphagamestudios@gmail.com">mizphagamestudios@gmail.com</a> · Monster truck art by madmarcel.</p>
-  <a class="btn-ghost small" href="#top">Back to top ↑</a>
-</footer>
+  </section>
 </main>
 
-<div class="modal" id="modal-map" role="dialog" aria-modal="true" aria-labelledby="map-title" hidden>
-  <div class="modal-panel map-panel">
-    <p class="eyebrow">World map</p>
-    <h2 id="map-title">Where to?</h2>
-    <ol class="map-list" id="map-list"></ol>
-    <button class="modal-x" type="button" data-action="close-modal" aria-label="Close">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
-    </button>
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-top reveal">
+      <p class="footer-line">Made with care,<br>for people who <em>play</em>.</p>
+      <a class="footer-brand" href="#top"><img src="assets/img/logo.png" alt="Mizpha Games" width="400" height="232"></a>
+    </div>
+    <div class="footer-bottom">
+      <nav class="footer-nav" aria-label="Footer">
+        <a href="#games">Games</a>
+        <a href="#services">Services</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <p class="footer-copy">© <span data-year>2026</span> Mizpha Games · Founded by Bensath · <a href="mailto:mizphagamestudios@gmail.com">mizphagamestudios@gmail.com</a></p>
+    </div>
   </div>
-</div>
+</footer>
 
-<div class="travel" id="travel" aria-hidden="true">
-  <div class="tr-sky"></div><div class="tr-lines"></div>
-  <div class="tr-sign"><small>Next stop</small><b></b><span></span></div>
-  <div class="tr-road"><div class="tr-car"></div></div>
-</div>
-<p class="sr" id="travel-live" role="status" aria-live="polite"></p>
-
-<!-- ============================================================== modals -->
-<div class="modal" id="modal-door" role="dialog" aria-modal="true" aria-labelledby="door-title" hidden>
-  <div class="modal-panel door-panel">
-    <div class="door-cover"><img data-door-cover alt=""></div>
-    <div class="door-info">
-      <p class="eyebrow" data-door-genre></p>
-      <h2 id="door-title" class="sr-title"><img data-door-logo alt=""></h2>
-      <p data-door-blurb></p>
-      <div class="modal-actions">
-        <a class="btn-play" data-door-play href="#" data-autofocus>
-          <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span>Play now
-        </a>
-        <button class="btn-ghost" type="button" data-action="close-modal">Keep driving</button>
-      </div>
-      <p class="fine">Plays right here on the site. Close the game to get back to your run.</p>
+<!-- "Coming soon" for the App Store / Google Play badges -->
+<div class="soon" id="soon" role="dialog" aria-modal="true" aria-labelledby="soon-title" hidden>
+  <div class="soon-card">
+    <button class="soon-x" type="button" data-soon-close aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div class="soon-art">
+      <img data-soon-cover alt="">
+      <span class="soon-store" data-soon-icon></span>
+    </div>
+    <p class="kicker"><span class="soon-spark" aria-hidden="true">✦</span>Coming soon</p>
+    <h3 id="soon-title" data-soon-title>Coming soon</h3>
+    <p class="soon-text" data-soon-text></p>
+    <div class="soon-actions">
+      <a class="btn btn-dark" href="#" data-soon-play>Play on the web</a>
+      <button class="btn btn-ghost" type="button" data-soon-close>Got it</button>
     </div>
   </div>
 </div>
 
-<!-- the game player: a game from the catalogue, played inside the site (hub.js) -->
-<div class="game-player" id="player" role="dialog" aria-modal="true" aria-labelledby="player-title" hidden>
+<!-- the game player: Play on the web opens the game here, over the page -->
+<div class="player" id="player" role="dialog" aria-modal="true" aria-labelledby="player-title" hidden>
   <div class="player-bar">
-    <img class="player-logo" data-player-logo alt="">
-    <h2 id="player-title" class="sr" data-player-title></h2>
+    <h2 id="player-title" class="player-name" data-player-title></h2>
     <span class="player-genre" data-player-genre></span>
     <div class="player-actions">
       <button class="player-btn" type="button" data-player-full aria-label="Full screen" title="Full screen">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5v2H6v3zm10-5h6v5h-2V6h-4zM6 15v3h3v2H4v-5zm12 0h2v5h-6v-2h4z"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
       </button>
       <button class="player-btn player-close" type="button" data-player-close>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.4 5 12 10.6 17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4L12 13.4 6.4 19 5 17.6 10.6 12 5 6.4z"/></svg><span>Close</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg><span>Close</span>
       </button>
     </div>
   </div>
   <div class="player-stage" data-player-stage>
-    <div class="player-load" data-player-load aria-hidden="true"><img data-player-load-logo alt=""><span class="player-spin"></span></div>
+    <span class="player-spin" aria-hidden="true"></span>
   </div>
 </div>
 
-<div class="modal" id="modal-stop" role="dialog" aria-modal="true" aria-labelledby="stop-title" hidden>
-  <div class="modal-panel stop-panel">
-    <div class="sp-sign">
-      <span class="sp-icon" data-stop-icon aria-hidden="true"></span>
-      <div><p class="eyebrow" data-stop-no></p><h2 id="stop-title" data-stop-name></h2></div>
-    </div>
-    <p class="sp-blurb" data-stop-blurb></p>
-    <ul class="sp-list" data-stop-list></ul>
-    <div class="modal-actions">
-      <button class="btn-play" type="button" data-stop-visit data-autofocus>
-        <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span><span data-stop-visit-label>Open stop</span>
-      </button>
-      <button class="btn-ghost" type="button" data-action="close-modal">Keep driving</button>
-    </div>
-    <p class="fine">Opening the stop ends this run and takes you to that part of the site.</p>
-  </div>
-</div>
-
-<div class="modal" id="modal-garage" role="dialog" aria-modal="true" aria-labelledby="garage-title" hidden>
-  <div class="modal-panel garage-panel">
-    <p class="eyebrow">Garage</p>
-    <h2 id="garage-title">Pick your ride</h2>
-    <div class="garage-grid">
-      <button type="button" class="garage-card" data-vehicle="truck" aria-pressed="true" data-autofocus>
-        <span class="ride-slot" data-ride="truck"></span><b>Monster Truck</b><span>4x4 · Long travel · Big air</span><kbd>1</kbd>
-      </button>
-      <button type="button" class="garage-card" data-vehicle="beetle" aria-pressed="false">
-        <span class="ride-slot" data-ride="beetle"></span><b>Blue Bubble</b><span>Light · Nimble · Quick flips</span><kbd>2</kbd>
-      </button>
-      <button type="button" class="garage-card" data-vehicle="sedan" aria-pressed="false">
-        <span class="ride-slot" data-ride="sedan"></span><b>Green Cruiser</b><span>Long · Stable · Steady</span><kbd>3</kbd>
-      </button>
-      <button type="button" class="garage-card" data-vehicle="skull" aria-pressed="false">
-        <span class="ride-slot" data-ride="skull"></span><b>Skull Crusher</b><span>Monster · Spooky · Big air</span><kbd>4</kbd>
-      </button>
-    </div>
-    <button class="modal-x" type="button" data-action="close-modal" aria-label="Close">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
-    </button>
-  </div>
-</div>
-
-<div class="modal fail" id="modal-fail" role="dialog" aria-modal="true" aria-labelledby="fail-title" hidden>
-  <div class="fail-fx" aria-hidden="true">
-    <span class="fog f1"></span><span class="fog f2"></span>
-    <img class="fail-bat b1" src="assets/img/assets/bat.png" alt=""><img class="fail-bat b2" src="assets/img/assets/bat.png" alt=""><img class="fail-bat b3" src="assets/img/assets/bat.png" alt="">
-  </div>
-  <div class="modal-panel fail-panel">
-    <p class="fail-level" data-fail-level>Level 1 · Run over</p>
-    <h2 id="fail-title" class="fail-title" aria-label="Spooked!">Spooked!</h2>
-    <div class="fail-stage" aria-hidden="true">
-      <span class="fs-moon"></span>
-      <img class="fs-house" data-fail-house alt="">
-      <span class="fs-mist"></span>
-      <div class="fs-car" data-fail-car></div>
-      <span class="fs-shock">!</span>
-      <img class="fs-ghost" data-fail-ghost alt="">
-    </div>
-    <p class="fail-tip">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg>
-      <span data-fail-reason>That was a haunted house. Only doors with a game sign lead to a game. Watch for the bats!</span>
-    </p>
-    <div class="fail-progress">
-      <div class="fp-head"><span>Distance</span><b data-fail-progress-text>0%</b></div>
-      <div class="fp-track"><span class="fp-fill" data-fail-progress></span><span class="fp-flag"></span></div>
-    </div>
-    <dl class="finish-stats two">
-      <div><dt>Time</dt><dd class="mono" data-fail-time></dd></div>
-      <div><dt>Coins</dt><dd class="mono" data-fail-coins></dd></div>
-    </dl>
-    <div class="modal-actions win-actions fail-actions">
-      <button class="btn-play" type="button" data-action="restart" data-autofocus>
-        <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Try again
-      </button>
-      <div class="win-more two">
-        <button class="win-btn" type="button" data-action="levels"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg>Levels</button>
-        <button class="win-btn" type="button" data-action="exit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7M6 9.5V20h12V9.5"/></svg>Hub</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="modal" id="modal-levels" role="dialog" aria-modal="true" aria-labelledby="levels-title" hidden>
-  <div class="modal-panel levels-panel">
-    <p class="eyebrow">Monster Hills</p>
-    <h2 id="levels-title">Choose a level</h2>
-    <p class="levels-sub">Finish a level to unlock the next. Stars: finish, half the coins, 80% of the coins. <b class="levels-total"><i></i><span id="levels-total">0 / 60</span></b></p>
-    <div class="level-grid" id="level-grid"></div>
-    <button class="modal-x" type="button" data-action="close-modal" aria-label="Close">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
-    </button>
-  </div>
-</div>
-
-<div class="modal win" id="modal-finish" role="dialog" aria-modal="true" aria-labelledby="finish-title" hidden>
-  <div class="win-fx" aria-hidden="true"><div class="win-rays"></div><div class="win-confetti" data-win-confetti></div></div>
-  <div class="modal-panel finish-panel">
-    <p class="win-level" data-finish-level>Level 1 complete</p>
-    <h2 id="finish-title" class="win-title" aria-label="Victory!">Victory!</h2>
-    <div class="win-stage" aria-hidden="true">
-      <span class="win-spot"></span>
-      <span class="win-flag l"><i></i></span><span class="win-flag r"><i></i></span>
-      <span class="win-speed"></span>
-      <div class="win-podium"><span class="win-ring"></span><b>1st</b></div>
-      <div class="win-car" data-finish-car></div>
-      <span class="win-dust d1"></span><span class="win-dust d2"></span>
-    </div>
-    <svg class="win-defs" aria-hidden="true" focusable="false"><defs>
-      <linearGradient id="ws-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c2"/><stop offset=".38" stop-color="#ffd23f"/><stop offset=".78" stop-color="#ffa11c"/><stop offset="1" stop-color="#f07a0c"/></linearGradient>
-      <linearGradient id="ws-slot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#140e33"/><stop offset="1" stop-color="#2c2266"/></linearGradient>
-      <path id="ws-star" d="M50.0 9.0 L61.8 36.8 L91.8 39.4 L69.0 59.2 L75.9 88.6 L50.0 73.0 L24.1 88.6 L31.0 59.2 L8.2 39.4 L38.2 36.8Z"/>
-    </defs></svg>
-    <div class="finish-stars" data-finish-stars role="img" aria-label="Stars"></div>
-    <p class="win-rating" data-finish-rating></p>
-    <dl class="finish-stats">
-      <div><dt>Time</dt><dd data-finish-time></dd></div>
-      <div><dt>Coins</dt><dd data-finish-coins></dd></div>
-      <div><dt>Best</dt><dd data-finish-best></dd><p class="badge-record" data-finish-badge hidden>New record!</p></div>
-    </dl>
-    <p class="win-unlock" data-finish-unlock hidden>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2.5"/><path d="M8 10V7.5a4 4 0 0 1 7.6-1.7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-      <span data-finish-unlock-text></span>
-    </p>
-    <p class="finish-ride" data-finish-ride></p>
-    <div class="modal-actions win-actions">
-      <button class="btn-play" type="button" data-action="next-level" data-finish-next data-autofocus>
-        <span class="btn-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></span>Next level
-      </button>
-      <div class="win-more">
-        <button class="win-btn" type="button" data-action="restart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"/></svg>Race again</button>
-        <button class="win-btn" type="button" data-action="levels"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg>Levels</button>
-        <button class="win-btn" type="button" data-action="exit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7M6 9.5V20h12V9.5"/></svg>Hub</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script src="assets/js/vendor/matter.min.js"></script>
-<script src="assets/js/physics.js?v=20261103w"></script>
-<script src="assets/js/games.js?v=20261103w"></script>
-<script src="assets/js/site.js?v=20261103w"></script>
-<script src="assets/js/game.js?v=20261103w"></script>
-<script src="assets/js/hub.js?v=20261103w"></script>
-<script src="assets/js/world.js?v=20261103w"></script>
+<script src="assets/js/data.js?v=20261026i"></script>
+<script src="assets/js/main.js?v=20261026i"></script>
 </body>
 </html>
