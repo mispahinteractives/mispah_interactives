@@ -5,9 +5,14 @@
    the services, how we work, and the contact details. The page builds the
    Games and Services sections from this file.
 
-   Store links: fill in appStore / playStore when a game is published. A
-   button only appears when its link is filled in. `web` opens the game in
-   the site's game player.
+   Store links: fill in appStore / playStore when a game is published.
+   Until then the App Store / Google Play badges show "Coming soon". `web`
+   opens the game in the site's game player. `screen` is the portrait
+   picture the phone on the home page shows, and `color` is the game's accent
+   colour. `focus` moves the picture inside the poster card (CSS
+   object-position, e.g. '50% 85%' to show the lower part). `frame: false` opens the game in a new tab instead of the site's
+   game player, for hosts that don't allow being shown inside another site
+   (Playgama games only run on Playgama's own pages).
    ========================================================================== */
 window.MG = {
   email: 'mizphagamestudios@gmail.com',
@@ -19,39 +24,34 @@ window.MG = {
 
   games: [
     {
-      id: 'monster-hills',
-      name: 'Monster Hills',
-      genre: 'Physics racing',
-      blurb: 'Drive a monster truck with real suspension over 20 levels of hills, jumps and broken bridges. Four rides and four themes.',
-      cover: 'assets/img/games/monster-hills-cover.jpg',
-      shape: 'landscape',
-      // the standalone game (aim/monster_hills), published like learning_adventure_link
-      stores: { appStore: '', playStore: '', web: 'https://mispahinteractives.github.io/monster_hills_link/' },
-      local: 'http://localhost/aim/monster_hills/dist/'      // used instead of `web` when the site runs on localhost
-    },
-    {
       id: 'animal-cafe',
+      frame: false,
       name: 'Animal Café',
       genre: 'Match-3 puzzle',
       blurb: 'Swap ingredients to fill hungry customers’ orders. Chain combos into power-ups across cosy café levels.',
       cover: 'assets/img/games/dog-crush-slide.jpg',
-      stores: { appStore: '', playStore: '', web: 'https://mizphagamestudios-hash.github.io/cafe_link/' }
+      color: '#2f9a4f',
+      stores: { appStore: '', playStore: '', web: 'https://playgama.ai/play/3bgnwkq2gjhq3j' }
     },
     {
-      id: 'cinemoji',
-      name: 'Cinemoji',
-      genre: 'Emoji quiz',
-      blurb: 'Find the emojis, match the movie. Crack the clue puzzles before the timer and your hearts run out.',
-      cover: 'assets/img/games/cinemoji-slide.jpg',
-      stores: { appStore: '', playStore: '', web: 'https://mizphagamestudios-hash.github.io/emoji_link/' }
+      id: 'cluemoji',
+      frame: false,
+      name: 'ClueMoji',
+      genre: 'Emoji puzzle',
+      blurb: 'Find the emojis, crack the clue. Thousands of little discoveries in a bright, friendly word puzzle.',
+      cover: 'assets/img/games/cluemoji-slide.jpg',
+      color: '#2b7de9',
+      stores: { appStore: '', playStore: '', web: 'https://playgama.ai/play/d5ypyd7tb4ayic' }
     },
     {
       id: 'baggage-out',
+      frame: false,
       name: 'Baggage Out!',
       genre: 'Traffic puzzle',
       blurb: 'Steer luggage-cart trains through a busy airport and guide every cart to its matching garage before time runs out.',
       cover: 'assets/img/games/baggage-out-slide.jpg',
-      stores: { appStore: '', playStore: '', web: 'https://mizphagamestudios-hash.github.io/baggageout_link/' }
+      color: '#e2394f',
+      stores: { appStore: '', playStore: '', web: 'https://playgama.com/game/baggage-out' }
     },
     {
       id: 'learning-adventure',
@@ -59,6 +59,7 @@ window.MG = {
       genre: 'Kids learning',
       blurb: 'Learn and play in a cheerful classroom with a friendly bear teacher. Made for small learners with big dreams.',
       cover: 'assets/img/games/learning-adventure-slide.jpg',
+      color: '#2f8ff0',
       shape: 'landscape',
       stores: { appStore: '', playStore: '', web: 'https://mispahinteractives.github.io/learning_adventure_link/' }
     },
@@ -68,7 +69,22 @@ window.MG = {
       genre: 'Card battle',
       blurb: 'Match colours and numbers, drop a +2 at the perfect moment, and empty your hand before your rivals.',
       cover: 'assets/img/games/uno-clash-slide.jpg',
+      color: '#4a2bd8',
       stores: { appStore: '', playStore: '', web: 'https://mispahinteractives.github.io/UNO_Link/' }
+    },
+    {
+      id: 'monster-hills',
+      name: 'Monster Hills',
+      genre: 'Physics racing',
+      blurb: 'Drive a monster truck with real suspension over 20 levels of hills, jumps and broken bridges. Four rides and four themes.',
+      cover: 'assets/img/games/monster-hills-cover.jpg',
+      screen: 'assets/img/games/monster-hills-phone.jpg',
+      focus: '50% 85%',
+      color: '#5b3cc4',
+      shape: 'landscape',
+      // the standalone game (aim/monster_hills), published like learning_adventure_link
+      stores: { appStore: '', playStore: '', web: 'https://mispahinteractives.github.io/monster_hills_link/' },
+      local: 'http://localhost/aim/monster_hills/dist/'      // used instead of `web` when the site runs on localhost
     }
   ],
 

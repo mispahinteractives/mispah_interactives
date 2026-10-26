@@ -20,67 +20,135 @@
   const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
   const webUrl = (g) => (local && g.local) || g.stores.web;
+  // games whose host won't run inside another site open in a new tab
+  const newTab = (g) => g.frame === false ? ' target="_blank" rel="noopener"' : '';
+  const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   /* ------------------------------------------------------------- icons */
   const ICON = {
     apple: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.4 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9-.7 0-1.8-.9-3-.8-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.1 2.8-2.3.9-1.3 1.3-2.6 1.3-2.6s-2.5-1-2.5-3.8zM14.1 5.8c.6-.8 1.1-1.9 1-3-.9 0-2.1.6-2.7 1.4-.6.7-1.1 1.8-1 2.9 1 .1 2.1-.5 2.7-1.3z"/></svg>',
     play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#00d1ff" d="M3.6 2.3c-.3.3-.4.7-.4 1.2v17c0 .5.1.9.4 1.2l9.6-9.7z"/><path fill="#00e676" d="M16.7 8.6 5.3 2c-.7-.4-1.3-.4-1.7.3l9.6 9.7z"/><path fill="#ffd600" d="m16.7 8.6-3.5 3.4 3.5 3.4 3.9-2.2c1.2-.7 1.2-1.8 0-2.5z"/><path fill="#ff3d57" d="m13.2 12-9.6 9.7c.4.6 1 .7 1.7.3l11.4-6.6z"/></svg>',
-    web: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>'
+    web: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.8v10.4l8.2-5.2z"/></svg>'
   };
+  // (each icon has a small idle motion of its own, in site.css: the
+  // gamepad's buttons blink, the 5 redraws, the phone pings, the screen
+  // types, the brush paints, the globe turns)
   const SERVICE_ICON = {
-    pad: '<rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.5" cy="11.5" r=".6"/><circle cx="17.5" cy="13.5" r=".6"/>',
-    html5: '<path d="M4 3h16l-1.5 16L12 21l-6.5-2z"/><path d="M15.5 7.5h-7l.3 3.5h6.4l-.4 4-2.8.9-2.8-.9-.1-1.6"/>',
-    mobile: '<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/>',
-    ui: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 8.5h18M7 13h5M7 16h8"/>',
-    brush: '<path d="M14.5 4.5 19.5 9.5 11 18l-5-5z"/><path d="M6 13c-2 0-3 1.5-3 3.5S2.5 20 2.5 20s3.5.5 5.5-1 2-3 1-4"/>',
-    web: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>'
+    pad: '<rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle class="i-blink" cx="15.5" cy="11.5" r=".6"/><circle class="i-blink i-late" cx="17.5" cy="13.5" r=".6"/>',
+    html5: '<path d="M4 3h16l-1.5 16L12 21l-6.5-2z"/><path class="i-redraw" d="M15.5 7.5h-7l.3 3.5h6.4l-.4 4-2.8.9-2.8-.9-.1-1.6"/>',
+    mobile: '<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/><circle class="i-ping" cx="14.6" cy="6" r=".9"/>',
+    ui: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 8.5h18"/><path class="i-type" d="M7 13h5"/><path class="i-type i-late" d="M7 16h8"/>',
+    brush: '<g class="i-sway"><path d="M14.5 4.5 19.5 9.5 11 18l-5-5z"/><path d="M6 13c-2 0-3 1.5-3 3.5S2.5 20 2.5 20s3.5.5 5.5-1 2-3 1-4"/></g>',
+    web: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path class="i-spin" d="M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>'
   };
 
   /* ------------------------------------------------------------- intro */
   $$('[data-game-count]').forEach((el) => { el.textContent = MG.games.length; });
-  // three covers fanned out and floating, with the featured game in front
-  const stack = $('#hero-stack');
-  ['learning-adventure', 'monster-hills', 'uno-clash'].forEach((id) => {
-    const g = MG.games.find((x) => x.id === id);
-    if (!g) return;
-    const f = document.createElement('figure');
-    f.innerHTML = `<img src="${esc(g.cover)}" alt="" loading="eager">`;
-    stack.appendChild(f);
-  });
+
+  /* ------------------------------------------------ the intro game screen */
+  // The phone shows our games' screenshots, fading from one game to the
+  // next every few seconds. Every visit starts on a different game. It
+  // pauses while the phone is off screen, the tab is in the background or
+  // the pointer rests on the phone.
+  (function phone() {
+    const art = $('.hero-art'), tilt = $('#phone'), screen = $('.phone-screen', tilt);
+    const shots = $('[data-shots]', screen), dots = $('[data-phone-dots]', art);
+    const games = MG.games, n = games.length;
+    const HOLD = 4200;
+    let at = -1, timer = 0, paused = false, seen = true;
+    let start = Math.floor(Math.random() * n);
+    try {                                                   // a different game on every visit
+      const k = 'mg-phone', last = parseInt(localStorage.getItem(k), 10);
+      if (!isNaN(last)) start = (last + 1) % n;
+      localStorage.setItem(k, String(start));
+    } catch (e) { /* storage blocked: a random game */ }
+    const imgs = games.map((g) => {
+      const im = document.createElement('img');
+      im.alt = ''; im.decoding = 'async';
+      shots.appendChild(im);
+      return im;
+    });
+    const want = (i) => { const im = imgs[i]; if (!im.src) im.src = games[i].screen || games[i].cover; };
+    dots.innerHTML = games.map((g, i) => `<button type="button" aria-label="Show ${esc(g.name)}" data-dot="${i}"></button>`).join('');
+    const dotEls = $$('button', dots);
+
+    function show(i) {
+      at = i;
+      const g = games[i];
+      want(i); want((i + 1) % n);
+      art.style.setProperty('--gc', g.color || '#6d3df2');
+      imgs.forEach((im, j) => im.classList.toggle('on', j === i));
+      $('[data-chip-img]', art).src = g.cover;
+      $('[data-chip-name]', art).textContent = g.name;
+      dotEls.forEach((d, j) => d.setAttribute('aria-current', String(j === i)));
+      next();
+    }
+    function next() {
+      clearTimeout(timer);
+      if (!paused && seen && !document.hidden) timer = setTimeout(() => show((at + 1) % n), HOLD);
+    }
+    dots.addEventListener('click', (e) => {
+      const d = e.target.closest('[data-dot]');
+      if (d && +d.dataset.dot !== at) show(+d.dataset.dot);
+    });
+    tilt.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') { paused = true; clearTimeout(timer); } });
+    tilt.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') { paused = false; next(); } });
+    document.addEventListener('visibilitychange', next);
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(([en]) => { seen = en.isIntersecting; next(); }).observe(art);
+    }
+    // on a desktop the phone turns gently towards the pointer
+    if (finePointer && !calm) {
+      const hero = $('.hero');
+      let raf = 0;
+      hero.addEventListener('pointermove', (e) => {
+        if (raf) return;
+        raf = requestAnimationFrame(() => {
+          raf = 0;
+          const r = hero.getBoundingClientRect();
+          const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+          tilt.style.setProperty('--px', (x * 12).toFixed(2) + 'deg');
+          tilt.style.setProperty('--py', (y * -8).toFixed(2) + 'deg');
+        });
+      });
+      hero.addEventListener('pointerleave', () => { tilt.style.removeProperty('--px'); tilt.style.removeProperty('--py'); });
+    }
+    show(start);
+  })();
 
   /* ------------------------------------------------------------- games */
-  // The first game is featured (a big card). Every game shows the App Store
+  // Every game shows the App Store
   // and Google Play badges: with a link (data.js) they open the store; until
   // then they show "Coming soon". Play on the web opens the game player.
   const STORE = {
     app: { name: 'App Store', title: 'the App Store', small: 'Download on the', icon: ICON.apple, key: 'appStore', device: 'iPhone and iPad' },
-    play: { name: 'Google Play', title: 'Google Play', small: 'Get it on', icon: ICON.play, key: 'playStore', device: 'Android phones and tablets' }
+    play: { name: 'Google Play', title: 'Google Play', small: 'GET IT ON', icon: ICON.play, key: 'playStore', device: 'Android phones and tablets' }
   };
   const badge = (g, which) => {
     const st = STORE[which], link = (g.stores || {})[st.key];
     const inner = `${st.icon}<span><small>${st.small}</small><b>${st.name}</b></span>`;
     return link
-      ? `<a class="badge" href="${esc(link)}" target="_blank" rel="noopener" aria-label="${esc(g.name)} on ${st.name}">${inner}</a>`
-      : `<button class="badge" type="button" data-soon="${which}" data-game="${esc(g.id)}" aria-label="${esc(g.name)} on ${st.name}: coming soon">${inner}</button>`;
+      ? `<a class="badge badge-${which}" href="${esc(link)}" target="_blank" rel="noopener" aria-label="${esc(g.name)} on ${st.name}">${inner}</a>`
+      : `<button class="badge badge-${which}" type="button" data-soon="${which}" data-game="${esc(g.id)}" aria-label="${esc(g.name)} on ${st.name}: coming soon">${inner}</button>`;
   };
   const list = $('#games-list');
   MG.games.forEach((g, i) => {
     const web = webUrl(g);
     const card = document.createElement('article');
-    card.className = 'game reveal' + (i === 0 ? ' featured' : '');
+    card.className = 'game reveal';
     card.style.setProperty('--d', (i % 3) * 90 + 'ms');
+    card.style.setProperty('--gc', g.color || '#6d3df2');
+    // a tall poster: the game's portrait picture fills the card, and the
+    // details sit on frosted glass at the bottom
     card.innerHTML = `
-      <div class="game-cover">
-        <img src="${esc(g.cover)}" alt="${esc(g.name)}" loading="lazy">
-        <span class="game-tag">${esc(g.genre)}</span>
-        ${i === 0 ? '<span class="feature-flag">Featured</span>' : ''}
-      </div>
+      <div class="game-cover"><img src="${esc(g.screen || g.cover)}" alt="${esc(g.name)}" loading="lazy"${g.focus ? ` style="object-position:${esc(g.focus)}"` : ''}></div>
+      <span class="game-tag">${esc(g.genre)}</span>
       <div class="game-body">
         <h3>${esc(g.name)}</h3>
-        <p class="game-blurb">${esc(g.blurb)}</p>
         <div class="game-actions">
+          ${web ? `<a class="play-web" href="${esc(web)}" data-play="${esc(g.id)}"${newTab(g)} aria-label="Play ${esc(g.name)} on the web${g.frame === false ? ' (opens in a new tab)' : ''}"><i>${ICON.web}</i><span><small>Play now on the</small><b>Web</b></span></a>` : ''}
           ${badge(g, 'app')}${badge(g, 'play')}
-          ${web ? `<a class="play-web" href="${esc(web)}" data-play="${esc(g.id)}">${ICON.web}Play on web</a>` : ''}
         </div>
       </div>`;
     list.appendChild(card);
@@ -138,6 +206,27 @@
     if (g) Soon.open(g, b.dataset.soon);
   });
 
+  /* ------------------------------------------------------- card tilt */
+  // On a desktop, game cards and service tiles lean a little towards the pointer and catch a soft
+  // light where it rests.
+  if (finePointer && !calm) {
+    document.addEventListener('pointermove', (e) => {
+      const c = e.target.closest && e.target.closest('.game, .service');
+      if (!c) return;
+      const r = c.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+      const k = 4;
+      c.style.setProperty('--rx', ((0.5 - y) * k).toFixed(2) + 'deg');
+      c.style.setProperty('--ry', ((x - 0.5) * k).toFixed(2) + 'deg');
+      c.style.setProperty('--mx', (x * 100).toFixed(1) + '%');
+      c.style.setProperty('--my', (y * 100).toFixed(1) + '%');
+    }, { passive: true });
+    document.addEventListener('pointerout', (e) => {
+      const c = e.target.closest && e.target.closest('.game, .service');
+      if (c && !c.contains(e.relatedTarget)) { c.style.removeProperty('--rx'); c.style.removeProperty('--ry'); }
+    });
+  }
+
   /* ---------------------------------------------------------- services */
   $('#services-list').innerHTML = MG.services.map((sv, i) => `
     <article class="service reveal" style="--d:${(i % 3) * 80}ms">
@@ -149,11 +238,57 @@
       <p>${esc(sv.text)}</p>
     </article>`).join('');
   $('#process-list').innerHTML = MG.process.map((p) => `<li><b>${esc(p.title)}</b><span>${esc(p.text)}</span></li>`).join('');
+  // the icons draw themselves in as their tile arrives (pathLength 1 lets
+  // one stroke-dash value fit every shape)
+  $$('.service-icon svg :is(path, rect, circle)').forEach((el) => el.setAttribute('pathLength', '1'));
+
+  /* ------------------------------------- services and how we work: motion */
+  // Everything runs on its own as you scroll. How we work fills its
+  // timeline step by step as the steps come into view, the newest step
+  // softly pulsing. The section's shapes float and drift at different
+  // speeds as you scroll past. Idle motion (icons, shapes, the pulse) only
+  // runs while the section is on screen.
+  (function servicesMotion() {
+    const sec = $('#services'), fl = $('.floaters', sec), ol = $('#process-list'), steps = $$('li', ol);
+    let last = -1;
+    function reach(i) {
+      if (i <= last) return;
+      const from = last;
+      last = i;
+      steps.forEach((li, j) => {
+        if (j > from && j <= i) li.style.setProperty('--sd', (j - from - 1) * 180 + 'ms');
+        li.classList.toggle('on', j <= i);
+        li.classList.toggle('done', j < i);
+        li.classList.toggle('current', j === i);
+      });
+      ol.style.setProperty('--fill', String(i / Math.max(1, steps.length - 1)));
+    }
+    if (!('IntersectionObserver' in window) || calm) { reach(steps.length - 1); return; }
+    const io = new IntersectionObserver((entries) => entries.forEach((en) => {
+      if (en.isIntersecting) reach(steps.indexOf(en.target));
+    }), { rootMargin: '0px 0px -16% 0px', threshold: 0.6 });
+    steps.forEach((li) => io.observe(li));
+
+    // drift: the shapes move at their own speed (--k) as the section scrolls
+    let raf = 0, live = false;
+    const drift = () => {
+      raf = 0;
+      const r = sec.getBoundingClientRect();
+      fl.style.setProperty('--sy', ((r.top + r.height / 2 - innerHeight / 2) / innerHeight).toFixed(3));
+    };
+    const onScroll = () => { if (live && !raf) raf = requestAnimationFrame(drift); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    new IntersectionObserver(([en]) => {
+      live = en.isIntersecting;
+      sec.classList.toggle('live', live);
+      if (live) drift();
+    }, { rootMargin: '80px 0px' }).observe(sec);
+  })();
 
   /* ----------------------------------------------------- scroll reveals */
   // content rises softly into place as it comes into view (once)
   const reveals = $$('.reveal');
-  if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if ('IntersectionObserver' in window && !calm) {
     const io = new IntersectionObserver((entries) => entries.forEach((en) => {
       if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
     }), { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
@@ -171,6 +306,7 @@
     function open(g) {
       const url = webUrl(g);
       if (!url) return;
+      if (g.frame === false) { window.open(url, '_blank', 'noopener'); return; }
       if (frame) frame.remove(); else back = document.activeElement;
       game = g;
       el.classList.toggle('is-portrait', g.shape !== 'landscape');

@@ -13,8 +13,8 @@
 <script>document.documentElement.classList.add('js')</script>
 <link rel="preload" href="assets/fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/plus-jakarta-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/fonts.css?v=20261026i">
-<link rel="stylesheet" href="assets/css/site.css?v=20261026i">
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261026t">
+<link rel="stylesheet" href="assets/css/site.css?v=20261026t">
 </head>
 <body>
 <a class="skip" href="#games">Skip to content</a>
@@ -29,14 +29,13 @@
       <a href="#services">Services</a>
       <a href="#contact">Contact</a>
     </nav>
-    <a class="header-cta" href="#contact">Start a project <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    <a class="header-cta" href="#contact">Start a project<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
   </div>
 </header>
 
 <main>
   <!-- intro -->
   <section class="hero" aria-labelledby="hero-title">
-    <div class="aura" aria-hidden="true"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
     <div class="wrap hero-in">
       <div class="hero-text">
         <p class="pill reveal"><span class="pill-dot" aria-hidden="true"></span>Independent game studio</p>
@@ -52,11 +51,23 @@
           <li><b>1</b><span>team, idea to launch</span></li>
         </ul>
       </div>
-      <div class="hero-art reveal" aria-hidden="true">
-        <div class="stack" id="hero-stack"></div>
-        <div class="seal">
+      <!-- a phone showing our games: each time it "loads", a different game -->
+      <div class="hero-art reveal" aria-roledescription="carousel" aria-label="Our games on a phone">
+        <span class="phone-glow" aria-hidden="true"></span>
+        <div class="phone-tilt" id="phone">
+          <div class="phone">
+            <span class="phone-island" aria-hidden="true"></span>
+            <div class="phone-screen">
+              <div class="ps-shots" data-shots aria-hidden="true"></div>
+              <span class="ps-glare" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+        <div class="phone-chip" aria-hidden="true"><img data-chip-img alt=""><span><small>Now showing</small><b data-chip-name></b></span></div>
+        <div class="phone-dots" data-phone-dots></div>
+        <div class="seal" aria-hidden="true">
           <svg viewBox="0 0 200 200"><defs><path id="seal-ring" d="M100,100 m-74,0 a74,74 0 1,1 148,0 a74,74 0 1,1 -148,0"/></defs>
-            <text><textPath href="#seal-ring">PLAY · CREATE · DELIGHT · PLAY · CREATE · DELIGHT ·</textPath></text></svg>
+            <text><textPath href="#seal-ring" textLength="462" lengthAdjust="spacing">PLAY · CREATE · DELIGHT ·</textPath></text></svg>
           <img src="assets/img/logo-icon.png" alt="">
         </div>
       </div>
@@ -64,12 +75,12 @@
   </section>
 
   <!-- 01 our games -->
-  <section class="section" id="games" aria-labelledby="games-title">
+  <section class="section section-feature" id="games" aria-labelledby="games-title">
     <div class="wrap">
-      <header class="section-head reveal">
-        <p class="kicker"><span>01</span>Our games</p>
+      <header class="section-head reveal" data-num="01">
+        <p class="kicker"><span>01</span>Worlds made to be played</p>
         <div class="section-head-row">
-          <h2 id="games-title">Worlds made to be <em>played</em>.</h2>
+          <h2 id="games-title">Our <em>games</em></h2>
           <p>Every game is designed, drawn and built in-house. Play them right here in your browser, with App Store and Google Play releases on the way.</p>
         </div>
       </header>
@@ -79,12 +90,17 @@
   </section>
 
   <!-- 02 our services -->
-  <section class="section section-soft" id="services" aria-labelledby="services-title">
+  <section class="section section-soft section-feature" id="services" aria-labelledby="services-title">
+    <!-- soft shapes that float and drift as you scroll -->
+    <div class="floaters" aria-hidden="true">
+      <i class="fl fl-ring"></i><i class="fl fl-plus"></i><i class="fl fl-square"></i><i class="fl fl-dot"></i>
+      <i class="fl fl-play"></i><i class="fl fl-spark">✦</i><i class="fl fl-ring fl-ring-2"></i><i class="fl fl-dot fl-dot-2"></i>
+    </div>
     <div class="wrap">
-      <header class="section-head reveal">
-        <p class="kicker"><span>02</span>Our services</p>
+      <header class="section-head reveal" data-num="02">
+        <p class="kicker"><span>02</span>Everything a great game needs</p>
         <div class="section-head-row">
-          <h2 id="services-title">Everything a great game <em>needs</em>.</h2>
+          <h2 id="services-title">Our <em>services</em></h2>
           <p>From the first prototype to the final pixel: one studio for games, art, interfaces and the web.</p>
         </div>
       </header>
@@ -108,7 +124,7 @@
           <ul class="contact-list">
             <li>
               <span class="cl-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/><path d="M3.5 6.5 12 13l8.5-6.5"/></svg></span>
-              <div><p class="cl-label">Email</p><a class="cl-value" href="mailto:mizphagamestudios@gmail.com">mizphagamestudios@gmail.com</a>
+              <div><p class="cl-label">Email</p><a class="cl-value" href="mailto:mizphagamestudios@gmail.com">mizphagamestudios@<wbr>gmail.com</a>
                 <button class="cl-copy" type="button" data-copy="mizphagamestudios@gmail.com">Copy email</button></div>
             </li>
             <li>
@@ -211,7 +227,7 @@
   </div>
 </div>
 
-<script src="assets/js/data.js?v=20261026i"></script>
-<script src="assets/js/main.js?v=20261026i"></script>
+<script src="assets/js/data.js?v=20261026t"></script>
+<script src="assets/js/main.js?v=20261026t"></script>
 </body>
 </html>
