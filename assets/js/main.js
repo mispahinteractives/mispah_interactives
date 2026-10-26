@@ -232,7 +232,7 @@
     view.addEventListener('focusin', (e) => {
       const it = e.target.closest('.game-item');
       target = 0; factor = 0; apply();
-      if (it) setPos(-(it.offsetLeft - originals[0].offsetLeft) + 24);
+      if (it) setPos(-(it.offsetLeft - originals[0].offsetLeft));
     });
     view.addEventListener('focusout', () => { target = 1; wake(); });
     // drag or swipe the row
