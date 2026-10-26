@@ -287,6 +287,20 @@ p { margin: 0; }
 .play-web i { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 9px; background: linear-gradient(180deg, #fff, #ece6ff); color: var(--violet); box-shadow: 0 2px 6px rgba(20, 0, 80, 0.35); }
 .play-web svg { width: 16px; height: 16px; fill: currentColor; }
 .play-web span { display: grid; text-align: left; line-height: 1; white-space: nowrap; }
+/* a game that's coming soon: a quiet, unclickable sibling of Play on the web */
+.play-soon {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 48px; padding: 0 20px 0 8px; grid-column: 1 / -1; border-radius: 999px; cursor: default;
+  border: 1.5px dashed #c9bdf2; background: linear-gradient(180deg, #fff, var(--violet-soft)); color: var(--violet-deep); font-family: var(--sans);
+}
+.play-soon i { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--violet-soft); color: var(--violet); }
+.play-soon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.play-soon span { display: grid; text-align: left; line-height: 1; white-space: nowrap; }
+.play-soon small { margin-bottom: 3px; font-size: 8.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.75; }
+.play-soon b { font-size: 16.5px; font-weight: 700; letter-spacing: -0.01em; }
+.game-soon {
+  position: absolute; right: 16px; top: 16px; z-index: 2; padding: 7px 12px; border-radius: 999px; background: linear-gradient(180deg, #2d2546, var(--ink)); color: #fff;
+  font: 700 11px/1 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 6px 14px -6px rgba(0, 0, 0, 0.5);
+}
 .play-web small { margin-bottom: 3px; font-size: 8.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.88; }
 .play-web b { font-size: 16.5px; font-weight: 700; letter-spacing: -0.01em; }
 .rail-hint { display: none; }
@@ -561,7 +575,8 @@ html.modal-on, html.modal-on body { overflow: hidden; }
   .game:hover, .service:hover { transform: none; }
   .rail-hint { display: flex; align-items: center; gap: 10px; justify-content: center; margin-top: 4px; font-size: 13px; color: var(--muted); }
   .rail-hint span { width: 34px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, var(--violet), var(--amber)); }
-  .badge, .play-web { height: 46px; }
+  .badge, .play-web, .play-soon { height: 46px; }
+  .game-soon { right: 12px; top: 12px; }
   .badge { gap: 7px; padding: 0 10px; }
   .badge svg { width: 20px; height: 20px; }
   .badge-play svg { width: 18px; height: 18px; }
@@ -602,6 +617,7 @@ html.modal-on, html.modal-on body { overflow: hidden; }
   .game-item { flex-basis: 90%; }
   .game .game-body { padding: 14px 10px 10px; }
   .game-actions { gap: 7px; }
+  .game-soon { left: 12px; right: auto; top: 46px; }
   .badge { gap: 6px; padding: 0 8px; }
   .badge svg, .badge-play svg { width: 17px; height: 17px; }
   .badge small, .badge-play small { font-size: 7px; }

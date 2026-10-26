@@ -12,7 +12,9 @@
    colour. `focus` moves the picture inside the poster card (CSS
    object-position, e.g. '50% 85%' to show the lower part). `frame: false` opens the game in a new tab instead of the site's
    game player, for hosts that don't allow being shown inside another site
-   (Playgama games only run on Playgama's own pages).
+   (Playgama games only run on Playgama's own pages). `soon: true` shows the
+   game as Coming soon: no Play on the Web (its link is kept for later);
+   remove the line to make it playable again.
    ========================================================================== */
 window.MG = {
   email: 'mizphagamestudios@gmail.com',
@@ -55,6 +57,7 @@ window.MG = {
     },
     {
       id: 'learning-adventure',
+      soon: true,
       name: 'Learning Adventure',
       genre: 'Kids learning',
       blurb: 'Learn and play in a cheerful classroom with a friendly bear teacher. Made for small learners with big dreams.',
@@ -65,6 +68,7 @@ window.MG = {
     },
     {
       id: 'uno-clash',
+      soon: true,
       name: 'UNO Clash',
       genre: 'Card battle',
       blurb: 'Match colours and numbers, drop a +2 at the perfect moment, and empty your hand before your rivals.',
@@ -74,6 +78,7 @@ window.MG = {
     },
     {
       id: 'monster-hills',
+      soon: true,
       name: 'Monster Hills',
       genre: 'Physics racing',
       blurb: 'Drive a monster truck with real suspension over 20 levels of hills, jumps and broken bridges. Four rides and four themes.',

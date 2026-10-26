@@ -19,7 +19,8 @@
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
   const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-  const webUrl = (g) => (local && g.local) || g.stores.web;
+  // (a game marked `soon` isn't playable yet)
+  const webUrl = (g) => g.soon ? '' : (local && g.local) || g.stores.web;
   // games whose host won't run inside another site open in a new tab
   const newTab = (g) => g.frame === false ? ' target="_blank" rel="noopener"' : '';
   const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -29,7 +30,8 @@
   const ICON = {
     apple: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.4 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9-.7 0-1.8-.9-3-.8-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.1 2.8-2.3.9-1.3 1.3-2.6 1.3-2.6s-2.5-1-2.5-3.8zM14.1 5.8c.6-.8 1.1-1.9 1-3-.9 0-2.1.6-2.7 1.4-.6.7-1.1 1.8-1 2.9 1 .1 2.1-.5 2.7-1.3z"/></svg>',
     play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#00d1ff" d="M3.6 2.3c-.3.3-.4.7-.4 1.2v17c0 .5.1.9.4 1.2l9.6-9.7z"/><path fill="#00e676" d="M16.7 8.6 5.3 2c-.7-.4-1.3-.4-1.7.3l9.6 9.7z"/><path fill="#ffd600" d="m16.7 8.6-3.5 3.4 3.5 3.4 3.9-2.2c1.2-.7 1.2-1.8 0-2.5z"/><path fill="#ff3d57" d="m13.2 12-9.6 9.7c.4.6 1 .7 1.7.3l11.4-6.6z"/></svg>',
-    web: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.8v10.4l8.2-5.2z"/></svg>'
+    web: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.8v10.4l8.2-5.2z"/></svg>',
+    clock: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>'
   };
   // (each icon has a small idle motion of its own, in site.css: the
   // gamepad's buttons blink, the 5 redraws, the phone pings, the screen
@@ -144,9 +146,11 @@
     card.innerHTML = `
       <div class="game-cover"><img src="${esc(g.screen || g.cover)}" alt="${esc(g.name)}" loading="lazy"${g.focus ? ` style="object-position:${esc(g.focus)}"` : ''}></div>
       <span class="game-tag">${esc(g.genre)}</span>
+      ${g.soon ? '<span class="game-soon">Coming soon</span>' : ''}
       <div class="game-body">
         <h3>${esc(g.name)}</h3>
         <div class="game-actions">
+          ${g.soon ? `<span class="play-soon"><i>${ICON.clock}</i><span><small>Launching</small><b>Coming soon</b></span></span>` : ''}
           ${web ? `<a class="play-web" href="${esc(web)}" data-play="${esc(g.id)}"${newTab(g)} aria-label="Play ${esc(g.name)} on the web${g.frame === false ? ' (opens in a new tab)' : ''}"><i>${ICON.web}</i><span><small>Play now on the</small><b>Web</b></span></a>` : ''}
           ${badge(g, 'app')}${badge(g, 'play')}
         </div>

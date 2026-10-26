@@ -40,6 +40,8 @@ Each game in `data.js` has `stores: { appStore, playStore, web }`, a `cover`, a 
 
 Games with `frame: false` open in a **new tab** instead of the player: their host doesn't allow being shown inside another site. That's the case for the Playgama links (Animal Café, ClueMoji, Baggage Out!), whose games only run on Playgama's own pages.
 
+Games marked `soon: true` in `data.js` (Learning Adventure, UNO Clash and Monster Hills for now) show **Coming soon** instead of Play on the Web, with a Coming soon tag on the picture; their web links stay in `data.js`, so removing the line makes a game playable again.
+
 Monster Hills plays from `https://mispahinteractives.github.io/monster_hills_link/` (its `web` link). Publish it there first (see the README in `aim/monster_hills`); on `localhost` the site uses the local build (`local`) instead, so it can be tried before it's published.
 
 ## Contact form
