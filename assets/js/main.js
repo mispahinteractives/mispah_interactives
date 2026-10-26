@@ -361,7 +361,13 @@
 
   /* ------------------------------------------------- header and menu */
   const header = $('.header');
-  const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 8);
+  // (two switch points, so it can't flicker back and forth at one spot)
+  let tight = false;
+  const onScroll = () => {
+    const y = window.scrollY;
+    if (!tight && y > 24) tight = true; else if (tight && y < 6) tight = false;
+    header.classList.toggle('scrolled', tight);
+  };
   window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
   // the menu link of the section in view is highlighted
   const links = $$('.nav a');
