@@ -23,12 +23,20 @@ A clean white site with a quiet, premium feel. The palette comes from the logo: 
 - **Header:** the logo, a pill-shaped menu that highlights the section you're in, and Start a project. It turns into a frosted bar and tightens as you scroll.
 - **Intro:** a white background with soft blue waves, the headline, three figures, and a slim, upright **phone** (a thin dark body and the camera notch, no buttons or status bar) that shows our games' screenshots. Every 2 seconds it fades to the next game, round and round,, and every visit starts on a different game. Dots to pick a game and a slowly turning "Play · Create · Delight" seal sit around it. On a desktop the phone turns gently towards the pointer; it only rests while it's off screen or the tab is in the background.
 - **Feature sections:** Our Games and Our Services get more room than the rest of the page: a wider layout (1360px), more space above and below, larger headings with a big outlined section number (`data-num`) behind them, bigger game posters and service tiles.
-- **Our Games (01):** tall **poster cards**, in the order of `data.js`. Each game's portrait picture (`screen`, or `cover`) fills the card, the genre sits on frosted glass at the top, and the name and buttons sit on a frosted glass panel at the bottom. `focus` in data.js moves the picture inside the card (Monster Hills uses it to show its truck). On hover the card lifts and leans towards the pointer, and the picture zooms gently. Each card has **Play on the Web** (a violet pill) plus the **App Store** and **Google Play** badges in the official black style. On phones the cards become a swipe row with the next one peeking in.
-- **Our Services (02):** raised, numbered tiles. As each tile scrolls in it rises into place, a soft light sweeps across it and its icon pops in and draws itself; then every icon keeps a small motion of its own (the gamepad's buttons blink, the phone pings, the screen types, the brush paints, the globe turns). Soft shapes float in the background and drift at different speeds as you scroll.
-- **How we work:** a timeline (a vertical one on phones) that fills step by step as the steps scroll into view, with the newest step softly pulsing. All of this runs on its own while scrolling, and only while the section is on screen.
+- **Our Games (01):** tall **poster cards** in **one row that moves by itself**, round and round (a second copy of the cards follows the first, so it loops with no seam). When the section first comes into view the six games sweep past quickly, then the row eases into a slow, steady glide; under the mouse it slows right down (it never stops), and it can be dragged or swiped. Each game's portrait picture (`screen`, or `cover`) fills its card, with the genre at the top and the name and buttons on a white panel at the bottom; `focus` in data.js moves the picture inside the card. With reduced motion it's a plain row to scroll by hand.
+- **Our Services (02):** raised, numbered tiles. As each tile scrolls in it rises into place, a soft light sweeps across it and its icon pops in and draws itself, then floats gently. Soft shapes float in the background and drift at different speeds as you scroll.
+- **How we work:** a timeline (a vertical one on phones) that fills step by step as the steps scroll into view, with the newest step pulsing a few times. All of this runs on its own while scrolling, and only while the section is on screen.
 - **Contact Details (03):** one framed card: the details on a dark panel with a soft glow, and the form (with floating labels) beside it.
 - **Footer:** a closing line in large serif type, the logo, links and the email.
 - **Motion:** sections rise softly into place as they come into view, buttons and cards respond to the pointer, and the intro phone fades from game to game. Everything stays still with reduced motion turned on (the intro phone still changes games, without the fade).
+
+## Keeping it smooth
+
+The site is built to stay light on phones and laptops; keep it that way when changing it:
+
+- Move things with `transform` / `opacity` (the graphics card does that for free). Don't animate shapes *inside* an SVG icon, shadows or sizes forever: those make the browser redo layout or paint on every frame.
+- No live blur (`backdrop-filter`, `filter: blur`) on anything that moves or sits over something that moves; use solid or semi-solid colours and radial gradients instead.
+- The games row is a browser-run animation (only its speed is steered from main.js), and every moving part rests while it's off screen.
 
 ## Games and store links
 
