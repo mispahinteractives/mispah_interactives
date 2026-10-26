@@ -33,9 +33,6 @@
     web: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.8v10.4l8.2-5.2z"/></svg>',
     clock: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>'
   };
-  // (each icon has a small idle motion of its own, in site.css: the
-  // gamepad's buttons blink, the 5 redraws, the phone pings, the screen
-  // types, the brush paints, the globe turns)
   const SERVICE_ICON = {
     pad: '<rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle class="i-blink" cx="15.5" cy="11.5" r=".6"/><circle class="i-blink i-late" cx="17.5" cy="13.5" r=".6"/>',
     html5: '<path d="M4 3h16l-1.5 16L12 21l-6.5-2z"/><path class="i-redraw" d="M15.5 7.5h-7l.3 3.5h6.4l-.4 4-2.8.9-2.8-.9-.1-1.6"/>',
@@ -94,7 +91,7 @@
     });
     document.addEventListener('visibilitychange', next);
     if ('IntersectionObserver' in window) {
-      new IntersectionObserver(([en]) => { seen = en.isIntersecting; next(); }).observe(art);
+      new IntersectionObserver((ens) => { seen = ens[ens.length - 1].isIntersecting; next(); }).observe(art);
     }
     // on a desktop the phone turns gently towards the pointer
     if (finePointer && !calm) {
@@ -130,12 +127,11 @@
       ? `<a class="badge badge-${which}" href="${esc(link)}" target="_blank" rel="noopener" aria-label="${esc(g.name)} on ${st.name}">${inner}</a>`
       : `<button class="badge badge-${which}" type="button" data-soon="${which}" data-game="${esc(g.id)}" aria-label="${esc(g.name)} on ${st.name}: coming soon">${inner}</button>`;
   };
-  const list = $('#games-list');
+  const list = $('#games-list .games-track');
   MG.games.forEach((g, i) => {
     const web = webUrl(g);
     const item = document.createElement('div');
-    item.className = 'game-item reveal';
-    item.style.setProperty('--d', (i % 3) * 90 + 'ms');
+    item.className = 'game-item';
     item.style.setProperty('--gc', g.color || '#6d3df2');
     const card = document.createElement('article');
     card.className = 'game';
@@ -156,6 +152,110 @@
     item.appendChild(card);
     list.appendChild(item);
   });
+  $$('img', list).forEach((im) => { im.draggable = false; });
+
+  /* ---------------------------------------------------- the games row */
+  // All the games sit in one row that moves by itself, round and round.
+  // A second copy of the cards follows the first, so the row wraps with no
+  // seam. When the section first comes into view the first six sweep past
+  // quickly, then the row eases into a slow, steady glide; the speed only
+  // ever changes smoothly, so it never jumps or stops. Under the mouse it
+  // slows right down (but keeps moving) so the buttons are easy to click;
+  // it can also be dragged or swiped. With reduced motion it's a plain row
+  // to scroll by hand.
+  (function gamesRow() {
+    const view = $('#games-list'), track = $('.games-track', view);
+    const originals = $$('.game-item', track);
+    if (calm || !originals.length) { view.classList.add('is-static'); return; }
+    originals.forEach((it) => {
+      const c = it.cloneNode(true);
+      c.classList.add('is-copy'); c.setAttribute('aria-hidden', 'true');
+      $$('a, button', c).forEach((el) => { el.tabIndex = -1; });
+      track.appendChild(c);
+    });
+    const copy0 = $('.is-copy', track);
+    // The steady glide is a plain looping animation (a slide by one set of
+    // cards) run by the browser itself, so it costs next to nothing. Only
+    // its speed (playbackRate) is steered from here, and only while it
+    // changes: the opening sweep, slowing under the mouse, dragging.
+    const slow = () => (innerWidth < 680 ? 26 : 40);              // px per second, the steady glide
+    const INTRO = 2.4;                                            // seconds for the opening sweep past all six
+    let setW = 1, anim = null, introT = -1, boost = 1, factor = 1, target = 1, seen = false, raf = 0, last = 0, drag = null, suppress = false;
+    const dur = () => setW / slow() * 1000;
+    const pos = () => anim ? -((anim.currentTime || 0) % dur()) / dur() * setW : 0;        // where the row is, in px
+    const setPos = (x) => { const d = dur(); anim.currentTime = ((((-x / setW) % 1) + 1) % 1) * d; };
+    function build() {
+      const keep = anim ? pos() : 0;
+      if (anim) anim.cancel();
+      setW = Math.max(1, copy0.offsetLeft - originals[0].offsetLeft);
+      anim = track.animate([{ transform: 'translate3d(0, 0, 0)' }, { transform: `translate3d(${-setW}px, 0, 0)` }], { duration: dur(), iterations: Infinity, easing: 'linear' });
+      setPos(keep);
+      apply();
+    }
+    // the speed: the opening boost (fast at first, easing to 1 so it meets
+    // the glide at exactly its speed) times the hover factor
+    const apply = () => {
+      if (!anim) return;
+      anim.playbackRate = Math.max(0.0001, boost * factor);
+      if (drag || !seen) anim.pause(); else if (anim.playState !== 'running') anim.play();
+    };
+    function steer(t) {
+      raf = 0;
+      const dt = last ? Math.min(0.05, (t - last) / 1000) : 0;
+      last = t;
+      if (introT >= 0 && introT < INTRO) {
+        introT += dt * factor;
+        const k = Math.max(0, 1 - introT / INTRO);
+        const v0 = slow() + 3 * Math.max(0, setW - slow() * INTRO) / INTRO;
+        boost = 1 + (v0 / slow() - 1) * k * k;
+      } else boost = 1;
+      factor += (target - factor) * Math.min(1, dt * 3);
+      if (Math.abs(target - factor) < 0.002) factor = target;
+      apply();
+      if (seen && ((introT >= 0 && introT < INTRO) || factor !== target)) raf = requestAnimationFrame(steer);
+      else last = 0;
+    }
+    const wake = () => { if (!raf && seen) { last = 0; raf = requestAnimationFrame(steer); } };
+    build();
+    // (fast scrolling can report several changes at once: the last one counts)
+    new IntersectionObserver((ens) => {
+      const en = ens[ens.length - 1];
+      seen = en.isIntersecting;
+      if (seen && introT < 0 && en.intersectionRatio >= 0.25) introT = 0;
+      apply(); wake();
+    }, { threshold: [0, 0.25] }).observe(view);
+    let rt = 0;
+    window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(build, 150); });
+    // slow down under the mouse; keyboard focus brings the card into view
+    view.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') { target = 0.3; wake(); } });
+    view.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') { target = 1; wake(); } });
+    view.addEventListener('focusin', (e) => {
+      const it = e.target.closest('.game-item');
+      target = 0; factor = 0; apply();
+      if (it) setPos(-(it.offsetLeft - originals[0].offsetLeft) + 24);
+    });
+    view.addEventListener('focusout', () => { target = 1; wake(); });
+    // drag or swipe the row
+    view.addEventListener('pointerdown', (e) => { if (e.button === 0) drag = { id: e.pointerId, sx: e.clientX, x0: pos(), moved: false, held: false }; });
+    view.addEventListener('pointermove', (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dx = e.clientX - drag.sx;
+      if (!drag.moved && Math.abs(dx) > 6) {
+        drag.moved = true; view.setPointerCapture(e.pointerId); view.classList.add('dragging');
+        introT = INTRO; boost = 1; drag.x0 = pos(); drag.sx = e.clientX; apply();
+      }
+      if (drag.moved) setPos(drag.x0 + (e.clientX - drag.sx));
+    });
+    const end = (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      if (drag.moved) suppress = true;
+      drag = null; view.classList.remove('dragging'); apply();
+      setTimeout(() => { suppress = false; }, 0);
+    };
+    view.addEventListener('pointerup', end);
+    view.addEventListener('pointercancel', end);
+    view.addEventListener('click', (e) => { if (suppress) { e.preventDefault(); e.stopPropagation(); suppress = false; } }, true);
+  })();
 
   /* ------------------------------------------------------- coming soon */
   // A store badge without a link opens this card (a sheet from the bottom on
@@ -281,8 +381,8 @@
     };
     const onScroll = () => { if (live && !raf) raf = requestAnimationFrame(drift); };
     window.addEventListener('scroll', onScroll, { passive: true });
-    new IntersectionObserver(([en]) => {
-      live = en.isIntersecting;
+    new IntersectionObserver((ens) => {
+      live = ens[ens.length - 1].isIntersecting;
       sec.classList.toggle('live', live);
       if (live) drift();
     }, { rootMargin: '80px 0px' }).observe(sec);

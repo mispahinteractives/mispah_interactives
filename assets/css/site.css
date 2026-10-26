@@ -94,15 +94,15 @@ p { margin: 0; }
 /* ---------- header: a frosted bar that tightens when you scroll ---------- */
 /* the header floats over the page (fixed, not in the flow), so tightening
    it as you scroll never moves the page itself */
-.header { position: fixed; top: 0; left: 0; right: 0; z-index: 50; transition: background-color 0.35s, box-shadow 0.35s, backdrop-filter 0.35s; }
-.header.scrolled { background: rgba(255, 255, 255, 0.82); backdrop-filter: saturate(1.6) blur(14px); -webkit-backdrop-filter: saturate(1.6) blur(14px); box-shadow: 0 1px 0 rgba(23, 17, 42, 0.06); }
+.header { position: fixed; top: 0; left: 0; right: 0; z-index: 50; transition: background-color 0.35s, box-shadow 0.35s; }
+.header.scrolled { background: rgba(255, 255, 255, 0.96); box-shadow: 0 1px 0 rgba(23, 17, 42, 0.06); }
 .header-in { display: flex; align-items: center; justify-content: space-between; gap: 20px; height: 84px; transition: height 0.35s var(--ease); }
 .header.scrolled .header-in { height: 68px; }
 .brand { flex: none; }
 .brand img { height: 66px; width: auto; filter: drop-shadow(0 4px 10px rgba(76, 31, 201, 0.18)); transition: height 0.35s var(--ease), transform 0.35s var(--ease); }
 .brand:hover img { transform: rotate(-3deg) scale(1.04); }
 .header.scrolled .brand img { height: 52px; }
-.nav { display: flex; gap: 6px; padding: 5px; border-radius: 999px; background: rgba(255, 255, 255, 0.72); border: 1px solid var(--line); box-shadow: var(--edge), 0 1px 2px rgba(23, 17, 42, 0.05), 0 8px 20px -12px rgba(40, 20, 90, 0.25); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.nav { display: flex; gap: 6px; padding: 5px; border-radius: 999px; background: rgba(255, 255, 255, 0.94); border: 1px solid var(--line); box-shadow: var(--edge), 0 1px 2px rgba(23, 17, 42, 0.05), 0 8px 20px -12px rgba(40, 20, 90, 0.25); }
 .nav a { position: relative; padding: 9px 18px; border-radius: 999px; font: 600 14px/1 var(--sans); color: var(--text); text-decoration: none; transition: color 0.25s, background-color 0.25s; }
 .nav a:hover { color: var(--ink); }
 .nav a.active { color: #fff; background: linear-gradient(180deg, #2d2546, var(--ink)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 4px 10px -4px rgba(23, 17, 42, 0.55); }
@@ -117,10 +117,11 @@ p { margin: 0; }
 
 /* ---------- soft glowing aura behind the hero and the contact panel ---------- */
 .aura { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
-.aura span { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.55; animation: drift 22s var(--ease) infinite alternate; }
-.aura .a1 { width: 520px; height: 520px; left: 52%; top: -160px; background: #cdb6ff; }
-.aura .a2 { width: 420px; height: 420px; left: 72%; top: 140px; background: #ffd9a1; animation-delay: -8s; opacity: 0.45; }
-.aura .a3 { width: 380px; height: 380px; left: -120px; top: 220px; background: #e4dbff; animation-delay: -14s; opacity: 0.5; }
+/* (soft radial gradients, not a live blur: much lighter for the graphics card) */
+.aura span { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, var(--c), transparent); opacity: 0.55; animation: drift 22s var(--ease) infinite alternate; will-change: transform; }
+.aura .a1 { width: 640px; height: 640px; left: 48%; top: -220px; --c: #cdb6ff; }
+.aura .a2 { width: 540px; height: 540px; left: 68%; top: 80px; --c: #ffd9a1; animation-delay: -8s; opacity: 0.45; }
+.aura .a3 { width: 500px; height: 500px; left: -180px; top: 160px; --c: #e4dbff; animation-delay: -14s; opacity: 0.5; }
 @keyframes drift { from { transform: translate(0, 0) scale(1); } to { transform: translate(-40px, 30px) scale(1.08); } }
 
 /* ---------- hero ---------- */
@@ -140,7 +141,7 @@ p { margin: 0; }
 
 /* the phone: a slim, upright phone showing our games' screenshots, one after another */
 .hero-art { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 0 4px; --gc: #6d3df2; }
-.phone-glow { position: absolute; z-index: 0; left: 50%; top: 46%; width: 380px; height: 380px; margin: -190px 0 0 -190px; border-radius: 50%; background-color: var(--gc); opacity: 0.26; filter: blur(80px); transition: background-color 1s ease; }
+.phone-glow { position: absolute; z-index: 0; left: 50%; top: 46%; width: 560px; height: 560px; margin: -280px 0 0 -280px; border-radius: 50%; background: radial-gradient(closest-side, rgba(109, 61, 242, 0.32), rgba(109, 61, 242, 0.1) 55%, transparent); }
 .phone-tilt { position: relative; z-index: 2; perspective: 1400px; animation: bob 8s ease-in-out infinite; }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 .phone {
@@ -166,7 +167,7 @@ p { margin: 0; }
 .phone-dots button:hover { background: #b9addb; }
 .phone-dots button[aria-current="true"] { background: var(--gc); transform: scale(1.5); }
 /* a slowly turning seal with the logo icon */
-.seal { position: absolute; z-index: 3; right: 2%; bottom: 12%; width: clamp(104px, 10vw, 128px); aspect-ratio: 1; border-radius: 50%; background: rgba(255, 255, 255, 0.92); box-shadow: var(--edge), var(--depth); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: grid; place-items: center; }
+.seal { position: absolute; z-index: 3; right: 2%; bottom: 12%; width: clamp(104px, 10vw, 128px); aspect-ratio: 1; border-radius: 50%; background: rgba(255, 255, 255, 0.97); box-shadow: var(--edge), var(--depth); display: grid; place-items: center; }
 .seal svg { position: absolute; inset: 0; width: 100%; height: 100%; animation: turn 26s linear infinite; }
 .seal text { font: 700 16px var(--sans); fill: var(--ink); }
 .seal img { width: 58%; height: auto; filter: drop-shadow(0 3px 6px rgba(76, 31, 201, 0.2)); }
@@ -205,7 +206,23 @@ p { margin: 0; }
 #games > .wrap { position: relative; }
 
 /* ---------- games: a grid of equal cards ---------- */
-.games { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: auto; gap: clamp(24px, 2.6vw, 36px); }
+/* one row that runs edge to edge and moves by itself (main.js); the ends
+   fade softly into the page */
+#games { overflow: hidden; }
+.games {
+  position: relative; margin: 0 calc(50% - 50vw); padding: 16px 0 44px; touch-action: pan-y; cursor: grab;
+}
+.games::before, .games::after { content: ""; position: absolute; top: 0; bottom: 0; z-index: 2; width: 6vw; pointer-events: none; }
+.games::before { left: 0; background: linear-gradient(90deg, #fff, rgba(255, 255, 255, 0)); }
+.games::after { right: 0; background: linear-gradient(270deg, #fff, rgba(255, 255, 255, 0)); }
+.games.dragging { cursor: grabbing; }
+.games.dragging .game { pointer-events: none; }
+.games-track { display: flex; gap: clamp(18px, 2.2vw, 32px); width: max-content; padding: 0 var(--gutter); will-change: transform; }
+.games img { -webkit-user-drag: none; user-select: none; }
+/* with reduced motion: a plain row to scroll by hand */
+.games.is-static { overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter); cursor: auto; scrollbar-width: none; }
+.games.is-static::-webkit-scrollbar { display: none; }
+.games.is-static .game-item { scroll-snap-align: start; }
 .game {
   position: relative; display: flex; flex-direction: column; border-radius: var(--radius); background: var(--frame); border: 1px solid transparent;
   box-shadow: var(--edge), var(--depth); overflow: hidden; isolation: isolate;
@@ -224,7 +241,7 @@ p { margin: 0; }
 .game { aspect-ratio: 9 / 14; border-radius: 28px; background: #1a1430; border: 0; box-shadow: 0 0 0 1px rgba(23, 17, 42, 0.06), var(--depth); }
 .game:hover { box-shadow: 0 0 0 1px rgba(23, 17, 42, 0.06), var(--depth-up); }
 .game { transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease); }
-.game-item { min-width: 0; }
+.game-item { flex: none; width: clamp(260px, 24vw, 340px); }
 .game::before { z-index: 3; }
 .game-cover { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; }
 .game-cover img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; transition: transform 1.2s var(--ease); }
@@ -232,14 +249,13 @@ p { margin: 0; }
 .game-cover::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(23, 17, 42, 0.35)); }
 .game-tag {
   position: absolute; left: 16px; top: 16px; z-index: 2; display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px 7px 10px; border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82); border: 1px solid rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.92); border: 1px solid rgba(255, 255, 255, 0.8);
   font: 600 12px/1 var(--sans); color: var(--ink); letter-spacing: 0.02em; box-shadow: 0 4px 14px -4px rgba(23, 17, 42, 0.3);
 }
 .game-tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--gc); }
 .game-body {
   position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 2; display: flex; flex-direction: column; gap: 6px; padding: 20px 18px 18px;
-  border-radius: 22px; background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(18px) saturate(1.5); -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border-radius: 22px; background: rgba(255, 255, 255, 0.93); border: 1px solid rgba(255, 255, 255, 0.75);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 10px 30px -12px rgba(23, 17, 42, 0.45);
 }
 .game h3 { font-size: clamp(22px, 2vw, 28px); font-weight: 600; }
@@ -297,7 +313,6 @@ p { margin: 0; }
 }
 .play-web small { margin-bottom: 3px; font-size: 8.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.88; }
 .play-web b { font-size: 16.5px; font-weight: 700; letter-spacing: -0.01em; }
-.rail-hint { display: none; }
 
 /* ---------- services ---------- */
 .services { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(18px, 2vw, 28px); }
@@ -321,7 +336,9 @@ p { margin: 0; }
 .service:hover .service-icon::after { opacity: 1; }
 .service-icon svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 /* a tile arrives: it rises and settles, a light sweeps across it, its icon
-   pops in and draws itself, then keeps a small idle motion of its own */
+   pops in and draws itself, then floats gently (only the whole icon moves:
+   animating the shapes inside an icon makes the browser redo the page
+   layout on every frame) */
 .js .service.reveal { scale: 0.96; }
 .js .service.reveal.in { scale: 1; }
 .service::after {
@@ -337,19 +354,7 @@ p { margin: 0; }
 .service-icon svg { animation: icon-float 5s ease-in-out infinite; }
 .service:nth-child(2n) .service-icon svg { animation-delay: -2.5s; }
 @keyframes icon-float { 0%, 100% { transform: translateY(1px); } 50% { transform: translateY(-2px); } }
-.i-blink { animation: blink 2.4s ease-in-out infinite; }
-.i-blink.i-late { animation-delay: 1.2s; }
-@keyframes blink { 0%, 60%, 100% { opacity: 1; } 75% { opacity: 0.1; } }
-.i-type, .i-redraw { animation: type 3.6s var(--ease) 2.6s infinite; }
-.i-type.i-late { animation-delay: 3s; }
-.i-redraw { animation-duration: 4.8s; }
-@keyframes type { 0%, 10% { stroke-dashoffset: 1.02; } 45%, 82% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -1.02; } }
-.i-ping { fill: currentColor; transform-box: fill-box; transform-origin: center; animation: ping-dot 2.2s var(--ease) infinite; }
-@keyframes ping-dot { 0%, 55%, 100% { transform: scale(1); } 70% { transform: scale(1.9); } 85% { transform: scale(0.8); } }
-.i-sway { transform-box: fill-box; transform-origin: 15% 90%; animation: sway 3.4s ease-in-out infinite; }
-@keyframes sway { 0%, 100% { transform: rotate(-7deg); } 50% { transform: rotate(6deg); } }
-.i-spin { transform-box: fill-box; transform-origin: center; animation: globe 4.5s ease-in-out infinite; }
-@keyframes globe { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(-1); } }
+.i-ping { fill: currentColor; }
 /* soft shapes float on their own and drift at their own speed (--k) as the
    section scrolls past (--sy, set by main.js) */
 .floaters { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
@@ -371,7 +376,7 @@ p { margin: 0; }
 .fl-play { left: 8%; bottom: 13%; width: 30px; height: 30px; clip-path: polygon(18% 8%, 92% 50%, 18% 92%); background: linear-gradient(160deg, #ffd08a, var(--amber-deep)); opacity: 0.42; --k: 75; --t: 11s; --fr: -30deg; }
 .fl-spark { right: 11%; bottom: 25%; font: 24px/1 var(--sans); color: var(--amber-deep); opacity: 0.55; --k: -95; --t: 7s; --fr: 120deg; }
 /* idle motion only runs while the section is on screen */
-#services:not(.live) :is(.fl, .service-icon svg, .i-blink, .i-type, .i-redraw, .i-ping, .i-sway, .i-spin) { animation-play-state: paused; }
+#services:not(.live) :is(.fl, .service-icon svg) { animation-play-state: paused; }
 #services:not(.live) .process-steps li::before { animation-play-state: paused; }
 .service h3 { font-size: clamp(24px, 2.2vw, 30px); margin-bottom: 12px; }
 .service p { color: var(--muted); font-size: clamp(15px, 1.2vw, 17px); line-height: 1.6; }
@@ -398,7 +403,7 @@ p { margin: 0; }
   background: linear-gradient(160deg, #8058ff, var(--violet-deep)); border-color: transparent; color: #fff;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 10px 18px -8px rgba(76, 31, 201, 0.6);
 }
-.process-steps li.current::before { animation: step-pulse 2.6s ease-out calc(var(--sd, 0ms) + 0.9s) infinite; }
+.process-steps li.current::before { animation: step-pulse 2.6s ease-out calc(var(--sd, 0ms) + 0.9s) 3; }   /* (a few pulses, then still: an endless shadow animation costs work on every frame) */
 @keyframes step-pulse {
   0% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 10px 18px -8px rgba(76, 31, 201, 0.6), 0 0 0 0 rgba(109, 61, 242, 0.42); }
   70%, 100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 10px 18px -8px rgba(76, 31, 201, 0.6), 0 0 0 14px rgba(109, 61, 242, 0); }
@@ -414,9 +419,9 @@ p { margin: 0; }
 .contact { display: grid; grid-template-columns: 1fr 1.08fr; padding: 8px; border-radius: 32px; background: var(--frame); border: 1px solid transparent; box-shadow: var(--edge), var(--depth-up); }
 .contact-panel { position: relative; overflow: hidden; padding: clamp(32px, 4.5vw, 56px); border-radius: 25px; background: linear-gradient(165deg, #241c3c, var(--ink) 55%); color: #d9d4ea; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 18px 34px -18px rgba(23, 17, 42, 0.7); }
 .contact-panel > :not(.aura) { position: relative; z-index: 1; }
-.aura-dark span { opacity: 0.35; filter: blur(60px); }
-.aura-dark .a1 { left: 40%; top: -200px; background: #7b4dff; }
-.aura-dark .a2 { left: -100px; top: 60%; background: #f0a040; opacity: 0.22; }
+.aura-dark span { opacity: 0.45; }
+.aura-dark .a1 { left: 34%; top: -260px; --c: #7b4dff; }
+.aura-dark .a2 { left: -160px; top: 54%; --c: #f0a040; opacity: 0.3; }
 .contact-panel h2 { color: #fff; font-size: clamp(34px, 4vw, 50px); }
 .contact-panel h2 em { background: linear-gradient(100deg, #c9b3ff, var(--amber)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .contact-intro { margin-top: 18px; color: #bdb6d3; max-width: 400px; }
@@ -523,7 +528,6 @@ html.modal-on, html.modal-on body { overflow: hidden; }
 /* ---------- responsive ---------- */
 @media (max-width: 1080px) {
   .header-cta { display: none; }
-  .games { grid-template-columns: repeat(2, 1fr); }
   .services { grid-template-columns: repeat(2, 1fr); }
   .process-steps { grid-template-columns: repeat(3, 1fr); row-gap: 36px; }
   .process-steps::before, .process-steps::after { display: none; }
@@ -553,19 +557,13 @@ html.modal-on, html.modal-on body { overflow: hidden; }
   .phone-dots { margin-top: 24px; }
   .seal { width: 92px; right: 0; bottom: 16%; }
   .seal text { font-size: 17px; }
-  /* games: a swipe row of cards, the next one peeking in */
-  .games {
-    display: flex; gap: 14px; margin: 0 calc(-1 * var(--gutter)); padding: 6px var(--gutter) 22px;
-    overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter); scrollbar-width: none; overscroll-behavior-x: contain;
-  }
-  .games::-webkit-scrollbar { display: none; }
-  .game-item { flex: 0 0 86%; scroll-snap-align: start; }
+  .game-item { width: min(74vw, 300px); }
+  .games { padding: 10px 0 30px; }
+  .games::before, .games::after { display: none; }
   .game .game-body { padding: 16px 12px 12px; left: 8px; right: 8px; bottom: 8px; }
   .game h3 { font-size: 22px; }
   .game-blurb { font-size: 13.5px; }
   .game:hover, .service:hover { transform: none; }
-  .rail-hint { display: flex; align-items: center; gap: 10px; justify-content: center; margin-top: 4px; font-size: 13px; color: var(--muted); }
-  .rail-hint span { width: 34px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, var(--violet), var(--amber)); }
   .badge, .play-web, .play-soon { height: 46px; }
   .game-soon { right: 12px; top: 12px; }
   .badge { gap: 7px; padding: 0 10px; }
@@ -605,7 +603,7 @@ html.modal-on, html.modal-on body { overflow: hidden; }
 @media (max-width: 380px) {
   .header-in { gap: 8px; }
   .nav a { padding: 8px 8px; }
-  .game-item { flex-basis: 90%; }
+  .game-item { width: 78vw; }
   .game .game-body { padding: 14px 10px 10px; }
   .game-actions { gap: 7px; }
   .game-soon { left: 12px; right: auto; top: 46px; }
