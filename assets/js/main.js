@@ -81,8 +81,6 @@
       want(i); want((i + 1) % n); want((i + 2) % n);
       art.style.setProperty('--gc', g.color || '#6d3df2');
       imgs.forEach((im, j) => im.classList.toggle('on', j === i));
-      $('[data-chip-img]', art).src = g.cover;
-      $('[data-chip-name]', art).textContent = g.name;
       dotEls.forEach((d, j) => d.setAttribute('aria-current', String(j === i)));
       next();
     }
