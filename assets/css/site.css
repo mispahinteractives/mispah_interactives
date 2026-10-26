@@ -96,6 +96,7 @@ p { margin: 0; }
 .header.scrolled { background: rgba(255, 255, 255, 0.82); backdrop-filter: saturate(1.6) blur(14px); -webkit-backdrop-filter: saturate(1.6) blur(14px); box-shadow: 0 1px 0 rgba(23, 17, 42, 0.06); }
 .header-in { display: flex; align-items: center; justify-content: space-between; gap: 20px; height: 84px; transition: height 0.35s var(--ease); }
 .header.scrolled .header-in { height: 68px; }
+.brand { flex: none; }
 .brand img { height: 50px; width: auto; filter: drop-shadow(0 4px 10px rgba(76, 31, 201, 0.18)); transition: height 0.35s var(--ease), transform 0.35s var(--ease); }
 .brand:hover img { transform: rotate(-3deg) scale(1.04); }
 .header.scrolled .brand img { height: 42px; }
@@ -228,6 +229,25 @@ p { margin: 0; }
    lifts and leans towards the pointer, and the picture zooms gently. */
 .game { aspect-ratio: 9 / 14; border-radius: 28px; background: #1a1430; border: 0; box-shadow: 0 0 0 1px rgba(23, 17, 42, 0.06), var(--depth); }
 .game:hover { box-shadow: 0 0 0 1px rgba(23, 17, 42, 0.06), var(--depth-up); }
+.game { transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease); }
+/* under each poster: the game's rating and Rate & review */
+.game-item { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.game-rate {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 6px 6px 8px; border-radius: 999px; border: 1px solid transparent; background: var(--frame);
+  box-shadow: var(--edge), 0 1px 2px rgba(23, 17, 42, 0.05), 0 8px 18px -12px rgba(23, 17, 42, 0.25);
+}
+.gr-score { display: inline-flex; align-items: center; gap: 8px; min-width: 0; padding: 7px 8px; border: 0; border-radius: 999px; background: none; cursor: pointer; font: 700 14px/1 var(--sans); color: var(--ink); transition: background-color 0.25s; }
+.gr-score:hover { background: var(--bg-soft); }
+.gr-score b:empty { display: none; }
+.gr-count { color: var(--muted); font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gr-btn {
+  display: inline-flex; align-items: center; gap: 6px; flex: none; height: 38px; padding: 0 15px 0 12px; border-radius: 999px; border: 1px solid #e4dafc; cursor: pointer; white-space: nowrap;
+  background: linear-gradient(180deg, #fff, var(--violet-soft)); color: var(--violet-deep); font: 700 13px/1 var(--sans);
+  box-shadow: inset 0 1px 0 #fff, 0 4px 10px -6px rgba(109, 61, 242, 0.45); transition: transform 0.3s var(--ease), color 0.25s, box-shadow 0.3s var(--ease);
+}
+.gr-btn svg { width: 14px; height: 14px; fill: #f6a91c; }
+.gr-btn:hover { transform: translateY(-1px); color: #fff; background: linear-gradient(180deg, #8058ff, var(--violet-deep)); border-color: transparent; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 10px 18px -8px rgba(76, 31, 201, 0.6); }
+.gr-btn:hover svg { fill: #ffd27a; }
 .game::before { z-index: 3; }
 .game-cover { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; }
 .game-cover img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; transition: transform 1.2s var(--ease); }
@@ -399,6 +419,68 @@ p { margin: 0; }
 .process-steps b { display: block; font: 600 20px/1.2 var(--serif); color: var(--ink); margin-bottom: 6px; }
 .process-steps span { font-size: 14px; color: var(--muted); }
 
+/* ---------- ratings and reviews (one game's, from Rate & review) ---------- */
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* the review form */
+.rv-form { display: grid; gap: 16px; }
+/* star rows: grey stars with gold ones laid over, cut to the score */
+.stars { --size: 16px; position: relative; display: inline-block; flex: none; line-height: 0; white-space: nowrap; }
+.stars svg { width: var(--size); height: var(--size); margin-right: 2px; }
+.stars-bg svg { fill: #e6e0f3; }
+.stars-fg { position: absolute; left: 0; top: 0; bottom: 0; overflow: hidden; width: calc(var(--v, 0) / 5 * 100%); }
+.stars-fg svg { fill: #f6a91c; }
+.stars-lg { --size: 22px; }
+/* review cards */
+.rv-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.rv-card { padding: 22px 24px; border-radius: 22px; border: 1px solid transparent; background: var(--frame); box-shadow: var(--edge), var(--depth); }
+.rv-card.new { animation: rv-new 1.8s var(--ease); }
+@keyframes rv-new { from { transform: translateY(-10px); opacity: 0; box-shadow: var(--edge), 0 0 0 3px rgba(109, 61, 242, 0.35), var(--depth); } 60% { box-shadow: var(--edge), 0 0 0 3px rgba(109, 61, 242, 0.25), var(--depth); } }
+.rv-head { display: flex; align-items: center; gap: 12px; }
+.rv-avatar { display: grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius: 50%; background: hsl(var(--h) 75% 93%); color: hsl(var(--h) 50% 36%); font: 600 18px/1 var(--serif); box-shadow: inset 0 0 0 1px hsl(var(--h) 60% 86%); }
+.rv-who { display: grid; gap: 3px; min-width: 0; }
+.rv-who b { font: 600 15px/1.2 var(--sans); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rv-who time { font-size: 13px; color: var(--muted); }
+.rv-head .stars { margin-left: auto; }
+.rv-text { color: var(--text); font-size: 15px; white-space: pre-line; overflow-wrap: anywhere; }
+.rv-skel { height: 132px; background: linear-gradient(100deg, #f6f4fb 30%, #fdfcff 50%, #f6f4fb 70%) 0 0 / 200% 100%; animation: rv-shine 1.4s linear infinite; }
+@keyframes rv-shine { to { background-position: -200% 0; } }
+.rv-empty { display: grid; justify-items: center; gap: 10px; padding: clamp(36px, 5vw, 56px) 24px; text-align: center; border-radius: 22px; border: 1.5px dashed var(--line-2); background: rgba(255, 255, 255, 0.7); }
+.rv-empty h3 { font-size: 26px; }
+.rv-empty p { color: var(--muted); max-width: 340px; }
+.rv-empty .btn { margin-top: 8px; min-height: 46px; }
+.rv-empty-star svg { width: 46px; height: 46px; fill: #f6a91c; filter: drop-shadow(0 8px 14px rgba(246, 169, 28, 0.35)); }
+/* the star picker */
+.rv-pick { margin: 0; padding: 0; border: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.rv-pick legend { width: 100%; margin-bottom: 8px; padding: 0; font: 600 14px/1 var(--sans); color: var(--ink); }
+.rv-pick-stars { display: flex; gap: 4px; }
+.rv-pick-stars input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.rv-pick-stars label { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; cursor: pointer; }
+.rv-pick-stars label svg { width: 34px; height: 34px; fill: #e6e0f3; transition: fill 0.2s, transform 0.3s var(--ease); }
+.rv-pick-stars label:hover svg { transform: scale(1.12); }
+.rv-pick-stars label.lit svg { fill: #f6a91c; filter: drop-shadow(0 3px 6px rgba(246, 169, 28, 0.35)); }
+.rv-pick-stars input:focus-visible + label { outline: 2px solid var(--violet); outline-offset: 1px; }
+.rv-pick-stars[aria-invalid="true"] label svg { fill: #f6d3dc; }
+.rv-pick-word { font: 600 14px/1 var(--sans); color: var(--muted); min-width: 64px; }
+.rv-pick .field-err { width: 100%; margin-top: 0; }
+.rv-chars { position: absolute; right: 14px; top: 9px; font: 500 12px/1 var(--sans); color: var(--muted); pointer-events: none; }
+.form-status.ok { color: #16803c; font-weight: 600; }
+
+/* one game's reviews: the window opened from Rate & review */
+.rvg .rvg-card { width: min(580px, 100%); max-height: min(88vh, 900px); overflow: auto; overscroll-behavior: contain; padding: 28px; text-align: left; }
+.rvg .kicker { justify-content: flex-start; margin-bottom: 6px; }
+.rvg-head { display: flex; align-items: center; gap: 16px; padding-right: 42px; margin-bottom: 22px; }
+.rvg-head img { flex: none; width: 78px; height: 78px; border-radius: 22px; object-fit: cover; object-position: 50% 20%; box-shadow: 0 0 0 3px #fff, 0 10px 22px -10px rgba(23, 17, 42, 0.5); }
+.rvg-head h3 { font-size: 28px; }
+.rvg-score { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; font: 700 15px/1 var(--sans); color: var(--ink); }
+.rvg-score b:empty { display: none; }
+.rvg-score > span:last-child { color: var(--muted); font-weight: 500; font-size: 14px; }
+.rvg-form { padding: 20px; border-radius: 20px; background: var(--bg-soft); border: 1px solid var(--line); gap: 14px; box-shadow: inset 0 1px 0 #fff; }
+.rvg-form .field input, .rvg-form .field textarea { background: #fff; }
+.rvg [data-rvg-list] { margin-top: 22px; }
+.rvg .rv-card { box-shadow: var(--edge), var(--shadow-sm); }
+.rv-empty-sm { padding: 26px 18px; }
+.rv-empty-sm .rv-empty-star svg { width: 34px; height: 34px; }
+
 /* ---------- contact ---------- */
 .contact { display: grid; grid-template-columns: 1fr 1.08fr; padding: 8px; border-radius: 32px; background: var(--frame); border: 1px solid transparent; box-shadow: var(--edge), var(--depth-up); }
 .contact-panel { position: relative; overflow: hidden; padding: clamp(32px, 4.5vw, 56px); border-radius: 25px; background: linear-gradient(165deg, #241c3c, var(--ink) 55%); color: #d9d4ea; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 18px 34px -18px rgba(23, 17, 42, 0.7); }
@@ -550,7 +632,7 @@ html.modal-on, html.modal-on body { overflow: hidden; }
     overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter); scrollbar-width: none; overscroll-behavior-x: contain;
   }
   .games::-webkit-scrollbar { display: none; }
-  .game { flex: 0 0 86%; scroll-snap-align: start; }
+  .game-item { flex: 0 0 86%; scroll-snap-align: start; }
   .game .game-body { padding: 16px 12px 12px; left: 8px; right: 8px; bottom: 8px; }
   .game h3 { font-size: 22px; }
   .game-blurb { font-size: 13.5px; }
@@ -565,6 +647,12 @@ html.modal-on, html.modal-on body { overflow: hidden; }
   .badge-play small { font-size: 7.5px; }
   .badge b { font-size: 14px; }
   .services { grid-template-columns: 1fr; gap: 14px; }
+  .rv-card { padding: 18px; }
+  .rv-head { flex-wrap: wrap; row-gap: 8px; }
+  .rv-who { flex: 1 1 calc(100% - 56px); }
+  .rv-head .stars { margin-left: 54px; }
+  .rv-pick-stars label { width: 42px; height: 42px; }
+  .rv-pick-stars label svg { width: 32px; height: 32px; }
   .service { min-height: 0; }
   .section-feature .kicker { font-size: 11.5px; letter-spacing: 0.14em; }
   .service-top { margin-bottom: 20px; }
@@ -589,12 +677,20 @@ html.modal-on, html.modal-on body { overflow: hidden; }
   .soon { place-items: end center; padding: 0; }
   .soon-card { width: 100%; border-radius: 28px 28px 0 0; padding: 30px 22px max(26px, env(safe-area-inset-bottom)); transform: translateY(100%); }
   .soon-actions .btn { flex: 1; }
+  .rvg .rvg-card { max-height: 92vh; padding: 24px 18px max(22px, env(safe-area-inset-bottom)); }
+  .rvg-head img { width: 62px; height: 62px; border-radius: 18px; }
+  .rvg-head h3 { font-size: 24px; }
+  .rvg-form { padding: 16px; }
   .player.is-portrait .player-frame { width: 100%; }
   .player-genre { display: none; }
 }
 @media (max-width: 380px) {
   .nav a { padding: 8px 9px; }
-  .game { flex-basis: 90%; }
+  .game-item { flex-basis: 90%; }
+  .gr-btn { padding: 0 11px 0 9px; font-size: 12px; }
+  .gr-score { padding: 7px 4px; gap: 6px; }
+  .gr-score .stars { --size: 12px; }
+  .gr-count { font-size: 12px; }
   .game .game-body { padding: 14px 10px 10px; }
   .game-actions { gap: 7px; }
   .badge { gap: 6px; padding: 0 8px; }

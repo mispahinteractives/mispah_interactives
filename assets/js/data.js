@@ -21,6 +21,12 @@ window.MG = {
   // `email` (the first message sends a one-time "Activate Form" email; click
   // it once). Optionally paste a Web3Forms access key here to use Web3Forms.
   contactKey: '',
+  // Game ratings and reviews (Rate & review under each game): they're stored in Supabase (a free online database)
+  // and shown to everyone. Paste your project's URL and its public "anon"
+  // key here (Supabase → Project Settings → API); the README has the one-off
+  // table setup. Until both are filled in, reviews are emailed to `email`
+  // instead, so none are lost.
+  reviews: { url: '', key: '' },
 
   games: [
     {
