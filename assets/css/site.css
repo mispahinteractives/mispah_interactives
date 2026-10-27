@@ -36,7 +36,7 @@
   --depth: 0 1px 1px rgba(23, 17, 42, 0.04), 0 2px 4px rgba(23, 17, 42, 0.04), 0 10px 18px -8px rgba(23, 17, 42, 0.1), 0 26px 44px -24px rgba(40, 20, 90, 0.22);
   --depth-up: 0 2px 2px rgba(23, 17, 42, 0.04), 0 8px 12px rgba(23, 17, 42, 0.05), 0 22px 32px -12px rgba(40, 20, 90, 0.18), 0 46px 72px -30px rgba(60, 25, 150, 0.38);
   --serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;
-  --logo-font: 'Fredoka One', 'Plus Jakarta Sans', system-ui, sans-serif;   /* round, chunky letters like the logo's */
+  --logo-font: 'Bagel Fat One', 'Plus Jakarta Sans', system-ui, sans-serif;   /* fat, round, bubbly letters like the logo's */
   --logo-ink: #36115e;          /* the logo's deep purple outline */
   --sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -546,29 +546,45 @@ html.modal-on, html.modal-on body { overflow: hidden; }
 .reveal { transition: opacity 0.9s var(--ease) var(--d, 0ms), translate 0.9s var(--ease) var(--d, 0ms), scale 0.9s var(--ease) var(--d, 0ms), transform 0.5s var(--ease), box-shadow 0.5s var(--ease); }
 
 /* ---------- the logo's lettering, reused for a few brand accents ----------
-   The logo's round chunky letters (Fredoka One) in the logo's colours: a
-   golden fill like "GAMES" (.logo-gold) or white shading to lavender like
-   "MIZPHA" (.logo-white), inside the logo's thick deep-purple outline. No
-   shadow or glow. The word stays as plain (invisible) text for layout,
-   selection and screen readers; two copies of it (data-text) draw the look:
-   the outline behind (::before, the letters grown outward by an SVG filter
-   in index.html, sized by main.js) and the fill on top (::after).
+   Made to match the logo: fat, round, bubbly letters (Bagel Fat One), set tight;
+   a golden fill like "GAMES" (.logo-gold: bright yellow at the top to
+   orange at the bottom) or white shading to lavender like "MIZPHA"
+   (.logo-white), with a glossy highlight across the top of the letters;
+   all inside the logo's thick, even, deep-purple outline. No offset, blur
+   or glow. The word stays as plain (invisible) text for layout, selection
+   and screen readers; two copies of it (data-text) draw the look: the
+   outline behind (::before, the letters grown outward by an SVG filter in
+   index.html, sized by main.js) and the fill on top (::after).
    (Selectors are doubled up to win over the headings' italic accents.) */
 .logo-word, h1 em.logo-word, h2 em.logo-word, .contact-panel h2 em.logo-word, .footer-line em.logo-word {
-  position: relative; display: inline-block; padding: 0 0.07em; margin: 0 0.03em;
-  font: 400 0.92em/1.05 var(--logo-font); letter-spacing: 0.02em; font-style: normal;
+  position: relative; z-index: 0; display: inline-block; padding: 0 0.09em; margin: 0 0.04em;
+  font: 400 0.95em/1.05 var(--logo-font); letter-spacing: -0.005em; font-style: normal; text-transform: none;
   background: none; color: transparent; -webkit-text-fill-color: transparent; -webkit-text-stroke: 0; text-shadow: none;
 }
-/* (the copies reach past the word above and below, so tails like g, p, y
-   are filled too; the matching padding keeps their letters exactly over the
-   word's) */
-.logo-word::before, .logo-word::after { content: attr(data-text); position: absolute; inset: -0.2em -0.1em -0.4em; padding: 0.2em 0.17em 0.4em; pointer-events: none; }
-.logo-word::before { color: var(--logo-ink); -webkit-text-fill-color: var(--logo-ink); filter: var(--outline, url(#logo-ink-5)); }
+/* (the copies reach past the word above and below; the matching padding
+   keeps their letters exactly over the word's) */
+.logo-word::before, .logo-word::after { content: attr(data-text); position: absolute; inset: -0.2em -0.1em -0.4em; padding: 0.2em 0.19em 0.4em; pointer-events: none; text-shadow: none; }
+.logo-word::before { z-index: -1; color: var(--logo-ink); -webkit-text-fill-color: var(--logo-ink); filter: var(--outline, url(#logo-ink-6)); }
+/* the fill, from top to bottom of the letters (they span about 21%–64% of
+   this taller box): the shine (resting off the word), the glossy
+   highlight along the top, then the colour */
 .logo-word::after {
-  background: linear-gradient(180deg, #fff09a 18%, #ffd43a 36%, #ffb21f 58%, #ff9a1f 82%);
+  background:
+    linear-gradient(105deg, rgba(255, 255, 255, 0) 44%, rgba(255, 255, 255, 0.85) 50%, rgba(255, 255, 255, 0) 56%) 100% 0 / 300% 100% no-repeat,
+    linear-gradient(180deg, rgba(255, 255, 255, 0) 20%, rgba(255, 255, 255, 0.7) 24%, rgba(255, 255, 255, 0) 32%) 0 0 / 100% 100% no-repeat,
+    linear-gradient(180deg, #fff27a 20%, #ffdb35 32%, #ffc124 46%, #ff9e14 62%) 0 0 / 100% 100% no-repeat;
   -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
 }
-.logo-word.logo-white::after { background-image: linear-gradient(180deg, #ffffff 18%, #ffffff 46%, #f1e9ff 62%, #d9c8fb 82%); }
+.logo-word.logo-white::after {
+  background-image:
+    linear-gradient(105deg, rgba(255, 214, 110, 0) 44%, rgba(255, 214, 110, 0.75) 50%, rgba(255, 214, 110, 0) 56%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0) 20%, rgba(255, 255, 255, 0.7) 24%, rgba(255, 255, 255, 0) 32%),
+    linear-gradient(180deg, #ffffff 20%, #ffffff 44%, #efe7ff 54%, #d3c0f7 63%);
+}
+/* now and then (main.js), the light sweeps across once, like a gleam on the
+   logo's glossy letters */
+.logo-word.shine::after { animation: logo-shine 1.6s cubic-bezier(0.45, 0, 0.2, 1) both; }
+@keyframes logo-shine { from { background-position: 100% 0, 0 0, 0 0; } to { background-position: 0% 0, 0 0, 0 0; } }
 .nowrap { white-space: nowrap; }   /* (keeps a word and its full stop together) */
 
 /* ---------- responsive ---------- */

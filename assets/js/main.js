@@ -41,16 +41,33 @@
   };
 
   /* --------------------------------------------- logo-style lettering */
-  // The .logo-word outlines grow each letter outward by about 0.08em: pick
+  // The .logo-word outlines grow each letter outward by about 0.1em (thick
+  // and even, like the logo's, and clean inside letters like C and S): pick
   // the SVG filter (index.html) nearest that for each word's size.
   const sizeOutlines = () => $$('.logo-word').forEach((w) => {
-    const r = Math.min(8, Math.max(2, Math.round(parseFloat(getComputedStyle(w).fontSize) * 0.08)));
+    const r = Math.min(10, Math.max(2, Math.round(parseFloat(getComputedStyle(w).fontSize) * 0.1)));
     w.style.setProperty('--outline', `url(#logo-ink-${r})`);
   });
   sizeOutlines();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(sizeOutlines);
   let ot = 0;
   window.addEventListener('resize', () => { clearTimeout(ot); ot = setTimeout(sizeOutlines, 150); });
+  // The shine: every few seconds a soft light sweeps once across the words
+  // that are on screen (one after another), then rests. Each sweep is short,
+  // so it costs next to nothing; nothing runs for words out of view.
+  if (!calm && 'IntersectionObserver' in window) {
+    const inView = new Set();
+    const io = new IntersectionObserver((ens) => ens.forEach((en) => { if (en.isIntersecting) inView.add(en.target); else inView.delete(en.target); }));
+    $$('.logo-word').forEach((w) => {
+      io.observe(w);
+      w.addEventListener('animationend', () => w.classList.remove('shine'));
+    });
+    const gleam = () => {
+      if (!document.hidden) [...inView].forEach((w, i) => setTimeout(() => { w.classList.remove('shine'); void w.offsetWidth; w.classList.add('shine'); }, i * 260));
+      setTimeout(gleam, 5200);
+    };
+    setTimeout(gleam, 1400);
+  }
 
   /* ------------------------------------------------------------- intro */
   $$('[data-game-count]').forEach((el) => { el.textContent = MG.games.length; });

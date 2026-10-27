@@ -15,7 +15,9 @@
      screens  in-game screenshots, in order. The phone at the top of the
               page shows every picture of every game, game by game: the
               cover first, then these
-   `color` is the game's accent colour. `focus` (optional) moves the
+   `color` is the game's accent colour, from the logo's palette (gold
+   #ffb21f, orange #ff9a1f, violet #6d3df2, deep purple #4c1fc9, lavender
+   #a68bff). `focus` (optional) moves the
    picture inside its card (CSS object-position, e.g. '50% 85%').
 
    `frame: false` opens `web` in the same browser tab instead of the site's
@@ -40,7 +42,7 @@ window.MG = {
       blurb: 'Swap ingredients to fill hungry customers’ orders. Chain combos into power-ups across cosy café levels.',
       cover: 'assets/img/games/animal-cafe-title.jpg',
       screens: ['assets/img/games/animal-cafe-play.jpg', 'assets/img/games/animal-cafe-blocker.jpg'],
-      color: '#2f9a4f',
+      color: '#ffb21f',
       frame: false,
       stores: { appStore: '', playStore: '', web: 'https://playgama.ai/play/3bgnwkq2gjhq3j' }
     },
@@ -51,7 +53,7 @@ window.MG = {
       blurb: 'Find the emojis, crack the clue. Thousands of little discoveries in a bright, friendly word puzzle.',
       cover: 'assets/img/games/cluemoji-title.jpg',
       screens: ['assets/img/games/cluemoji-play.jpg'],
-      color: '#2b7de9',
+      color: '#6d3df2',
       frame: false,
       stores: { appStore: '', playStore: '', web: 'https://playgama.ai/play/d5ypyd7tb4ayic' }
     },
@@ -62,7 +64,7 @@ window.MG = {
       blurb: 'Steer luggage-cart trains through a busy airport and guide every cart to its matching garage before time runs out.',
       cover: 'assets/img/games/baggage-out-title.jpg',
       screens: ['assets/img/games/baggage-out-play.jpg', 'assets/img/games/baggage-out-how-to-play.jpg'],
-      color: '#e2394f',
+      color: '#ff9a1f',
       frame: false,
       stores: { appStore: '', playStore: '', web: 'https://playgama.com/game/baggage-out' }
     },
@@ -73,7 +75,7 @@ window.MG = {
       genre: 'Kids learning',
       blurb: 'Learn and play in a cheerful classroom with a friendly bear teacher. Made for small learners with big dreams.',
       cover: 'assets/img/games/learning-adventure-title.jpg',
-      color: '#2f8ff0',
+      color: '#a68bff',
       shape: 'landscape',
       stores: { appStore: '', playStore: '', web: 'https://mispahinteractives.github.io/learning_adventure_link/' }
     },
@@ -85,7 +87,7 @@ window.MG = {
       blurb: 'Match colours and numbers, drop a +2 at the perfect moment, and empty your hand before your rivals.',
       cover: 'assets/img/games/uno-clash-title.jpg',
       screens: ['assets/img/games/uno-clash-play.jpg', 'assets/img/games/uno-clash-level.jpg'],
-      color: '#4a2bd8',
+      color: '#4c1fc9',
       stores: { appStore: '', playStore: '', web: 'https://mispahinteractives.github.io/UNO_Link/' }
     },
     {
@@ -96,7 +98,7 @@ window.MG = {
       blurb: 'Drive a monster truck with real suspension over 20 levels of hills, jumps and broken bridges. Four rides and four themes.',
       cover: 'assets/img/games/monster-hills-title.jpg',
       screens: ['assets/img/games/monster-hills-play.jpg'],
-      color: '#5b3cc4',
+      color: '#f5a300',
       shape: 'landscape',
       // the standalone game (aim/monster_hills), published like learning_adventure_link
       stores: { appStore: '', playStore: '', web: 'https://mispahinteractives.github.io/monster_hills_link/' },
