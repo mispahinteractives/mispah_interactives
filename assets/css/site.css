@@ -36,7 +36,7 @@
   --depth: 0 1px 1px rgba(23, 17, 42, 0.04), 0 2px 4px rgba(23, 17, 42, 0.04), 0 10px 18px -8px rgba(23, 17, 42, 0.1), 0 26px 44px -24px rgba(40, 20, 90, 0.22);
   --depth-up: 0 2px 2px rgba(23, 17, 42, 0.04), 0 8px 12px rgba(23, 17, 42, 0.05), 0 22px 32px -12px rgba(40, 20, 90, 0.18), 0 46px 72px -30px rgba(60, 25, 150, 0.38);
   --serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;
-  --logo-font: 'Bagel Fat One', 'Plus Jakarta Sans', system-ui, sans-serif;   /* fat, round, bubbly letters like the logo's */
+  --logo-font: 'Fredoka One', 'Plus Jakarta Sans', system-ui, sans-serif;   /* round, chunky letters in the logo's style */
   --logo-ink: #36115e;          /* the logo's deep purple outline */
   --sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -546,7 +546,7 @@ html.modal-on, html.modal-on body { overflow: hidden; }
 .reveal { transition: opacity 0.9s var(--ease) var(--d, 0ms), translate 0.9s var(--ease) var(--d, 0ms), scale 0.9s var(--ease) var(--d, 0ms), transform 0.5s var(--ease), box-shadow 0.5s var(--ease); }
 
 /* ---------- the logo's lettering, reused for a few brand accents ----------
-   Made to match the logo: fat, round, bubbly letters (Bagel Fat One), set tight;
+   In the logo's style: round, chunky letters (Fredoka One), set tight;
    a golden fill like "GAMES" (.logo-gold: bright yellow at the top to
    orange at the bottom) or white shading to lavender like "MIZPHA"
    (.logo-white), with a glossy highlight across the top of the letters;
@@ -558,7 +558,7 @@ html.modal-on, html.modal-on body { overflow: hidden; }
    (Selectors are doubled up to win over the headings' italic accents.) */
 .logo-word, h1 em.logo-word, h2 em.logo-word, .contact-panel h2 em.logo-word, .footer-line em.logo-word {
   position: relative; z-index: 0; display: inline-block; padding: 0 0.09em; margin: 0 0.04em;
-  font: 400 0.95em/1.05 var(--logo-font); letter-spacing: -0.005em; font-style: normal; text-transform: none;
+  font: 400 0.92em/1.05 var(--logo-font); letter-spacing: 0.01em; font-style: normal; text-transform: none;
   background: none; color: transparent; -webkit-text-fill-color: transparent; -webkit-text-stroke: 0; text-shadow: none;
 }
 /* (the copies reach past the word above and below; the matching padding
