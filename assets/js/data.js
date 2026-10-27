@@ -15,6 +15,8 @@
      screens  in-game screenshots, in order. The phone at the top of the
               page shows every picture of every game, game by game: the
               cover first, then these
+   One copy of each picture, about 600px wide (light enough for the phone,
+   sharp enough for the cards).
    `color` is the game's accent colour, from the logo's palette (gold
    #ffb21f, orange #ff9a1f, violet #a12bc2, deep purple #6b1085, lavender
    #d791eb). `focus` (optional) moves the

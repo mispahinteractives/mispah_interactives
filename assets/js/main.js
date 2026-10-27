@@ -98,19 +98,17 @@
       if (!isNaN(last)) startGame = (last + 1) % games.length;
       localStorage.setItem(k, String(startGame));
     } catch (e) { /* storage blocked: a random game */ }
-    // The phone uses lighter copies of the screenshots, sized for it
-    // (assets/img/games/phone/). Each one loads only when it's needed, and
+    // Each screenshot loads only when it's needed, and
     // the phone moves on only once the next screenshot has arrived, so it
     // never shows an empty screen (until the very first one arrives it shows
     // the logo, see .phone-screen in site.css).
-    const phoneSrc = (src) => src.replace('assets/img/games/', 'assets/img/games/phone/');
     const imgs = list.map(() => {
       const im = document.createElement('img');
       im.alt = ''; im.decoding = 'async';
       shots.appendChild(im);
       return im;
     });
-    const want = (i, high) => { const im = imgs[i]; if (!im.getAttribute('src')) { if (high) im.fetchPriority = 'high'; im.src = phoneSrc(list[i].src); } };
+    const want = (i, high) => { const im = imgs[i]; if (!im.getAttribute('src')) { if (high) im.fetchPriority = 'high'; im.src = list[i].src; } };
     const ready = (i) => new Promise((res) => {
       want(i);
       const im = imgs[i];
