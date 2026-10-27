@@ -69,6 +69,9 @@
     setTimeout(gleam, 1400);
   }
 
+  // (resolves once the phone's first screenshot is on screen)
+  let phoneFirst = Promise.resolve();
+
   /* ------------------------------------------------------------- intro */
   $$('[data-game-count]').forEach((el) => { el.textContent = MG.games.length; });
 
@@ -95,23 +98,41 @@
       if (!isNaN(last)) startGame = (last + 1) % games.length;
       localStorage.setItem(k, String(startGame));
     } catch (e) { /* storage blocked: a random game */ }
-    const imgs = list.map((s) => {
+    // The phone uses lighter copies of the screenshots, sized for it
+    // (assets/img/games/phone/). Each one loads only when it's needed, and
+    // the phone moves on only once the next screenshot has arrived, so it
+    // never shows an empty screen (until the very first one arrives it shows
+    // the logo, see .phone-screen in site.css).
+    const phoneSrc = (src) => src.replace('assets/img/games/', 'assets/img/games/phone/');
+    const imgs = list.map(() => {
       const im = document.createElement('img');
       im.alt = ''; im.decoding = 'async';
       shots.appendChild(im);
       return im;
     });
-    const want = (i) => { const im = imgs[i]; if (!im.src) im.src = list[i].src; };
+    const want = (i, high) => { const im = imgs[i]; if (!im.getAttribute('src')) { if (high) im.fetchPriority = 'high'; im.src = phoneSrc(list[i].src); } };
+    const ready = (i) => new Promise((res) => {
+      want(i);
+      const im = imgs[i];
+      if (im.complete && im.naturalWidth) { res(); return; }
+      im.addEventListener('load', () => res(), { once: true });
+      im.addEventListener('error', () => res(), { once: true });
+    });
     dots.innerHTML = games.map((g, i) => `<button type="button" aria-label="Show ${esc(g.name)}" data-dot="${i}"></button>`).join('');
     const dotEls = $$('button', dots);
 
-    function show(i) {
+    let token = 0;
+    async function show(i) {
+      const mine = ++token;
+      clearTimeout(timer);
+      await ready(i);                                      // wait for it: never switch to a blank screen
+      if (mine !== token) return;                          // (a newer request came in meanwhile)
       at = i;
       const gi = list[i].gi, g = games[gi];
-      want(i); want((i + 1) % n); want((i + 2) % n);
       art.style.setProperty('--gc', g.color || '#6d3df2');
       imgs.forEach((im, j) => im.classList.toggle('on', j === i));
       dotEls.forEach((d, j) => d.setAttribute('aria-current', String(j === gi)));
+      want((i + 1) % n);                                   // fetch the next one while this one shows
       next();
     }
     function next() {
@@ -120,7 +141,7 @@
     }
     dots.addEventListener('click', (e) => {
       const d = e.target.closest('[data-dot]');
-      if (d && list[at].gi !== +d.dataset.dot) show(firstOf(+d.dataset.dot));
+      if (d && (at < 0 || list[at].gi !== +d.dataset.dot)) show(firstOf(+d.dataset.dot));
     });
     document.addEventListener('visibilitychange', next);
     if ('IntersectionObserver' in window) {
@@ -142,7 +163,18 @@
       });
       hero.addEventListener('pointerleave', () => { tilt.style.removeProperty('--px'); tilt.style.removeProperty('--py'); });
     }
-    show(firstOf(startGame));
+    // the first screenshot loads ahead of everything else on the phone; the
+    // rest follow quietly one at a time once the page has finished loading
+    const first = firstOf(startGame);
+    want(first, true);
+    show(first);
+    phoneFirst = ready(first);
+    const rest = () => {
+      let k = 0;
+      const step = () => { if (++k >= n) return; const i = (first + k) % n; if (imgs[i].getAttribute('src')) { step(); return; } imgs[i].fetchPriority = 'low'; ready(i).then(step); };
+      step();
+    };
+    if (document.readyState === 'complete') rest(); else window.addEventListener('load', rest, { once: true });
   })();
 
   /* ------------------------------------------------------------- games */
@@ -171,7 +203,7 @@
     // a tall poster: the game's portrait picture fills the card, and the
     // details sit on frosted glass at the bottom
     card.innerHTML = `
-      <div class="game-cover"><img src="${esc(g.cover)}" alt="${esc(g.name)}" loading="lazy"${g.focus ? ` style="object-position:${esc(g.focus)}"` : ''}></div>
+      <div class="game-cover"><img data-src="${esc(g.cover)}" alt="${esc(g.name)}" loading="lazy" fetchpriority="low"${g.focus ? ` style="object-position:${esc(g.focus)}"` : ''}></div>
       <span class="game-tag">${esc(g.genre)}</span>
       ${g.soon ? '<span class="game-soon">Coming soon</span>' : ''}
       <div class="game-body">
@@ -298,6 +330,22 @@
     view.addEventListener('pointerup', end);
     view.addEventListener('pointercancel', end);
     view.addEventListener('click', (e) => { if (suppress) { e.preventDefault(); e.stopPropagation(); suppress = false; } }, true);
+  })();
+
+  // The card pictures load once the phone's first screenshot has arrived (so
+  // on a slow connection that comes first), or as soon as the games come
+  // near, whichever is sooner; at the latest after 3 seconds.
+  (function cardPictures() {
+    let done = false;
+    const go = () => {
+      if (done) return; done = true;
+      $$('.game-cover img[data-src]').forEach((im) => { im.src = im.dataset.src; im.removeAttribute('data-src'); });
+    };
+    Promise.race([phoneFirst, new Promise((r) => setTimeout(r, 3000))]).then(go);
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((ens) => { if (ens[ens.length - 1].isIntersecting) { io.disconnect(); go(); } }, { rootMargin: '400px 0px' });
+      io.observe($('#games'));
+    } else go();
   })();
 
   /* ------------------------------------------------------- coming soon */

@@ -6,7 +6,8 @@
    work step numbers). */
 @font-face {
   font-family: 'Fredoka One'; font-style: normal; font-weight: 400; font-display: swap;
-  src: url('../fonts/fredoka-one.ttf') format('truetype');
+  src: url('../fonts/fredoka-one-latin.woff2') format('woff2');
+  unicode-range: U+0020-00FF, U+2013-2014, U+2018-2019, U+201C-201D, U+2026, U+20AC, U+2122;
 }
 @font-face {
   font-family: 'Fraunces'; font-style: normal; font-weight: 400 700; font-display: swap;

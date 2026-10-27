@@ -13,9 +13,10 @@ assets/js/main.js     builds Games and Services from data.js; the intro game scr
 assets/css/site.css   all the styles
 assets/css/fonts.css  Fraunces, Plus Jakarta Sans and Fredoka One (the logo-style letters), all served locally
                       from assets/fonts (nothing is loaded from outside the site) and preloaded in index.html
-assets/img            logo.png, logo-icon.png (browser tab), hero-bg.jpg + hero-bg-sm.jpg (the intro background in the
+assets/img            logo.webp (the logo on the page; logo.png is kept for link previews), logo-icon.png (browser tab), hero-bg.jpg + hero-bg-sm.jpg (the intro background in the
                       logo's purple, desktop and phones), games/ (each game's screenshots, named after the game: <game>-title.jpg
-                      is its title screen with the logo, <game>-play.jpg and the others are in-game shots)
+                      is its title screen with the logo, <game>-play.jpg and the others are in-game shots;
+                      games/phone/ holds lighter copies sized for the phone at the top)
 ```
 
 ## Design
@@ -40,6 +41,15 @@ The site is built to stay light on phones and laptops; keep it that way when cha
 - Move things with `transform` / `opacity` (the graphics card does that for free). Don't animate shapes *inside* an SVG icon, shadows or sizes forever: those make the browser redo layout or paint on every frame.
 - No live blur (`backdrop-filter`, `filter: blur`) on anything that moves or sits over something that moves; use solid or semi-solid colours and radial gradients instead.
 - The games row is a browser-run animation (only its speed is steered from main.js), and every moving part rests while it's off screen.
+
+## Loading fast
+
+On a slow phone connection the phone at the top shows its first screenshot in about 2 seconds:
+
+- The phone uses lighter copies of the screenshots (`assets/img/games/phone/`, 520px wide). **When you add or change a screenshot, make its phone copy too** (same name in `phone/`).
+- Its first screenshot loads ahead of everything else; until it arrives the phone shows the logo on a soft purple screen. The rest load one at a time after the page has loaded, and the phone only moves on once the next screenshot is there.
+- The game card pictures wait until the phone's first screenshot is in (or the games come near).
+- The logo is a small WebP (18 KB) and Fredoka One a Latin-only WOFF2 (14 KB).
 
 ## Games and store links
 
