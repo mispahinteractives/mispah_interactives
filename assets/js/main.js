@@ -21,8 +21,6 @@
   const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
   // (a game marked `soon` isn't playable yet)
   const webUrl = (g) => g.soon ? '' : (local && g.local) || g.stores.web;
-  // games whose host won't run inside another site open in a new tab
-  const newTab = (g) => g.frame === false ? ' target="_blank" rel="noopener"' : '';
   const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
@@ -46,39 +44,44 @@
   $$('[data-game-count]').forEach((el) => { el.textContent = MG.games.length; });
 
   /* ------------------------------------------------ the intro game screen */
-  // The phone shows our games' screenshots, fading from one game to the
-  // next every 2 seconds, round and round. Every visit starts on a different
+  // The phone shows our games' in-game screenshots (`screens` in data.js),
+  // game by game, fading to the next one every 2 seconds, round and round.
+  // The dots mark the game on screen. Every visit starts on a different
   // game. It only rests while the phone is off screen or the tab is in the
   // background.
   (function phone() {
     const art = $('.hero-art'), tilt = $('#phone'), screen = $('.phone-screen', tilt);
     const shots = $('[data-shots]', screen), dots = $('[data-phone-dots]', art);
-    const games = MG.games, n = games.length;
+    const games = MG.games;
+    // every screenshot in order, each knowing its game
+    const list = [];
+    games.forEach((g, gi) => ((g.screens && g.screens.length) ? g.screens : [g.cover]).forEach((src) => list.push({ src, gi })));
+    const n = list.length, firstOf = (gi) => list.findIndex((s) => s.gi === gi);
     const HOLD = 2000;
     let at = -1, timer = 0, seen = true;
-    let start = Math.floor(Math.random() * n);
+    let startGame = Math.floor(Math.random() * games.length);
     try {                                                   // a different game on every visit
       const k = 'mg-phone', last = parseInt(localStorage.getItem(k), 10);
-      if (!isNaN(last)) start = (last + 1) % n;
-      localStorage.setItem(k, String(start));
+      if (!isNaN(last)) startGame = (last + 1) % games.length;
+      localStorage.setItem(k, String(startGame));
     } catch (e) { /* storage blocked: a random game */ }
-    const imgs = games.map((g) => {
+    const imgs = list.map((s) => {
       const im = document.createElement('img');
       im.alt = ''; im.decoding = 'async';
       shots.appendChild(im);
       return im;
     });
-    const want = (i) => { const im = imgs[i]; if (!im.src) im.src = games[i].screen || games[i].cover; };
+    const want = (i) => { const im = imgs[i]; if (!im.src) im.src = list[i].src; };
     dots.innerHTML = games.map((g, i) => `<button type="button" aria-label="Show ${esc(g.name)}" data-dot="${i}"></button>`).join('');
     const dotEls = $$('button', dots);
 
     function show(i) {
       at = i;
-      const g = games[i];
+      const gi = list[i].gi, g = games[gi];
       want(i); want((i + 1) % n); want((i + 2) % n);
       art.style.setProperty('--gc', g.color || '#6d3df2');
       imgs.forEach((im, j) => im.classList.toggle('on', j === i));
-      dotEls.forEach((d, j) => d.setAttribute('aria-current', String(j === i)));
+      dotEls.forEach((d, j) => d.setAttribute('aria-current', String(j === gi)));
       next();
     }
     function next() {
@@ -87,7 +90,7 @@
     }
     dots.addEventListener('click', (e) => {
       const d = e.target.closest('[data-dot]');
-      if (d && +d.dataset.dot !== at) show(+d.dataset.dot);
+      if (d && list[at].gi !== +d.dataset.dot) show(firstOf(+d.dataset.dot));
     });
     document.addEventListener('visibilitychange', next);
     if ('IntersectionObserver' in window) {
@@ -109,7 +112,7 @@
       });
       hero.addEventListener('pointerleave', () => { tilt.style.removeProperty('--px'); tilt.style.removeProperty('--py'); });
     }
-    show(start);
+    show(firstOf(startGame));
   })();
 
   /* ------------------------------------------------------------- games */
@@ -138,14 +141,14 @@
     // a tall poster: the game's portrait picture fills the card, and the
     // details sit on frosted glass at the bottom
     card.innerHTML = `
-      <div class="game-cover"><img src="${esc(g.screen || g.cover)}" alt="${esc(g.name)}" loading="lazy"${g.focus ? ` style="object-position:${esc(g.focus)}"` : ''}></div>
+      <div class="game-cover"><img src="${esc(g.cover)}" alt="${esc(g.name)}" loading="lazy"${g.focus ? ` style="object-position:${esc(g.focus)}"` : ''}></div>
       <span class="game-tag">${esc(g.genre)}</span>
       ${g.soon ? '<span class="game-soon">Coming soon</span>' : ''}
       <div class="game-body">
         <h3>${esc(g.name)}</h3>
         <div class="game-actions">
           ${g.soon ? `<span class="play-soon"><i>${ICON.clock}</i><span><small>Launching</small><b>Coming soon</b></span></span>` : ''}
-          ${web ? `<a class="play-web" href="${esc(web)}" data-play="${esc(g.id)}"${newTab(g)} aria-label="Play ${esc(g.name)} on the web${g.frame === false ? ' (opens in a new tab)' : ''}"><i>${ICON.web}</i><span><small>Play now on the</small><b>Web</b></span></a>` : ''}
+          ${web ? `<a class="play-web" href="${esc(web)}" data-play="${esc(g.id)}" aria-label="Play ${esc(g.name)} on the web"><i>${ICON.web}</i><span><small>Play now on the</small><b>Web</b></span></a>` : ''}
           ${badge(g, 'app')}${badge(g, 'play')}
         </div>
       </div>`;
@@ -226,21 +229,31 @@
     }, { threshold: [0, 0.25] }).observe(view);
     let rt = 0;
     window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(build, 150); });
-    // slow down under the mouse; keyboard focus brings the card into view
+    // slow down under the mouse
     view.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') { target = 0.3; wake(); } });
     view.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') { target = 1; wake(); } });
+    // keyboard focus (Tab) brings the card into view and holds the row still.
+    // (Only the keyboard: a mouse click also focuses a button, and moving the
+    // row then would pull the button away before the click lands.)
+    let kbd = false;
     view.addEventListener('focusin', (e) => {
+      if (!e.target.matches(':focus-visible')) return;
       const it = e.target.closest('.game-item');
-      target = 0; factor = 0; apply();
+      kbd = true; target = 0; factor = 0; apply();
       if (it) setPos(-(it.offsetLeft - originals[0].offsetLeft));
     });
-    view.addEventListener('focusout', () => { target = 1; wake(); });
-    // drag or swipe the row
-    view.addEventListener('pointerdown', (e) => { if (e.button === 0) drag = { id: e.pointerId, sx: e.clientX, x0: pos(), moved: false, held: false }; });
+    view.addEventListener('focusout', () => { if (kbd) { kbd = false; target = 1; wake(); } });
+    // press: the row holds still under the finger or mouse until it's
+    // released, so a button can't slide away mid-click; drag to move it
+    view.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      drag = { id: e.pointerId, sx: e.clientX, x0: pos(), moved: false, slop: e.pointerType === 'mouse' ? 6 : 12 };
+      apply();
+    });
     view.addEventListener('pointermove', (e) => {
       if (!drag || e.pointerId !== drag.id) return;
       const dx = e.clientX - drag.sx;
-      if (!drag.moved && Math.abs(dx) > 6) {
+      if (!drag.moved && Math.abs(dx) > drag.slop) {
         drag.moved = true; view.setPointerCapture(e.pointerId); view.classList.add('dragging');
         introT = INTRO; boost = 1; drag.x0 = pos(); drag.sx = e.clientX; apply();
       }
@@ -409,7 +422,9 @@
     function open(g) {
       const url = webUrl(g);
       if (!url) return;
-      if (g.frame === false) { window.open(url, '_blank', 'noopener'); return; }
+      // (a game whose host can't be shown inside another site, like Playgama's,
+      // opens its web-store page in this same tab; Back returns to the site)
+      if (g.frame === false) { window.location.href = url; return; }
       if (frame) frame.remove(); else back = document.activeElement;
       game = g;
       el.classList.toggle('is-portrait', g.shape !== 'landscape');
