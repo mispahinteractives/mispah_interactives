@@ -129,7 +129,7 @@
       if (mine !== token) return;                          // (a newer request came in meanwhile)
       at = i;
       const gi = list[i].gi, g = games[gi];
-      art.style.setProperty('--gc', g.color || '#6d3df2');
+      art.style.setProperty('--gc', g.color || '#a12bc2');
       imgs.forEach((im, j) => im.classList.toggle('on', j === i));
       dotEls.forEach((d, j) => d.setAttribute('aria-current', String(j === gi)));
       want((i + 1) % n);                                   // fetch the next one while this one shows
@@ -197,7 +197,7 @@
     const web = webUrl(g);
     const item = document.createElement('div');
     item.className = 'game-item';
-    item.style.setProperty('--gc', g.color || '#6d3df2');
+    item.style.setProperty('--gc', g.color || '#a12bc2');
     const card = document.createElement('article');
     card.className = 'game';
     // a tall poster: the game's portrait picture fills the card, and the

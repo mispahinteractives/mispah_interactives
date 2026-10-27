@@ -16,8 +16,8 @@
               page shows every picture of every game, game by game: the
               cover first, then these
    `color` is the game's accent colour, from the logo's palette (gold
-   #ffb21f, orange #ff9a1f, violet #6d3df2, deep purple #4c1fc9, lavender
-   #a68bff). `focus` (optional) moves the
+   #ffb21f, orange #ff9a1f, violet #a12bc2, deep purple #6b1085, lavender
+   #d791eb). `focus` (optional) moves the
    picture inside its card (CSS object-position, e.g. '50% 85%').
 
    `frame: false` opens `web` in the same browser tab instead of the site's
@@ -53,7 +53,7 @@ window.MG = {
       blurb: 'Find the emojis, crack the clue. Thousands of little discoveries in a bright, friendly word puzzle.',
       cover: 'assets/img/games/cluemoji-title.jpg',
       screens: ['assets/img/games/cluemoji-play.jpg'],
-      color: '#6d3df2',
+      color: '#a12bc2',
       frame: false,
       stores: { appStore: '', playStore: '', web: 'https://playgama.ai/play/d5ypyd7tb4ayic' }
     },
@@ -75,7 +75,7 @@ window.MG = {
       genre: 'Kids learning',
       blurb: 'Learn and play in a cheerful classroom with a friendly bear teacher. Made for small learners with big dreams.',
       cover: 'assets/img/games/learning-adventure-title.jpg',
-      color: '#a68bff',
+      color: '#d791eb',
       shape: 'landscape',
       stores: { appStore: '', playStore: '', web: 'https://mispahinteractives.github.io/learning_adventure_link/' }
     },
@@ -87,7 +87,7 @@ window.MG = {
       blurb: 'Match colours and numbers, drop a +2 at the perfect moment, and empty your hand before your rivals.',
       cover: 'assets/img/games/uno-clash-title.jpg',
       screens: ['assets/img/games/uno-clash-play.jpg', 'assets/img/games/uno-clash-level.jpg'],
-      color: '#4c1fc9',
+      color: '#6b1085',
       stores: { appStore: '', playStore: '', web: 'https://mispahinteractives.github.io/UNO_Link/' }
     },
     {
