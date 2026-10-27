@@ -12,9 +12,9 @@
    Pictures (in assets/img/games, named after the game):
      cover    the game's title screen, with its logo: the game card in Our
               Games and the Coming soon message use it
-     screens  in-game screenshots, in order: the phone at the top of the
-              page shows them, game by game (a game without any shows its
-              cover there)
+     screens  in-game screenshots, in order. The phone at the top of the
+              page shows every picture of every game, game by game: the
+              cover first, then these
    `color` is the game's accent colour. `focus` (optional) moves the
    picture inside its card (CSS object-position, e.g. '50% 85%').
 

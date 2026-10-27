@@ -36,6 +36,8 @@
   --depth: 0 1px 1px rgba(23, 17, 42, 0.04), 0 2px 4px rgba(23, 17, 42, 0.04), 0 10px 18px -8px rgba(23, 17, 42, 0.1), 0 26px 44px -24px rgba(40, 20, 90, 0.22);
   --depth-up: 0 2px 2px rgba(23, 17, 42, 0.04), 0 8px 12px rgba(23, 17, 42, 0.05), 0 22px 32px -12px rgba(40, 20, 90, 0.18), 0 46px 72px -30px rgba(60, 25, 150, 0.38);
   --serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --logo-font: 'Fredoka One', 'Plus Jakarta Sans', system-ui, sans-serif;   /* round, chunky letters like the logo's */
+  --logo-ink: #36115e;          /* the logo's deep purple outline */
   --sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --gutter: clamp(20px, 4.5vw, 48px);
@@ -203,7 +205,7 @@ p { margin: 0; }
 .section-feature .section-head { position: relative; isolation: isolate; margin-bottom: clamp(44px, 6vw, 84px); }
 .section-feature .section-head::before {
   content: attr(data-num); position: absolute; z-index: -1; right: -0.04em; top: -0.42em; pointer-events: none;
-  font: italic 500 clamp(130px, 19vw, 280px)/1 var(--serif); letter-spacing: -0.04em; color: transparent; -webkit-text-stroke: 1.5px rgba(109, 61, 242, 0.13);
+  font: 400 clamp(120px, 17vw, 250px)/1 var(--logo-font); letter-spacing: 0; color: transparent; -webkit-text-stroke: 2px rgba(91, 33, 182, 0.13);
 }
 .section-feature .kicker { font-size: 13px; line-height: 1.4; margin-bottom: 22px; }
 .section-feature .kicker span { font-size: 18px; }
@@ -412,7 +414,7 @@ p { margin: 0; }
 .process-steps li { position: relative; counter-increment: step; }
 .process-steps li::before {
   content: counter(step, decimal-leading-zero); position: relative; display: grid; place-items: center; width: 44px; height: 44px; margin: 0 auto 18px; border-radius: 50%;
-  z-index: 1; background: linear-gradient(180deg, #fff, #f5f2fc); border: 1px solid var(--line-2); box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(23, 17, 42, 0.06), 0 8px 14px -8px rgba(40, 20, 90, 0.3); font: italic 500 15px/1 var(--serif); color: var(--ink);
+  z-index: 1; background: linear-gradient(180deg, #fff, #f5f2fc); border: 1px solid var(--line-2); box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(23, 17, 42, 0.06), 0 8px 14px -8px rgba(40, 20, 90, 0.3); font: 400 16px/1 var(--logo-font); color: var(--ink);
   transition: transform 0.8s var(--ease) var(--sd, 0ms), opacity 0.5s ease var(--sd, 0ms), color 0.5s var(--sd, 0ms), border-color 0.5s var(--sd, 0ms), box-shadow 0.6s var(--sd, 0ms);
 }
 .js .process-steps li::before { transform: scale(0.5); opacity: 0; }
@@ -542,6 +544,32 @@ html.modal-on, html.modal-on body { overflow: hidden; }
 .js .reveal { opacity: 0; translate: 0 26px; }
 .js .reveal.in { opacity: 1; translate: none; }
 .reveal { transition: opacity 0.9s var(--ease) var(--d, 0ms), translate 0.9s var(--ease) var(--d, 0ms), scale 0.9s var(--ease) var(--d, 0ms), transform 0.5s var(--ease), box-shadow 0.5s var(--ease); }
+
+/* ---------- the logo's lettering, reused for a few brand accents ----------
+   The logo's round chunky letters (Fredoka One) in the logo's colours: a
+   golden fill like "GAMES" (.logo-gold) or white shading to lavender like
+   "MIZPHA" (.logo-white), inside the logo's thick deep-purple outline. No
+   shadow or glow. The word stays as plain (invisible) text for layout,
+   selection and screen readers; two copies of it (data-text) draw the look:
+   the outline behind (::before, the letters grown outward by an SVG filter
+   in index.html, sized by main.js) and the fill on top (::after).
+   (Selectors are doubled up to win over the headings' italic accents.) */
+.logo-word, h1 em.logo-word, h2 em.logo-word, .contact-panel h2 em.logo-word, .footer-line em.logo-word {
+  position: relative; display: inline-block; padding: 0 0.07em; margin: 0 0.03em;
+  font: 400 0.92em/1.05 var(--logo-font); letter-spacing: 0.02em; font-style: normal;
+  background: none; color: transparent; -webkit-text-fill-color: transparent; -webkit-text-stroke: 0; text-shadow: none;
+}
+/* (the copies reach past the word above and below, so tails like g, p, y
+   are filled too; the matching padding keeps their letters exactly over the
+   word's) */
+.logo-word::before, .logo-word::after { content: attr(data-text); position: absolute; inset: -0.2em -0.1em -0.4em; padding: 0.2em 0.17em 0.4em; pointer-events: none; }
+.logo-word::before { color: var(--logo-ink); -webkit-text-fill-color: var(--logo-ink); filter: var(--outline, url(#logo-ink-5)); }
+.logo-word::after {
+  background: linear-gradient(180deg, #fff09a 18%, #ffd43a 36%, #ffb21f 58%, #ff9a1f 82%);
+  -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
+}
+.logo-word.logo-white::after { background-image: linear-gradient(180deg, #ffffff 18%, #ffffff 46%, #f1e9ff 62%, #d9c8fb 82%); }
+.nowrap { white-space: nowrap; }   /* (keeps a word and its full stop together) */
 
 /* ---------- responsive ---------- */
 /* the shapes only float in the empty margins beside the content; on

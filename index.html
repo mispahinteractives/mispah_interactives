@@ -13,8 +13,10 @@
 <script>document.documentElement.classList.add('js')</script>
 <link rel="preload" href="assets/fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/plus-jakarta-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/css/fonts.css?v=20261028j">
-<link rel="stylesheet" href="assets/css/site.css?v=20261028j">
+<link rel="preload" href="assets/fonts/fraunces-latin-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/fredoka-one.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="assets/css/fonts.css?v=20261028v">
+<link rel="stylesheet" href="assets/css/site.css?v=20261028v">
 </head>
 <body>
 <a class="skip" href="#games">Skip to content</a>
@@ -42,7 +44,7 @@
     <div class="wrap hero-in">
       <div class="hero-text">
         <p class="pill reveal"><span class="pill-dot" aria-hidden="true"></span>Independent game studio</p>
-        <h1 id="hero-title" class="reveal">Crafting games people <em>love</em> to play.</h1>
+        <h1 id="hero-title" class="reveal">Crafting games people <em class="logo-word logo-gold" data-text="love">love</em> to play.</h1>
         <p class="lead reveal">We design and build mobile, web and HTML5 games, and help studios and brands bring theirs to life, from the first spark of an idea to launch day.</p>
         <div class="hero-actions reveal">
           <a class="btn btn-dark" href="#games">Explore our games <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg></a>
@@ -82,7 +84,7 @@
       <header class="section-head reveal" data-num="01">
         <p class="kicker"><span>01</span>Worlds made to be played</p>
         <div class="section-head-row">
-          <h2 id="games-title">Our <em>games</em></h2>
+          <h2 id="games-title">Our <em class="logo-word logo-gold" data-text="games">games</em></h2>
           <p>Every game is designed, drawn and built in-house. Play them right here in your browser, with App Store and Google Play releases on the way.</p>
         </div>
       </header>
@@ -101,7 +103,7 @@
       <header class="section-head reveal" data-num="02">
         <p class="kicker"><span>02</span>Everything a great game needs</p>
         <div class="section-head-row">
-          <h2 id="services-title">Our <em>services</em></h2>
+          <h2 id="services-title">Our <em class="logo-word logo-white" data-text="services">services</em></h2>
           <p>From the first prototype to the final pixel: one studio for games, art, interfaces and the web.</p>
         </div>
       </header>
@@ -120,7 +122,7 @@
         <div class="contact-panel">
           <div class="aura aura-dark" aria-hidden="true"><span class="a1"></span><span class="a2"></span></div>
           <p class="kicker kicker-light"><span>03</span>Contact details</p>
-          <h2 id="contact-title">Let’s build something <em>together</em>.</h2>
+          <h2 id="contact-title">Let’s build something <span class="nowrap"><em class="logo-word logo-gold" data-text="together">together</em>.</span></h2>
           <p class="contact-intro">Have a game idea, a project, or feedback on our games? We’d love to hear from you.</p>
           <ul class="contact-list">
             <li>
@@ -177,7 +179,7 @@
 <footer class="footer">
   <div class="wrap">
     <div class="footer-top reveal">
-      <p class="footer-line">Made with care,<br>for people who <em>play</em>.</p>
+      <p class="footer-line">Made with care,<br>for people who <span class="nowrap"><em class="logo-word logo-gold" data-text="play">play</em>.</span></p>
       <a class="footer-brand" href="#top"><img src="assets/img/logo.png" alt="Mizpha Games" width="400" height="232"></a>
     </div>
     <div class="footer-bottom">
@@ -228,7 +230,12 @@
   </div>
 </div>
 
-<script src="assets/js/data.js?v=20261028j"></script>
-<script src="assets/js/main.js?v=20261028j"></script>
+<!-- the logo's outline for the .logo-word words: each letter grown outward
+     evenly with round corners and a crisp edge, which also fills the small
+     holes in a, e and g, as in the logo -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute"><filter id="logo-ink-2" x="-15%" y="-25%" width="130%" height="150%"><feGaussianBlur in="SourceAlpha" stdDeviation="1.74" result="b"/><feComponentTransfer in="b" result="t"><feFuncA type="linear" slope="36" intercept="-4"/></feComponentTransfer><feFlood flood-color="#36115e"/><feComposite in2="t" operator="in"/></filter><filter id="logo-ink-3" x="-15%" y="-25%" width="130%" height="150%"><feGaussianBlur in="SourceAlpha" stdDeviation="2.61" result="b"/><feComponentTransfer in="b" result="t"><feFuncA type="linear" slope="36" intercept="-4"/></feComponentTransfer><feFlood flood-color="#36115e"/><feComposite in2="t" operator="in"/></filter><filter id="logo-ink-4" x="-15%" y="-25%" width="130%" height="150%"><feGaussianBlur in="SourceAlpha" stdDeviation="3.48" result="b"/><feComponentTransfer in="b" result="t"><feFuncA type="linear" slope="36" intercept="-4"/></feComponentTransfer><feFlood flood-color="#36115e"/><feComposite in2="t" operator="in"/></filter><filter id="logo-ink-5" x="-15%" y="-25%" width="130%" height="150%"><feGaussianBlur in="SourceAlpha" stdDeviation="4.35" result="b"/><feComponentTransfer in="b" result="t"><feFuncA type="linear" slope="36" intercept="-4"/></feComponentTransfer><feFlood flood-color="#36115e"/><feComposite in2="t" operator="in"/></filter><filter id="logo-ink-6" x="-15%" y="-25%" width="130%" height="150%"><feGaussianBlur in="SourceAlpha" stdDeviation="5.22" result="b"/><feComponentTransfer in="b" result="t"><feFuncA type="linear" slope="36" intercept="-4"/></feComponentTransfer><feFlood flood-color="#36115e"/><feComposite in2="t" operator="in"/></filter><filter id="logo-ink-7" x="-15%" y="-25%" width="130%" height="150%"><feGaussianBlur in="SourceAlpha" stdDeviation="6.09" result="b"/><feComponentTransfer in="b" result="t"><feFuncA type="linear" slope="36" intercept="-4"/></feComponentTransfer><feFlood flood-color="#36115e"/><feComposite in2="t" operator="in"/></filter><filter id="logo-ink-8" x="-15%" y="-25%" width="130%" height="150%"><feGaussianBlur in="SourceAlpha" stdDeviation="6.96" result="b"/><feComponentTransfer in="b" result="t"><feFuncA type="linear" slope="36" intercept="-4"/></feComponentTransfer><feFlood flood-color="#36115e"/><feComposite in2="t" operator="in"/></filter></svg>
+
+<script src="assets/js/data.js?v=20261028v"></script>
+<script src="assets/js/main.js?v=20261028v"></script>
 </body>
 </html>

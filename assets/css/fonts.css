@@ -1,6 +1,12 @@
 /* Served locally (SIL Open Font License 1.1). Latin subset, variable weight.
    Fraunces — an elegant, soft serif for headings and italic accents.
-   Plus Jakarta Sans — a refined modern sans for reading and the interface. */
+   Plus Jakarta Sans — a refined modern sans for reading and the interface.
+   Fredoka One — round, chunky letters like the logo's, for a few brand
+   accents (the .logo-word words, the big section numbers). */
+@font-face {
+  font-family: 'Fredoka One'; font-style: normal; font-weight: 400; font-display: swap;
+  src: url('../fonts/fredoka-one.ttf') format('truetype');
+}
 @font-face {
   font-family: 'Fraunces'; font-style: normal; font-weight: 400 700; font-display: swap;
   src: url('../fonts/fraunces-latin.woff2') format('woff2');

@@ -40,12 +40,25 @@
     web: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path class="i-spin" d="M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>'
   };
 
+  /* --------------------------------------------- logo-style lettering */
+  // The .logo-word outlines grow each letter outward by about 0.08em: pick
+  // the SVG filter (index.html) nearest that for each word's size.
+  const sizeOutlines = () => $$('.logo-word').forEach((w) => {
+    const r = Math.min(8, Math.max(2, Math.round(parseFloat(getComputedStyle(w).fontSize) * 0.08)));
+    w.style.setProperty('--outline', `url(#logo-ink-${r})`);
+  });
+  sizeOutlines();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(sizeOutlines);
+  let ot = 0;
+  window.addEventListener('resize', () => { clearTimeout(ot); ot = setTimeout(sizeOutlines, 150); });
+
   /* ------------------------------------------------------------- intro */
   $$('[data-game-count]').forEach((el) => { el.textContent = MG.games.length; });
 
   /* ------------------------------------------------ the intro game screen */
-  // The phone shows our games' in-game screenshots (`screens` in data.js),
-  // game by game, fading to the next one every 2 seconds, round and round.
+  // The phone shows every screenshot of every game, game by game: its title
+  // screen (`cover` in data.js), then its in-game shots (`screens`), fading
+  // to the next one every 2 seconds, round and round.
   // The dots mark the game on screen. Every visit starts on a different
   // game. It only rests while the phone is off screen or the tab is in the
   // background.
@@ -55,7 +68,7 @@
     const games = MG.games;
     // every screenshot in order, each knowing its game
     const list = [];
-    games.forEach((g, gi) => ((g.screens && g.screens.length) ? g.screens : [g.cover]).forEach((src) => list.push({ src, gi })));
+    games.forEach((g, gi) => [...new Set([g.cover, ...(g.screens || [])])].forEach((src) => list.push({ src, gi })));
     const n = list.length, firstOf = (gi) => list.findIndex((s) => s.gi === gi);
     const HOLD = 2000;
     let at = -1, timer = 0, seen = true;
