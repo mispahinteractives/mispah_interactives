@@ -3,9 +3,9 @@
    --------------------------------------------------------------------------
    A clean white site with a quiet, premium feel. The logo gives the palette:
    a deep ink for text, Mizpha violet as the signature colour and the logo's
-   amber as a warm highlight, used sparingly. Fraunces (an elegant soft
-   serif, with italic accents) sets the headings; Plus Jakarta Sans reads
-   and runs the interface. Surfaces have quiet depth: a hairline gradient
+   amber as a warm highlight, used sparingly. Everything is set in Fredoka,
+   round, friendly letters like the logo's (bolder for headings, lighter for
+   reading), with Fredoka One for a few words in the logo's own style. Surfaces have quiet depth: a hairline gradient
    rim, a lit top edge and layered soft shadows; buttons press in. Motion
    is subtle: sections rise into place, the hero phone loads our games one
    after another, cards lean towards the pointer. Everything stays still
@@ -36,10 +36,10 @@
   --frame: linear-gradient(#fff, #fff) padding-box, linear-gradient(170deg, #ffffff 0%, #ebe6f6 32%, #d7cfec 100%) border-box;
   --depth: 0 1px 1px rgba(23, 17, 42, 0.04), 0 2px 4px rgba(23, 17, 42, 0.04), 0 10px 18px -8px rgba(23, 17, 42, 0.1), 0 26px 44px -24px rgba(56, 10, 70, 0.22);
   --depth-up: 0 2px 2px rgba(23, 17, 42, 0.04), 0 8px 12px rgba(23, 17, 42, 0.05), 0 22px 32px -12px rgba(56, 10, 70, 0.18), 0 46px 72px -30px rgba(84, 14, 104, 0.38);
-  --serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;
-  --logo-font: 'Fredoka One', 'Plus Jakarta Sans', system-ui, sans-serif;   /* round, chunky letters in the logo's style */
+  --serif: 'Fredoka', 'Nunito', 'Varela Round', system-ui, -apple-system, 'Segoe UI', sans-serif;   /* headings */
+  --logo-font: 'Fredoka One', 'Fredoka', system-ui, sans-serif;   /* round, chunky letters in the logo's style */
   --logo-ink: #380048;          /* the logo's deep purple outline */
-  --sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --sans: 'Fredoka', 'Nunito', 'Varela Round', system-ui, -apple-system, 'Segoe UI', sans-serif;    /* text and interface */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --gutter: clamp(20px, 4.5vw, 48px);
 }
@@ -51,7 +51,7 @@ img { max-width: 100%; display: block; }
 a { color: var(--violet); }
 h1, h2, h3 { margin: 0; color: var(--ink); font-family: var(--serif); font-weight: 600; line-height: 1.08; letter-spacing: -0.02em; font-optical-sizing: auto; }
 h1 em, h2 em, .footer-line em {
-  font-style: italic; font-weight: 500;
+  font-style: normal; font-weight: 600;
   background: linear-gradient(100deg, var(--violet) 10%, #c83fc7 55%, var(--amber-deep) 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: 0.06em;
 }
@@ -64,7 +64,7 @@ p { margin: 0; }
 
 /* small labels: "01 — Our games" */
 .kicker { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 18px; font: 600 12px/1 var(--sans); letter-spacing: 0.2em; text-transform: uppercase; color: var(--violet); }
-.kicker span { display: inline-flex; align-items: center; gap: 12px; font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 15px; letter-spacing: 0; color: var(--ink); }
+.kicker span { display: inline-flex; align-items: center; gap: 12px; font-family: var(--serif); font-style: normal; font-weight: 600; font-size: 15px; letter-spacing: 0; color: var(--ink); }
 .kicker span::after { content: ""; width: 28px; height: 1px; background: currentColor; opacity: 0.35; }
 .kicker-light { color: var(--amber); }
 .kicker-light span { color: #fff; }
@@ -347,7 +347,7 @@ p { margin: 0; }
 .service::before { background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), rgba(161, 43, 194, 0.07), transparent 50%); }
 .service:hover { transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-5px); box-shadow: var(--edge), var(--depth-up); }
 .service-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: clamp(26px, 3vw, 40px); }
-.service-num { font: italic 500 18px/1 var(--serif); color: var(--muted); }
+.service-num { font: 600 18px/1 var(--serif); color: var(--muted); }
 .service-icon {
   position: relative; display: grid; place-items: center; width: 64px; height: 64px; border-radius: 20px; color: var(--violet);
   background: linear-gradient(160deg, #fff, var(--violet-soft)); border: 1px solid #f0dafa;
