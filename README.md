@@ -59,7 +59,9 @@ Each game in `data.js` has `stores: { appStore, playStore, web }`, a `cover`, a 
 - **When you paste a store link** into `appStore` / `playStore`, that badge opens the store in a new tab instead. Nothing else needs to change.
 - **Play on web** opens the game over the page in the **game player** (a frame with the game's name, Full screen and Close; Back or Esc closes it, and closing stops the game). Games with `shape: 'landscape'` fill the player; the others get a phone-shaped screen on wide displays. A Ctrl/⌘-click opens the game in a new tab.
 
-Play on the Web uses each game's web-store link (`web`). Games with `frame: false` (Animal Café, ClueMoji and Baggage Out!, whose Playgama pages can't be shown inside another site) open that page **in the same browser tab**; Back returns to the site. The others play in the game player on the page.
+Play on the Web uses each game's web-store link (`web`). Games with `frame: false` (Animal Café and ClueMoji, whose Playgama pages can't be shown inside another site) open that page **in the same browser tab**; Back returns to the site. The others play in the game player on the page.
+
+Baggage Out! is hosted directly in `games/baggage-out/` and plays inside the site’s game player. Its web build has no coin store, purchases, or native ad offers. Coins are earned through gameplay, and progress is saved in browser local storage. See `games/baggage-out/README.md` for update instructions.
 
 The buttons work while the row is moving: pressing on the row holds it still until you let go, so a button can't slide away mid-click, and a slightly shaky tap on a phone still counts as a tap, not a swipe.
 
