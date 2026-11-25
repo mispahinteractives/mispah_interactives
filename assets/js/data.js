@@ -67,8 +67,7 @@ window.MG = {
       cover: 'assets/img/games/baggage-out-title.jpg',
       screens: ['assets/img/games/baggage-out-play.jpg', 'assets/img/games/baggage-out-how-to-play.jpg'],
       color: '#ff9a1f',
-      frame: false,
-      stores: { appStore: '', playStore: '', web: 'https://playgama.com/game/baggage-out' }
+      stores: { appStore: '', playStore: '', web: 'games/baggage-out/' }
     },
     {
       id: 'learning-adventure',
